@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeux de la soirée · Play Thau'Gether</title>
+<meta name="theme-color" content="#5C3A21">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --beige:#EFE2D3; --beige-clair:#FAE5D8; --marron:#5C3A21; --terracotta:#C0522A;
+  --teal:#2F6E62; --dore:#C9A57E; --carte:#FBF5EE; --ligne:#E2D0BC;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--beige);color:var(--marron);font-family:Poppins,system-ui,sans-serif;font-size:16px;line-height:1.55;min-height:100vh;padding-bottom:40px}
+a{color:var(--teal)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+header{padding:22px 0 8px;position:relative}
+.badge{position:absolute;top:22px;right:0;background:var(--terracotta);color:var(--beige-clair);font-weight:600;font-size:13px;letter-spacing:1px;padding:5px 10px;border-radius:6px}
+h1,h2,h3{font-family:"Bebas Neue",Impact,sans-serif;font-weight:400;letter-spacing:.5px;color:var(--terracotta);line-height:1.05}
+h1{font-size:44px;padding-right:70px}
+.trait{width:32px;height:3px;background:var(--teal);margin:10px 0 12px;border-radius:2px}
+.sous{font-size:15px}
+.sous b{color:var(--teal)}
+/* Filtres */
+.filtres{margin:18px 0 6px}
+.recherche{width:100%;font:inherit;padding:12px 14px;border:2px solid var(--ligne);border-radius:10px;background:var(--carte);color:var(--marron);outline:none}
+.recherche:focus{border-color:var(--teal)}
+.label{font-weight:600;font-size:14px;margin:14px 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:14px;border:2px solid var(--ligne);background:var(--carte);color:var(--marron);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip.actif{background:var(--teal);border-color:var(--teal);color:#fff}
+.compte{font-size:13px;margin:14px 0 8px;opacity:.8}
+/* Liste */
+.liste{display:grid;gap:10px}
+.jeu{display:block;text-decoration:none;color:inherit;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:14px 16px;position:relative}
+.jeu:active{transform:scale(.99)}
+.jeu{display:flex!important;gap:12px;align-items:flex-start}
+.jeu .txt{flex:1;min-width:0}
+.jeu h2{font-size:26px;padding-right:24px}
+.vignette{width:72px;height:72px;flex:none;object-fit:contain;background:#fff;border-radius:8px;border:1px solid var(--ligne)}
+.couverture{display:block;width:100%;max-height:230px;object-fit:contain;background:#fff;border-radius:12px;border:1px solid var(--ligne);margin:6px 0 14px}
+.sans{display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",Impact,sans-serif;font-size:34px;color:var(--beige-clair);background:var(--terracotta)}
+.couverture.sans{height:110px;font-size:60px}
+.jeu .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:2px}
+.jeu .meta span b{color:var(--teal)}
+.jeu p{font-size:14px;margin-top:6px}
+.jeu:after{content:"›";position:absolute;right:16px;top:12px;font-size:28px;color:var(--teal)}
+.tag{display:inline-block;font-size:12px;font-weight:600;color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:0 6px}
+.vide{padding:24px;text-align:center;background:var(--carte);border-radius:12px}
+/* Fiche */
+.retour{display:inline-block;margin:20px 0 4px;font:inherit;font-weight:600;background:none;border:none;color:var(--teal);cursor:pointer;padding:6px 0;text-decoration:none}
+.fiche h1{font-size:46px;padding-right:0}
+.fiche .meta{font-size:14px;display:flex;flex-wrap:wrap;gap:6px 16px}
+.fiche .meta b{color:var(--teal)}
+.onglets{display:flex;gap:6px;margin:18px 0 0;position:sticky;top:0;background:var(--beige);padding:8px 0;z-index:5}
+.onglet{flex:1;font:inherit;font-size:14px;font-weight:600;padding:10px 6px;border:2px solid var(--ligne);border-radius:10px;background:var(--carte);color:var(--marron);cursor:pointer}
+.onglet.actif{background:var(--marron);border-color:var(--marron);color:var(--beige-clair)}
+.panneau{display:none;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:18px 16px;margin-top:10px}
+.panneau.actif{display:block}
+.panneau h3{font-size:24px;margin:16px 0 6px}
+.panneau h3:first-child{margin-top:0}
+.panneau p{margin:6px 0}
+.panneau ul,.panneau ol{padding-left:22px;margin:6px 0}
+.panneau li{margin:4px 0}
+.panneau b{color:var(--teal)}
+.bref li{margin:8px 0}
+.note{font-size:13px;opacity:.8;margin-top:14px;border-top:1px solid var(--ligne);padding-top:10px}
+.video-box{position:relative;width:100%;aspect-ratio:16/9;background:var(--marron);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.video-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.btn{display:inline-block;font:inherit;font-weight:600;background:var(--terracotta);color:var(--beige-clair);border:none;border-radius:10px;padding:12px 18px;cursor:pointer;text-decoration:none;text-align:center}
+.btn.second{background:none;color:var(--teal);border:2px solid var(--teal);padding:10px 16px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+td,th{border:1px solid var(--ligne);padding:6px 8px;text-align:left}
+th{background:var(--beige)}
+.diff{letter-spacing:1px;color:var(--terracotta);font-size:12px}
+.diff i{font-style:normal;color:var(--ligne)}
+.legende{font-size:13px;margin-top:12px}
+.groupe{margin-top:22px}
+.gtitre{font-size:30px}
+.gdesc{font-size:13px;margin:0 0 10px;opacity:.85}
+.debut{background:var(--beige-clair);border:2px dashed var(--terracotta);border-radius:14px;padding:14px 12px 12px}
+.rliste{margin-top:6px}.rliste li{margin:6px 0}.rliste span{font-size:13px;opacity:.8}
+.offi{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--ligne);font-size:14px}
+footer{text-align:center;font-size:13px;margin-top:28px;opacity:.75}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* =====================================================================
+   DONNÉES DES JEUX
+   Pour ajouter / retirer un jeu : modifier ce tableau.
+   video : identifiant YouTube (la partie après "v=" dans l'URL). Vide = lien de recherche.
+   ===================================================================== */
+const JEUX = [
+{
+  id:"7-wonders", img:"https://www.espritjeu.com/upload/image/7-wonders--nouvelle-edition-2020--p-image-72122", nom:"7 Wonders", min:3, max:7, duree:"30 min", cat:"RÉFLEXION",diff:3,debut:false,regles:"https://cdn.1j1ju.com/medias/ce/c4/60-7-wonders-regle.pdf",reglesType:"PDF",
+  pitch:"Développez votre cité antique en 3 âges en choisissant une carte à la fois.",
+  video:"0EI9OkSnVeM",
+  bref:[
+    "Chacun dirige une cité avec sa merveille. La partie dure 3 âges.",
+    "À chaque tour : choisissez une carte de votre main, posez-la face cachée, puis tout le monde révèle en même temps. Passez le reste de votre main à votre voisin.",
+    "Avec la carte choisie, vous pouvez : la construire (en payant son coût), l'utiliser pour construire une étape de votre merveille, ou la défausser pour 3 pièces.",
+    "S'il vous manque une ressource, achetez-la à un voisin direct pour 2 pièces.",
+    "À la fin de chaque âge, comparez votre force militaire (boucliers) avec vos deux voisins.",
+    "Après le 3e âge, on compte les points : le plus haut score gagne."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Avoir le plus de points de victoire à la fin du 3e âge, grâce aux bâtiments, à la merveille, à l'armée, à la science et à l'argent.</p>
+<h3>Mise en place</h3>
+<ul>
+<li>Chaque joueur reçoit un plateau Merveille et <b>3 pièces</b>.</li>
+<li>On prépare le paquet de l'âge I selon le nombre de joueurs (indiqué au dos des cartes) et on distribue <b>7 cartes</b> à chacun.</li>
+</ul>
+<h3>Déroulement d'un tour</h3>
+<ol>
+<li>Tout le monde choisit une carte de sa main et la pose face cachée.</li>
+<li>On révèle en même temps. Chaque joueur fait une des 3 actions avec sa carte :
+<ul>
+<li><b>Construire le bâtiment</b> : payer son coût en ressources (produites par vos cartes marron/grises ou votre merveille) et/ou en pièces. Si vous possédez déjà le bâtiment indiqué comme « chaînage », la construction est gratuite.</li>
+<li><b>Construire une étape de merveille</b> : payer le coût de l'étape et glisser la carte face cachée sous le plateau.</li>
+<li><b>Défausser</b> la carte pour prendre <b>3 pièces</b>.</li>
+</ul></li>
+<li>On passe les cartes restantes au voisin : <b>à gauche</b> à l'âge I, <b>à droite</b> à l'âge II, <b>à gauche</b> à l'âge III.</li>
+</ol>
+<p>Au 6e tour, il reste 2 cartes : on en joue une, la dernière est défaussée.</p>
+<h3>Commerce</h3>
+<p>Vous pouvez acheter une ressource produite par un <b>voisin direct</b> (gauche ou droite) pour <b>2 pièces</b> par ressource. Le voisin ne peut pas refuser. Certaines cartes jaunes réduisent ce prix.</p>
+<h3>Conflits militaires</h3>
+<p>À la fin de chaque âge, chacun compare ses boucliers avec ses deux voisins : victoire = jeton de <b>+1</b> (âge I), <b>+3</b> (âge II), <b>+5</b> (âge III) ; défaite = jeton <b>-1</b> ; égalité = rien.</p>
+<h3>Décompte final</h3>
+<ul>
+<li>Jetons militaires.</li>
+<li>Pièces : <b>1 point par lot de 3 pièces</b>.</li>
+<li>Étapes de merveille construites.</li>
+<li>Bâtiments civils (bleus) : points indiqués.</li>
+<li>Bâtiments commerciaux (jaunes) et guildes (violettes) : selon leur texte.</li>
+<li>Science (vertes) : pour chaque symbole, le nombre de cartes identiques <b>au carré</b> (3 roues = 9 points), plus <b>7 points par série de 3 symboles différents</b>.</li>
+</ul>
+<p>Égalité : celui qui a le plus de pièces gagne.</p>`
+},
+{
+  id:"esquisse", img:"https://www.espritjeu.com/upload/image/esquisse-r-8-joueurs-p-image-78058", nom:"Esquissé ?", min:4, max:8, duree:"20 min", cat:"AMBIANCE & RIRES",diff:1,debut:true,regles:"https://cdn.1j1ju.com/medias/e6/62/9e-esquisse-regle.pdf",reglesType:"PDF",
+  pitch:"Le téléphone arabe avec des dessins. Moins vous savez dessiner, plus c'est drôle.",
+  video:"F7dwfyVymSs",
+  bref:[
+    "Chacun a un carnet et un feutre. Tout le monde joue en même temps.",
+    "Écrivez votre mot secret sur la première page, puis passez votre carnet au voisin (ou dessinez-le vous-même selon le nombre de joueurs).",
+    "On alterne : dessiner le mot qu'on lit, puis deviner et écrire ce qu'on voit sur le dessin. À chaque fois, on passe le carnet au voisin.",
+    "Pas de lettres ni de chiffres dans les dessins. Le sablier limite le temps.",
+    "Quand votre carnet revient, on déroule chaque carnet page par page et on rigole."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Surtout rigoler. Si vous voulez des points : retrouver le mot de départ à la fin de votre carnet.</p>
+<h3>Mise en place</h3>
+<ul>
+<li>Chaque joueur prend un carnet et un feutre et écrit son prénom en première page.</li>
+<li>Chacun reçoit une carte Mots. Un joueur lance le dé : le chiffre indique quel mot de la carte chacun doit faire deviner. Écrivez-le en page 0.</li>
+</ul>
+<h3>Déroulement</h3>
+<ol>
+<li><b>Nombre de joueurs pair</b> : chacun dessine son propre mot en page 1. <b>Impair</b> : on passe d'abord son carnet au voisin de gauche, qui dessine le mot.</li>
+<li>Retournez le sablier : on dessine jusqu'à la fin du temps. Interdit d'écrire des lettres ou des chiffres.</li>
+<li>Passez le carnet fermé à gauche. Le voisin regarde le dessin, tourne la page et écrit ce qu'il pense que c'est.</li>
+<li>Passez à gauche. Le suivant lit le mot, tourne la page et le dessine.</li>
+<li>On alterne ainsi jusqu'à ce que chaque carnet revienne à son propriétaire.</li>
+</ol>
+<h3>Révélation et points</h3>
+<ul>
+<li>Chacun présente son carnet page par page.</li>
+<li><b>+1 point</b> au propriétaire si le dernier mot est le même que celui de départ.</li>
+<li>Le propriétaire donne <b>1 point</b> au dessin qu'il préfère. Si le mot final est raté, il donne aussi 1 point à la proposition la plus drôle.</li>
+<li>On joue 3 manches ; le plus de points gagne.</li>
+</ul>`
+},
+{
+  id:"viva-catrina", img:"https://www.espritjeu.com/upload/image/viva-catrina-p-image-103194", nom:"Viva Catrina", min:2, max:6, duree:"30 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"https://media.play-in.com/pdf/rules_games/viva_catrina_fr.pdf",reglesType:"PDF",
+  pitch:"Construisez le plus beau village du Día de los Muertos avec des tuiles.",
+  video:"vfL-_f1Z7-Y",
+  bref:[
+    "À votre tour, prenez une tuile disponible sur le plateau, mais seulement au bout d'une ligne.",
+    "Posez-la dans votre village, à côté d'une tuile déjà posée (on part de sa tuile de départ).",
+    "Seuls les éléments reliés à votre tuile de départ par un chemin comptent.",
+    "Points : visiteurs sur les routes pavées, papillons sur les sentiers fleuris, échoppes différentes, ballons, chimères, autels.",
+    "Deux échoppes identiques dans votre village : piochez une tuile en plus dans le sac.",
+    "À la fin, on compte sur le carnet de score : le plus de points gagne."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Organiser la plus belle fête : avoir le plus de points à la fin de la partie grâce à votre village de tuiles.</p>
+<h3>Tour de jeu</h3>
+<ol>
+<li>Choisissez une tuile sur le plateau, <b>uniquement à l'une des extrémités d'une ligne</b>.</li>
+<li>Posez-la dans votre village, adjacente à votre tuile de départ ou à une tuile déjà posée.</li>
+<li>Appliquez les effets éventuels (échoppes, ballons, chimères).</li>
+</ol>
+<p>La partie compte <b>autant de manches que de joueurs</b>. Le pion Catrina désigne le premier joueur et passe à gauche à chaque manche.</p>
+<p>Le plateau présente les tuiles disponibles pour la manche, réparties sur deux lignes. Quand une ligne est vide, le choix se réduit : pensez-y en fin de manche.</p>
+<h3>Ce qui rapporte des points</h3>
+<p>Seul ce qui est <b>relié à votre tuile de départ</b> par une route pavée ou un sentier compte.</p>
+<ul>
+<li><b>Routes pavées</b> : 1 point par visiteur présent dessus.</li>
+<li><b>Sentiers fleuris</b> : 2 points par papillon.</li>
+<li><b>Échoppes</b> (6 types) : des points selon le nombre de types d'échoppes <b>différents</b>. Dès que vous avez 2 échoppes identiques, piochez une tuile supplémentaire dans le sac.</li>
+<li><b>Ballons</b> : une course par couleur. Le premier à avoir 3 ballons d'une couleur prend le meilleur jeton ; à 6 de la même couleur, le jeton est retourné. Les jetons suivants rapportent moins.</li>
+<li><b>Chimères</b> : construisez un socle fermé de la taille exacte demandée pour attirer une chimère.</li>
+<li><b>Autels</b> : multiplient des points selon d'autres éléments de votre village.</li>
+</ul>
+<h3>Fin de partie</h3>
+<p>À la fin de la dernière manche, faites le décompte sur le carnet de score. Le plus haut total gagne.</p>`
+},
+{
+  id:"secret-identity", img:"https://www.espritjeu.com/upload/image/secret-identity-p-image-93899", nom:"Secret Identity", min:3, max:8, duree:"30 min", cat:"AMBIANCE & RIRES",diff:1,debut:false,regles:"https://funnyfox.fr/wp-content/uploads/sites/21/2024/05/Regles.pdf",reglesType:"PDF",
+  pitch:"Faites deviner votre personnage secret avec des pictogrammes, tout en devinant celui des autres.",
+  video:"A1gNicQnTZc",
+  bref:[
+    "8 personnages sont posés au centre, numérotés de 1 à 8. Chacun reçoit en secret un numéro : c'est son personnage.",
+    "Avec 1 à 3 cartes Picto, donnez des indices : côté vert = « ça lui correspond », côté rouge = « ça ne lui correspond pas ».",
+    "Tout le monde joue en même temps, puis chacun vote pour le personnage de chaque autre joueur.",
+    "1 point par bonne réponse, 1 point par joueur qui a trouvé votre personnage.",
+    "Attention : vos cartes Picto ne sont jamais renouvelées. 4 manches, le plus de points gagne."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Marquer le plus de points en 4 manches : faire deviner son personnage et deviner celui des autres.</p>
+<h3>Mise en place</h3>
+<ul>
+<li>Chaque joueur prend son boîtier (coffre-fort), ses cartes ou clés Vote (numérotées de 1 à 8) et <b>10 cartes Picto</b> pour toute la partie.</li>
+<li>On révèle 8 cartes Personnage au centre, numérotées de 1 à 8.</li>
+</ul>
+<h3>Une manche</h3>
+<ol>
+<li>Chacun pioche une carte (ou clé) Mystère en secret : son numéro indique votre personnage.</li>
+<li>Choisissez <b>1 à 3 cartes Picto</b> et glissez-les dans votre boîtier : en face de la zone <b>verte</b> si le picto évoque votre personnage, de la zone <b>rouge</b> s'il ne lui correspond pas du tout.</li>
+<li>Quand tout le monde est prêt, on tourne les boîtiers vers la table.</li>
+<li>Chacun glisse un de ses votes dans le boîtier de chaque autre joueur, avec le numéro du personnage qu'il pense avoir trouvé.</li>
+<li>On ouvre les boîtiers un par un.</li>
+</ol>
+<h3>Points</h3>
+<ul>
+<li><b>+1</b> pour chaque joueur qui a trouvé votre personnage.</li>
+<li><b>+1</b> pour chaque personnage que vous avez trouvé chez les autres.</li>
+</ul>
+<p>Les cartes Picto utilisées sont défaussées : 10 cartes pour 4 manches, dosez bien. On change les personnages à chaque manche.</p>`
+},
+{
+  id:"toy-battle", img:"https://www.espritjeu.com/upload/image/toy-battle-p-image-99655", nom:"Toy Battle", min:2, max:2, duree:"20 min", cat:"DUEL",diff:2,debut:false,regles:"https://cdn.svc.asmodee.net/production-rprod/storage/games/toy_battle/rules/toy-fr01-rules-1744030098Pk1fi.pdf",reglesType:"PDF",
+  pitch:"Duel tactique de jouets : prenez le QG adverse ou raflez les médailles.",
+  video:"m3qpV5Ri7sw",
+  bref:[
+    "À votre tour, une seule action : piocher 2 troupes OU poser 1 troupe sur le terrain.",
+    "On peut poser sur une base vide, sur sa propre troupe, ou sur une troupe adverse plus faible (force strictement inférieure).",
+    "Toute troupe posée doit être reliée à votre QG par un chemin de bases que vous occupez.",
+    "Occupez toutes les bases autour d'une région : vous prenez ses médailles.",
+    "Victoire immédiate : poser une troupe sur le QG adverse, ou atteindre l'objectif de médailles du terrain."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Poser une troupe sur le quartier général adverse, ou atteindre le nombre de médailles indiqué sur le terrain.</p>
+<h3>Mise en place</h3>
+<ul>
+<li>Choisissez un terrain (pour une première partie : <b>la plaine des châteaux</b>). Le symbole face à vous indique votre couleur et l'objectif de médailles.</li>
+<li>Posez une médaille sur chaque emplacement prévu.</li>
+<li>Chacun mélange ses troupes face cachée (sa réserve) et en retire <b>4 au hasard</b> sans les regarder.</li>
+<li>Le premier joueur pioche <b>3 troupes</b>, l'autre <b>4</b>, sur leur support.</li>
+</ul>
+<h3>Tour de jeu : une action au choix</h3>
+<ul>
+<li><b>Piocher 2 troupes</b> de votre réserve (maximum 8 sur votre support).</li>
+<li><b>Poser 1 troupe</b> sur le terrain puis appliquer son effet (et celui de la base spéciale, si vous jouez avec).</li>
+</ul>
+<p>Passer son tour est interdit si une action est possible.</p>
+<h3>Règles de pose (les deux conditions sont obligatoires)</h3>
+<ol>
+<li><b>Emplacement</b> : une base vide, une base où vous êtes déjà, une base adverse dont la troupe visible a une force <b>strictement inférieure</b>, ou le QG adverse. Jamais sur votre propre QG. On pose par-dessus la pile ; seule la troupe du dessus compte.</li>
+<li><b>Connexion</b> : un chemin continu de bases que vous occupez doit relier la base à votre QG.</li>
+</ol>
+<h3>Régions et médailles</h3>
+<p>Dès que vous occupez <b>toutes les bases autour d'une région</b>, prenez ses médailles. Vous les gardez même si vous perdez la région ensuite.</p>
+<h3>Fin de partie</h3>
+<ul>
+<li><b>Troupe sur le QG adverse</b> : victoire immédiate.</li>
+<li><b>Objectif de médailles atteint</b> : victoire immédiate.</li>
+<li>Un joueur ne peut ni piocher ni poser : le plus de médailles gagne. En cas d'égalité, celui qui a déclenché la fin perd.</li>
+</ul>`
+},
+{
+  id:"shadow-hunters", img:"https://www.espritjeu.com/upload/image/shadow-hunters-p-image-112616", nom:"Shadow Hunters", min:4, max:8, duree:"45 min", cat:"BLUFF & TRAHISON",diff:2,debut:false,regles:"https://cdn.1j1ju.com/medias/bf/1f/fa-shadow-hunters-regle.pdf",reglesType:"PDF",
+  pitch:"Hunters, Shadows et Neutres s'affrontent sans savoir qui est qui.",
+  video:"vz-BtQyuFgI",
+  bref:[
+    "Votre personnage est secret : Hunter (gentil), Shadow (monstre) ou Neutre (objectif perso).",
+    "À votre tour : lancez les 2 dés et allez sur le lieu correspondant, appliquez son effet, puis attaquez si vous le voulez.",
+    "Attaque : relancez les 2 dés, la différence entre les deux = dégâts infligés à un joueur de votre zone.",
+    "Cartes Vision : vous en donnez une à un joueur, il doit répondre honnêtement. C'est comme ça qu'on devine les camps.",
+    "Hunters : tuer tous les Shadows. Shadows : tuer tous les Hunters (ou 3 Neutres). Neutres : leur carte."
+  ],
+  full:`
+<h3>Les camps</h3>
+<ul>
+<li><b>Hunters</b> : gagnent quand tous les Shadows sont morts.</li>
+<li><b>Shadows</b> : gagnent quand tous les Hunters sont morts, ou quand 3 personnages Neutres sont morts.</li>
+<li><b>Neutres</b> : chacun a sa propre condition de victoire écrite sur sa carte.</li>
+</ul>
+<h3>Mise en place</h3>
+<p>Répartition : 4 joueurs = 2 Hunters, 2 Shadows · 5 = 2/2 + 1 Neutre · 6 = 2/2 + 2 Neutres · 7 = 2/2 + 3 Neutres (sans Bob) · 8 = 3/3 + 2 Neutres (sans Bob).</p>
+<p>On mélange les personnages retenus et on en distribue un face cachée à chacun. Vous pouvez regarder le vôtre à tout moment. Chacun a un pion sur la piste de dégâts.</p>
+<h3>Tour de jeu</h3>
+<ol>
+<li><b>Se déplacer</b> : lancez le dé à 6 faces et le dé à 4 faces, additionnez et allez sur le lieu portant ce nombre (7 : lieu au choix ; si vous tombez sur votre lieu actuel, relancez).</li>
+<li><b>Effet du lieu</b> (facultatif) : piocher une carte Vision, Lumière ou Ténèbres, infliger ou soigner des dégâts, voler un équipement, etc.</li>
+<li><b>Attaquer</b> (facultatif) : un joueur situé dans votre zone (les lieux sont regroupés par 2). Lancez les deux dés : la <b>différence</b> est le nombre de dégâts (0 = raté).</li>
+</ol>
+<h3>Cartes Vision</h3>
+<p>Quand vous piochez une carte Vision, lisez-la en secret et donnez-la à un autre joueur. Il doit appliquer honnêtement l'effet (ou dire « rien ne se passe ») sans révéler le texte. Certains personnages peuvent mentir : c'est écrit sur leur carte.</p>
+<h3>Révélation et mort</h3>
+<ul>
+<li>Vous pouvez révéler votre personnage à votre tour pour utiliser son pouvoir spécial.</li>
+<li>Quand les dégâts atteignent vos points de vie, vous mourez : révélez votre carte. Le tueur prend vos équipements.</li>
+</ul>
+<p>La partie s'arrête dès qu'un camp atteint son objectif (plusieurs joueurs peuvent gagner en même temps).</p>`
+},
+{
+  id:"tag-team", img:"https://www.espritjeu.com/upload/image/tag-team-p-image-102330", nom:"Tag Team", min:2, max:2, duree:"20 min", cat:"DUEL",diff:2,debut:false,regles:"https://randolphca.sharepoint.com/sites/msteams_2ac136_352300/Jeux_Scorpion/Forms/AllItems.aspx?id=%2Fsites%2Fmsteams%5F2ac136%5F352300%2FJeux%5FScorpion%2FTag%20Team%2F%5Fmarketing%2FSite%20Web%2F%5Farchives%2FTT%5FRules%5F01%5FFR%5F07may2025%2Epdf&parent=%2Fsites%2Fmsteams%5F2ac136%5F352300%2FJeux%5FScorpion%2FTag%20Team%2F%5Fmarketing%2FSite%20Web%2F%5Farchives&p=true&ga=1",reglesType:"PDF",
+  pitch:"Baston d'arcade 2 contre 2 : vous préparez votre deck, le combat se joue tout seul.",
+  video:"oEWgSZwcjbs",
+  bref:[
+    "Chaque joueur choisit 2 combattants parmi 12.",
+    "Votre deck de combat démarre avec seulement 2 cartes (la carte de départ de chaque combattant).",
+    "Avant chaque round : piochez 3 cartes, gardez-en 1 et insérez-la où vous voulez dans votre deck. L'ordre des autres cartes ne change jamais.",
+    "Combat : les deux joueurs révèlent la carte du dessus en même temps et appliquent les effets, jusqu'au bout du deck.",
+    "Dès qu'un combattant tombe à 0 point de vie, son équipe perd."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Mettre KO un des deux combattants adverses (0 point de vie).</p>
+<h3>Mise en place</h3>
+<ul>
+<li>Les joueurs choisissent chacun <b>2 combattants</b> parmi les 12 (en draft ou à l'amiable).</li>
+<li>Chaque combattant a son plateau, ses points de vie et un paquet de 10 cartes.</li>
+<li>Les 2 cartes de départ forment votre <b>deck de combat</b>. Les 18 autres forment votre <b>deck de construction</b>.</li>
+</ul>
+<h3>Un round</h3>
+<ol>
+<li><b>Préparation</b> : piochez 3 cartes de votre deck de construction, choisissez-en <b>1</b> et insérez-la <b>à l'endroit de votre choix</b> dans votre deck de combat, sans changer l'ordre des cartes déjà présentes. Les 2 autres retournent sous le deck de construction.</li>
+<li><b>Combat</b> : les deux joueurs révèlent en même temps la première carte de leur deck de combat et appliquent les effets. Le combattant de la carte révélée est le <b>combattant actif</b> (il reçoit les coups) ; l'autre est le partenaire.</li>
+<li>On continue carte par carte jusqu'à la fin des decks de combat.</li>
+</ol>
+<p>Effets courants : attaquer, gagner de la puissance, bloquer, se soigner, infliger des dégâts directs. Chaque combattant a ses mécaniques propres (voir le Guide des Combattants).</p>
+<h3>Fin de partie</h3>
+<ul>
+<li>Un combattant à 0 point de vie : son équipe perd immédiatement.</li>
+<li>Deux combattants KO en même temps (un de chaque côté), ou impossible de piocher 3 cartes : match nul.</li>
+</ul>`
+},
+{
+  id:"citadelles", img:"https://www.espritjeu.com/upload/image/citadelles--4eme-ed--p-image-103635", nom:"Citadelles", min:2, max:8, duree:"45 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf",reglesType:"PDF",
+  pitch:"Bâtissez la plus belle cité en choisissant chaque tour un personnage secret.",
+  video:"26uq22x_Wac",
+  bref:[
+    "Chaque tour, chacun choisit en secret un personnage (Assassin, Voleur, Roi…). On joue dans l'ordre des numéros.",
+    "À votre tour : prenez 2 pièces d'or OU piochez 2 quartiers et gardez-en 1.",
+    "Puis construisez 1 quartier en payant son coût (jamais deux quartiers identiques).",
+    "Utilisez le pouvoir de votre personnage quand vous voulez pendant votre tour.",
+    "Dès qu'un joueur a 7 quartiers (8 dans les anciennes éditions), on finit le tour et on compte les points."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Avoir la cité qui rapporte le plus de points à la fin de la partie.</p>
+<h3>Mise en place</h3>
+<p>Chaque joueur reçoit <b>4 cartes Quartier</b> et <b>2 pièces d'or</b>. Un joueur reçoit la Couronne.</p>
+<h3>1. Choix des personnages</h3>
+<ul>
+<li>On mélange les 8 personnages et on en écarte certains (face visible ou cachée, selon le nombre de joueurs, voir livret).</li>
+<li>Le joueur qui a la Couronne choisit un personnage en secret, puis passe le paquet à gauche, etc.</li>
+</ul>
+<h3>2. Tours des personnages</h3>
+<p>La Couronne appelle les personnages dans l'ordre : 1 Assassin, 2 Voleur, 3 Magicien, 4 Roi, 5 Évêque, 6 Marchand, 7 Architecte, 8 Condottière / Seigneur de guerre. Le joueur appelé se révèle et joue :</p>
+<ol>
+<li>Prendre <b>2 pièces</b> OU piocher <b>2 quartiers</b> et en garder 1.</li>
+<li>Construire <b>1 quartier</b> (facultatif) en payant son coût. Interdit d'avoir deux quartiers identiques.</li>
+<li>Utiliser le pouvoir du personnage.</li>
+</ol>
+<h3>Pouvoirs</h3>
+<ul>
+<li><b>Assassin</b> : nomme un personnage, qui ne jouera pas ce tour.</li>
+<li><b>Voleur</b> : nomme un personnage (sauf l'Assassin et sa victime) et lui prend tout son or quand il se révèle.</li>
+<li><b>Magicien</b> : échange sa main avec un joueur, ou défausse des cartes pour en repiocher autant.</li>
+<li><b>Roi</b> : prend la Couronne ; or pour ses quartiers nobles (jaunes).</li>
+<li><b>Évêque</b> : ses quartiers sont protégés du Condottière ; or pour ses quartiers religieux (bleus).</li>
+<li><b>Marchand</b> : 1 pièce en plus ; or pour ses quartiers marchands (verts).</li>
+<li><b>Architecte</b> : pioche 2 cartes en plus et peut construire jusqu'à 3 quartiers.</li>
+<li><b>Condottière</b> : or pour ses quartiers militaires (rouges) ; peut détruire un quartier adverse en payant son coût moins 1.</li>
+</ul>
+<h3>Fin et points</h3>
+<p>Quand un joueur construit son <b>7e quartier</b> (4e édition) ou son <b>8e quartier</b> (éditions précédentes), on termine le tour en cours. Vérifiez sur le livret de votre boîte.</p>
+<ul>
+<li>Somme du coût de vos quartiers.</li>
+<li><b>+3</b> si vous avez les 5 types de quartiers.</li>
+<li><b>+4</b> au premier joueur à avoir complété sa cité, <b>+2</b> aux autres qui l'ont complétée.</li>
+<li>Bonus des quartiers violets (merveilles).</li>
+</ul>`
+},
+{
+  id:"miams", img:"https://www.espritjeu.com/upload/image/miams-p-image-105556", nom:"Miams", min:2, max:5, duree:"30 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"",reglesType:"",
+  pitch:"Le Yams survitaminé : brochettes de fruits, combos de cartes et course aux cœurs.",
+  video:"71ZwiphNAe8",
+  bref:[
+    "À votre tour : lancez les 5 dés, vous avez droit à une relance.",
+    "Formez une combinaison de fruits (paire, brelan, full, carré, suite, Miams = 5 identiques) et cochez-la sur votre feuille.",
+    "Les cases cochées font avancer votre piste de cœurs et donnent des bonus (étoiles, dé rouge, relances).",
+    "Avec vos étoiles, achetez des cartes Miams : leurs pouvoirs s'ajoutent tour après tour.",
+    "Quand un joueur atteint 50 cœurs, on finit le tour : cœurs + étoiles restantes, le plus haut total gagne."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Remplir sa piste de cœurs le plus vite possible et avoir le meilleur total à la fin.</p>
+<h3>Tour de jeu</h3>
+<ol>
+<li><b>Lancer</b> les 5 dés blancs. Vous pouvez relancer une fois les dés de votre choix (plus si vous avez des jetons Relance).</li>
+<li><b>Dé rouge</b> : si vous avez un jeton Dé rouge, vous pouvez l'utiliser pour lancer un dé supplémentaire.</li>
+<li><b>Cocher</b> une combinaison réalisée sur votre feuille : paire, brelan, full, carré, suite ou Miams (5 fruits identiques). La face croix est un échec… qui peut profiter à vos adversaires.</li>
+<li><b>Bonus</b> : certaines cases rapportent des étoiles (la monnaie du jeu), un jeton Dé rouge ou un jeton Relance.</li>
+<li><b>Acheter</b> une carte Miams dans le marché en payant son coût en étoiles (de gratuit à 3 étoiles). Ses effets s'appliquent dès le tour suivant et se cumulent avec vos autres cartes.</li>
+</ol>
+<h3>Fin de partie</h3>
+<p>Dès qu'un joueur atteint <b>50 cœurs</b>, on termine le tour. On additionne les cœurs et les étoiles restantes : le plus haut total gagne.</p>
+<p>Mode solo disponible contre « l'Incroyable Affamé » (voir livret).</p>`
+},
+{
+  id:"mindbug", img:"https://www.espritjeu.com/upload/image/mindbug-p-image-84053", nom:"Mindbug", min:2, max:2, duree:"20 min", cat:"DUEL",diff:2,debut:false,regles:"https://iello.fr/wp-content/uploads/2023/03/Mindbug_Rulebook_FR_V3_Revised4-light.pdf",reglesType:"PDF",
+  pitch:"Duel de créatures hybrides où l'adversaire peut voler ce que vous jouez.",
+  video:"PzafI51T7E8",
+  bref:[
+    "Chacun a 10 cartes, une main de 5, 3 points de vie et 2 Mindbugs.",
+    "À votre tour : jouer une créature OU attaquer avec une créature.",
+    "Quand vous jouez une créature, l'adversaire peut dépenser un Mindbug pour la voler. Vous rejouez alors un tour.",
+    "Attaque : l'adversaire bloque avec une créature (la plus faible meurt, égalité = les deux) ou perd 1 point de vie.",
+    "Adversaire à 0 point de vie, ou incapable de jouer ou d'attaquer : vous gagnez."
+  ],
+  full:`
+<h3>Mise en place</h3>
+<ul>
+<li>Chaque joueur reçoit <b>10 cartes</b> face cachée (sa pioche), en pioche <b>5</b>.</li>
+<li>Chacun pose ses <b>2 Mindbugs</b> face visible et règle son compteur à <b>3 points de vie</b>.</li>
+</ul>
+<h3>Tour de jeu : une action</h3>
+<ul>
+<li><b>Jouer une carte</b> : posez une créature de votre main. L'adversaire choisit :
+<ul>
+<li>la laisser : elle arrive chez vous et vous appliquez son effet « Jouer » ;</li>
+<li>la voler avec un Mindbug (usage unique) : il la place chez lui et applique l'effet « Jouer ». Vous terminez votre tour puis jouez immédiatement <b>un tour supplémentaire</b>. Impossible de reprendre une créature volée avec un Mindbug.</li>
+</ul>
+Puis complétez votre main à 5 cartes si votre pioche le permet.</li>
+<li><b>Attaquer</b> avec une de vos créatures. L'adversaire bloque avec une de ses créatures ou prend <b>1 dégât</b>. En cas de blocage, la plus faible est détruite ; égalité : les deux.</li>
+</ul>
+<h3>Mots-clés</h3>
+<ul>
+<li><b>Furie</b> : peut attaquer deux fois par tour.</li>
+<li><b>Coriace</b> : la première fois qu'elle devrait être détruite, on l'incline à la place.</li>
+<li><b>Chasseur</b> : choisit quelle créature adverse doit bloquer.</li>
+<li><b>Venimeux</b> : détruit toute créature qu'il combat.</li>
+<li><b>Furtif</b> : ne peut être bloqué que par une créature Furtive.</li>
+</ul>
+<h3>Victoire</h3>
+<p>L'adversaire tombe à 0 point de vie, ou ne peut ni jouer de carte ni attaquer à son tour.</p>`
+},
+{
+  id:"oriflamme", img:"https://www.espritjeu.com/upload/image/oriflamme-p-image-69870", nom:"Oriflamme", min:3, max:5, duree:"25 min", cat:"BLUFF & TRAHISON",diff:2,debut:false,regles:"https://nfc.accessijeux.com/regles-du-jeu-oriflamme/",reglesType:"fr",
+  pitch:"Complots pour le trône : posez vos cartes face cachée et révélez-les au bon moment.",
+  video:"h-okQkOEXzI",
+  bref:[
+    "Chaque joueur a les mêmes 10 cartes, en garde 7 au hasard, et commence avec 1 point d'Influence.",
+    "6 tours. À chaque tour, chacun pose une carte face cachée au début ou à la fin de la file centrale.",
+    "Puis on résout la file de gauche à droite : pour chacune de vos cartes, révélez-la (et appliquez son effet) ou laissez-la cachée et ajoutez-y 1 Influence.",
+    "Quand vous révélez une carte, vous gagnez l'Influence accumulée dessus.",
+    "Après 6 tours, le plus d'Influence gagne."
+  ],
+  full:`
+<h3>Mise en place</h3>
+<ul>
+<li>Chaque joueur prend les 10 cartes de sa famille, en écarte <b>3 au hasard</b> sans les regarder et garde 7 en main.</li>
+<li>Chacun prend <b>1 point d'Influence</b>. Le premier joueur prend la tuile Premier joueur.</li>
+</ul>
+<h3>Un tour en 2 phases</h3>
+<ol>
+<li><b>Placement</b> : en commençant par le premier joueur, chacun pose une carte face cachée <b>au début ou à la fin</b> de la file, ou <b>par-dessus une de ses propres cartes</b> déjà dans la file.</li>
+<li><b>Résolution</b> : on parcourt la file dans le sens de résolution. Pour chaque carte cachée, son propriétaire choisit :
+<ul>
+<li>la <b>laisser cachée</b> et poser <b>1 Influence</b> dessus ;</li>
+<li>la <b>révéler</b> : il prend l'Influence posée dessus et applique son effet.</li>
+</ul></li>
+</ol>
+<p>Les cartes révélées restent dans la file (leur effet ne se déclenche qu'une fois). Quand une carte est éliminée, on resserre la file. Éliminer une carte adverse rapporte de l'Influence (voir texte des cartes).</p>
+<h3>Les cartes (résumé)</h3>
+<p>Soldat, Archer, Espion, Héritier, Seigneur, Changeforme, Assassinat, Embuscade, Complot, Décret royal. Leurs effets sont écrits dessus : éliminer une carte voisine, la première ou la dernière de la file, voler de l'Influence, déplacer une carte, etc.</p>
+<h3>Fin de partie</h3>
+<p>Après le <b>6e tour</b> (il reste 1 carte en main à chacun), le joueur avec le plus d'Influence gagne. Égalité : celui qui a le plus de cartes de sa famille encore dans la file.</p>`
+},
+{
+  id:"skull-king", img:"https://www.espritjeu.com/upload/image/skull-king-vf-p-image-80958", nom:"Skull King", min:2, max:8, duree:"45 min", cat:"AMBIANCE & RIRES",diff:2,debut:false,regles:"https://cdn.1j1ju.com/medias/eb/6c/1c-skull-king-regle-2022.pdf",reglesType:"PDF",
+  pitch:"Jeu de plis pirate : pariez le nombre exact de plis que vous allez gagner.",
+  video:"yBFsFFrmSVA",
+  bref:[
+    "10 manches : 1 carte à la manche 1, 2 cartes à la manche 2… jusqu'à 10.",
+    "Après avoir regardé sa main, tout le monde annonce en même temps combien de plis il pense faire.",
+    "Il faut suivre la couleur demandée si possible. Le noir (drapeau pirate) est l'atout. Les cartes spéciales se jouent à tout moment.",
+    "Pari exact : 20 points par pli. Raté : -10 par pli d'écart. Pari de zéro : 10 × numéro de manche (gagné ou perdu).",
+    "Le plus de points après 10 manches gagne."
+  ],
+  full:`
+<h3>Les cartes</h3>
+<ul>
+<li><b>Couleurs</b> (1 à 14) : vert (perroquet), violet (carte au trésor), jaune (coffre). <b>Noir</b> (drapeau pirate) = atout, bat les autres couleurs.</li>
+<li><b>Fuite</b> : ne gagne jamais (sauf si tout le monde joue une Fuite).</li>
+<li><b>Pirates</b> : battent toutes les cartes de couleur.</li>
+<li><b>Sirènes</b> : battent les couleurs, mais perdent contre les Pirates.</li>
+<li><b>Skull King</b> : bat les Pirates… mais se fait capturer par une Sirène.</li>
+<li><b>Tigresse</b> : jouée au choix comme Pirate ou comme Fuite.</li>
+</ul>
+<p>Les éditions varient un peu (Kraken, Baleine blanche, etc. sont en option) : vérifiez l'aide de jeu de la boîte.</p>
+<h3>Une manche</h3>
+<ol>
+<li>Distribuez autant de cartes que le numéro de la manche.</li>
+<li><b>Pari</b> : tout le monde annonce en même temps (poing fermé, « Yo-ho-ho ! », puis doigts) le nombre de plis qu'il va faire.</li>
+<li><b>Plis</b> : le premier joueur pose une carte ; les autres doivent fournir la couleur demandée s'ils le peuvent. Les cartes spéciales peuvent toujours être jouées. Le vainqueur du pli ouvre le suivant.</li>
+</ol>
+<h3>Points</h3>
+<ul>
+<li>Pari réussi (1 ou plus) : <b>20 points par pli</b> annoncé.</li>
+<li>Pari raté : <b>-10 points par pli d'écart</b>.</li>
+<li>Pari de 0 réussi : <b>10 × numéro de la manche</b>. Raté : <b>-10 × numéro de la manche</b>.</li>
+<li>Bonus (seulement si le pari est réussi) : chaque 14 de couleur remporté <b>+10</b>, le 14 noir <b>+20</b> ; Sirène battue par un Pirate <b>+20</b>, Pirate battu par le Skull King <b>+30</b>, Skull King battu par une Sirène <b>+40</b>.</li>
+</ul>`
+},
+{
+  id:"presages", img:"https://www.espritjeu.com/upload/image/presages-p-image-101688", nom:"Présages", min:4, max:6, duree:"25 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"https://static.fnac-static.com/multimedia/editorial/pdf/3770026418024.pdf",reglesType:"PDF",
+  pitch:"Jeu de défausse en équipes, sans parler : aidez votre partenaire à vider sa main.",
+  video:"BoR8FvGwuiE",
+  bref:[
+    "On joue en équipes, désignées au début par les cartes « L'Absolu ». Interdit de communiquer sur son jeu.",
+    "Chaque tour, tout le monde joue une carte devant soi.",
+    "Effet éclair : s'applique tout de suite. Effet sablier : s'applique à la fin du tour, en même temps pour tous.",
+    "La carte la plus forte gagne le tour et est défaussée. Les autres cartes reviennent en main, sauf si un effet les défausse.",
+    "Une équipe gagne la manche quand un de ses membres n'a plus qu'une carte en main. 2 manches pour gagner."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Qu'un membre de votre équipe soit le premier à n'avoir plus <b>qu'une seule carte</b> en main à la fin d'un tour. La première équipe à gagner <b>2 manches</b> remporte la partie.</p>
+<h3>Mise en place</h3>
+<ul>
+<li>On distribue une carte <b>L'Absolu</b> (les plus fortes valeurs) à chaque joueur, face visible : elles forment les équipes selon le tableau du livret.</li>
+<li>Chacun reçoit ensuite ses cartes Arcane : <b>5</b> à 4 joueurs, <b>4</b> à 6 joueurs ; à 5, l'équipe de 3 en a 5 et l'équipe de 2 en a 4. À 4 : le plus fort Absolu fait équipe avec le plus faible. À 6 : 3 équipes de 2.</li>
+<li>Le joueur qui a L'Absolu le plus fort commence.</li>
+</ul>
+<h3>Un tour</h3>
+<ol>
+<li>Dans le sens horaire, chacun joue une carte devant lui et <b>annonce son effet</b>.</li>
+<li>Effet <b>éclair</b> : résolu immédiatement, avant que le joueur suivant ne joue.</li>
+<li>Quand tout le monde a joué : on résout <b>en même temps</b> tous les effets <b>sablier</b> et on désigne le vainqueur du tour.</li>
+<li>Sauf effet contraire, la carte de <b>plus forte valeur</b> gagne : elle est défaussée. Les cartes défaussées par des effets le sont aussi. Les autres reviennent en main.</li>
+<li>Le vainqueur du tour commence le suivant.</li>
+</ol>
+<h3>À savoir</h3>
+<ul>
+<li>Aucune communication sur votre main ou vos intentions, sauf si un effet le permet.</li>
+<li>Un effet est obligatoire ; s'il ne peut pas s'appliquer, la carte est jouée sans effet.</li>
+<li>Égalité en fin de tour : on compare la dernière carte en main des joueurs concernés.</li>
+</ul>`
+},
+{
+  id:"time-bomb-evolution", img:"https://www.espritjeu.com/upload/image/time-bomb-evolution-p-image-70633", nom:"Time Bomb Évolution", min:4, max:6, duree:"15 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://cdn.1j1ju.com/medias/fa/16/c1-time-bomb-evolution-regle.pdf",reglesType:"PDF",
+  pitch:"Sherlock contre Moriarty : coupez les bons câbles… ou faites tout sauter.",
+  video:"8mVf2MahZbA",
+  bref:[
+    "Rôle secret : équipe Sherlock (désamorcer) ou équipe Moriarty (faire exploser).",
+    "Chacun reçoit des cartes Câble, les regarde, annonce ce qu'il a (on peut mentir), puis les mélange face cachée devant lui.",
+    "Le joueur qui a la pince coupe (retourne) un câble chez un autre joueur. Ce joueur prend la pince.",
+    "Sherlock gagne si tous les câbles de désamorçage sont coupés. Moriarty gagne si une 4e bombe d'une même couleur est révélée.",
+    "4 manches maximum : si Sherlock n'a pas réussi à la fin, Moriarty gagne."
+  ],
+  full:`
+<h3>Les équipes</h3>
+<p>Rôles : à 4 ou 5 joueurs, 3 Sherlock et 2 Moriarty ; à 6 joueurs, 4 Sherlock et 2 Moriarty. On mélange et on distribue un rôle face cachée à chacun (à 4, un rôle reste caché). Chacun regarde le sien en secret.</p>
+<h3>Les câbles</h3>
+<ul>
+<li><b>Câbles de désamorçage</b> : autant que de joueurs. Quand on en coupe un, on le pose sur une couleur de bombe déjà révélée (sauf jaune, une seule fois par couleur) : cette couleur ne peut plus exploser. Tous coupés = victoire de Sherlock.</li>
+<li><b>Bombes colorées</b> : autant de couleurs que de joueurs (5 cartes par couleur, on en retire au hasard autant que de joueurs). <b>4 cartes d'une même couleur révélées</b> = explosion, victoire de Moriarty.</li>
+</ul>
+<h3>Une manche</h3>
+<ol>
+<li>Distribuez <b>5 cartes Câble</b> à chacun. Chacun les regarde, annonce ce qu'il possède (vrai ou faux), puis les mélange et les pose face cachée devant lui.</li>
+<li>Le joueur qui a la pince choisit une carte devant <b>un autre joueur</b> et la retourne.</li>
+<li>Le joueur chez qui on a coupé prend la pince et coupe à son tour chez quelqu'un d'autre.</li>
+<li>La manche s'arrête quand on a coupé <b>autant de câbles que de joueurs</b>.</li>
+<li>On ramasse les cartes non coupées, on les mélange et on redistribue : chacun a une carte de moins qu'à la manche précédente.</li>
+</ol>
+<h3>Fin de partie</h3>
+<ul>
+<li>Tous les câbles de désamorçage coupés : <b>Sherlock gagne</b>.</li>
+<li>4e bombe d'une même couleur : <b>Moriarty gagne</b>.</li>
+<li>Fin de la 4e manche sans vainqueur : <b>Moriarty gagne</b>.</li>
+</ul>
+<h3>Variante Évolution</h3>
+<p>Chaque couleur de bombe a un effet (feuillet dans la boîte) : la jaune ne peut pas être désamorcée, la verte explose dès la 3e carte, la rose explose si deux sortent à la suite, la rouge impose chez qui couper, la bleue annule un désamorçage, l'orange raccourcit la dernière manche. </p>`
+},
+{
+  id:"bang-des", img:"https://www.espritjeu.com/upload/image/bang--le-jeu-de-des-p-image-53222", nom:"Bang! Le jeu de dés", min:3, max:8, duree:"15 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://cdn.1j1ju.com/medias/c6/03/e0-bang-le-jeu-de-des-regle.pdf",reglesType:"PDF",
+  pitch:"Shérif, adjoints, hors-la-loi et renégat s'affrontent à coups de dés.",
+  video:"6SSCg7rf91Y",
+  bref:[
+    "Rôle secret, sauf le Shérif qui se révèle. Chacun a aussi un personnage avec un pouvoir.",
+    "À votre tour : lancez les 5 dés, relancez ceux que vous voulez jusqu'à 2 fois (3 lancers en tout).",
+    "Faces : 1 et 2 = tirer à distance 1 ou 2, bière = soigner, flèche = prendre une flèche, 3 dynamites = perdre 1 vie, 3 gatlings = 1 dégât à tous les autres.",
+    "Quand il n'y a plus de flèches, les Indiens attaquent : chacun perd 1 vie par flèche qu'il a.",
+    "Shérif et adjoints : éliminer hors-la-loi et renégat. Hors-la-loi : tuer le Shérif. Renégat : être le dernier en vie."
+  ],
+  full:`
+<h3>Rôles et objectifs</h3>
+<ul>
+<li><b>Shérif</b> (révélé, +2 points de vie) et <b>Adjoints</b> : éliminer tous les Hors-la-loi et le Renégat.</li>
+<li><b>Hors-la-loi</b> : éliminer le Shérif.</li>
+<li><b>Renégat</b> : être le dernier joueur en vie.</li>
+</ul>
+<p>Chacun reçoit aussi un personnage (points de vie + pouvoir). Le Shérif commence.</p>
+<h3>Tour de jeu</h3>
+<ol>
+<li>Lancez les 5 dés. Vous pouvez relancer tout ou partie des dés <b>deux fois</b>.</li>
+<li><b>Dynamite</b> : ne peut pas être relancée. 3 dynamites : vous perdez 1 point de vie et ne relancez plus (les autres dés s'appliquent quand même).</li>
+<li><b>Flèche</b> : prenez un jeton Flèche dès qu'elle sort (même lors d'une relance).</li>
+<li>Appliquez ensuite les dés :
+<ul>
+<li><b>1</b> : 1 dégât à un joueur à distance 1 (voisin direct).</li>
+<li><b>2</b> : 1 dégât à un joueur à distance 2. S'il ne reste que 2 ou 3 joueurs, la distance 2 compte comme 1.</li>
+<li><b>Bière</b> : 1 point de vie à n'importe quel joueur (sans dépasser son maximum).</li>
+<li><b>3 Gatlings</b> : 1 dégât à chaque autre joueur, et vous défaussez toutes vos flèches.</li>
+</ul></li>
+</ol>
+<h3>Attaque des Indiens</h3>
+<p>Quand on prend la dernière flèche de la pile, les Indiens attaquent : chaque joueur perd <b>1 point de vie par flèche</b> qu'il possède, puis toutes les flèches retournent dans la pile.</p>
+<h3>Élimination</h3>
+<p>À 0 point de vie, révélez votre rôle. La partie s'arrête dès qu'une équipe a atteint son objectif.</p>`
+},
+{
+  id:"dekal", img:"https://www.espritjeu.com/upload/image/dekal-p-image-92910", nom:"Dékal", min:2, max:6, duree:"15 min", cat:"RAPIDE & FUN",diff:1,debut:true,regles:"https://www.gigamic.com/index.php?controller=attachment&id_attachment=500",reglesType:"PDF",
+  pitch:"Faites glisser vos cartes pour coller les chiffres identiques et faire le moins de points.",
+  video:"vrXmNyhgk0w",
+  bref:[
+    "Chacun a une grille de 4 × 4 cartes face cachée. La partie dure 16 tours.",
+    "À chaque tour, tout le monde retourne en même temps une carte de sa grille au centre de la table.",
+    "Dans l'ordre, chacun prend une carte du centre et la fait glisser dans sa grille en poussant la ligne ou la colonne qui a un trou.",
+    "À la fin, les cartes identiques qui se touchent (côté à côté) s'annulent.",
+    "On additionne ce qui reste : le plus petit total gagne."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Avoir le <b>moins de points</b> possible dans sa grille à la fin.</p>
+<h3>Mise en place</h3>
+<p>Mélangez les 100 cartes (1 à 10, dix exemplaires de chaque). Chacun reçoit <b>16 cartes</b> qu'il pose sans les regarder en carré de 4 × 4, face cachée. Le reste retourne dans la boîte.</p>
+<h3>Un tour</h3>
+<ol>
+<li>Tous les joueurs choisissent une carte face cachée de leur grille et la retournent <b>en même temps</b> au milieu de la table. Un trou apparaît dans chaque grille.</li>
+<li>En commençant par le premier joueur, dans le sens horaire, chacun choisit une carte du milieu. Le dernier prend celle qui reste.</li>
+<li>Pour l'insérer : posez-la au bord de la grille, dans la ligne ou la colonne qui contient le trou, et poussez toute la rangée vers l'intérieur pour combler le trou. On reforme ainsi un carré de 4 × 4.</li>
+<li>Interdit de poser directement dans le trou, interdit de pousser en diagonale.</li>
+<li>Le jeton Premier joueur passe au voisin de gauche.</li>
+</ol>
+<h3>Fin et décompte</h3>
+<ul>
+<li>Après 16 tours, toutes les cartes sont visibles.</li>
+<li>Les cartes de même valeur <b>adjacentes horizontalement ou verticalement</b> s'annulent et sont retirées.</li>
+<li>Additionnez les cartes restantes : le plus petit score gagne. Égalité : celui qui a le moins de cartes dans sa grille.</li>
+</ul>`
+},
+{
+  id:"trio", img:"https://www.espritjeu.com/upload/image/trio-p-image-92302", nom:"Trio", min:3, max:6, duree:"15 min", cat:"RAPIDE & FUN",diff:1,debut:true,regles:"https://www.cocktailgames.com/wp-content/uploads/2022/11/trio_regles_BD.pdf",reglesType:"PDF",
+  pitch:"Mémoire et déduction : trouvez trois cartes identiques avant les autres.",
+  video:"dXSjx9fLRZI",
+  bref:[
+    "Cartes de 1 à 12, trois exemplaires de chaque. Chacun a une main triée, et des cartes sont posées face cachée au centre.",
+    "À votre tour, révélez des cartes une par une : demandez à un joueur sa plus petite ou sa plus grande carte, ou retournez une carte du centre.",
+    "Tant que les cartes révélées sont identiques, continuez. Dès qu'elles sont différentes, votre tour s'arrête et tout est remis en place.",
+    "Trois cartes identiques : vous gagnez ce trio.",
+    "Victoire : 3 trios, ou le trio de 7."
+  ],
+  full:`
+<h3>Mise en place</h3>
+<p>Selon le nombre de joueurs, distribuez une main à chacun et posez le reste face cachée au centre (tableau dans le livret). Triez votre main du plus petit au plus grand, sans la montrer.</p>
+<h3>Tour de jeu</h3>
+<p>Révélez une carte à la fois, de l'une de ces façons :</p>
+<ul>
+<li>demander à un joueur (vous compris) de révéler sa <b>plus petite</b> ou sa <b>plus grande</b> carte ;</li>
+<li>retourner une carte <b>du centre</b>.</li>
+</ul>
+<p>Jamais une carte du milieu d'une main. Si les cartes révélées sont identiques, continuez. Si deux cartes sont différentes, votre tour s'arrête immédiatement : les cartes retournent à leur place, face cachée.</p>
+<p>Si vous révélez <b>3 cartes identiques</b>, vous prenez ce trio devant vous.</p>
+<h3>Victoire (mode simple)</h3>
+<ul>
+<li>Avoir <b>3 trios</b>,</li>
+<li>ou obtenir <b>le trio de 7</b>.</li>
+</ul>
+<p>Le livret propose aussi un mode « Picante » (plus exigeant) et une variante par équipes.</p>`
+},
+{
+  id:"flip-7", img:"https://www.espritjeu.com/upload/image/flip-7-p-image-98426", nom:"Flip 7", min:3, max:18, duree:"20 min", cat:"RAPIDE & FUN",diff:1,debut:true,regles:"https://media.play-in.com/pdf/rules_games/flip_7_fr.pdf",reglesType:"PDF",
+  pitch:"Stop ou encore : accumulez des cartes différentes sans jamais tirer un doublon.",
+  video:"u23JgPadx48",
+  bref:[
+    "Cartes de 0 à 12 : il y a autant d'exemplaires que la valeur (douze 12, onze 11… un seul 1, et un 0).",
+    "À votre tour : prenez une carte de plus, ou arrêtez-vous et gardez vos points.",
+    "Si vous tirez un chiffre que vous avez déjà : vous sautez et ne marquez rien cette manche.",
+    "7 chiffres différents : +15 points et la manche s'arrête pour tout le monde.",
+    "Premier à 200 points à la fin d'une manche : il gagne."
+  ],
+  full:`
+<h3>Une manche</h3>
+<ol>
+<li>Le donneur donne une carte face visible à chaque joueur.</li>
+<li>Ensuite, à son tour, chaque joueur encore en jeu choisit : <b>Encore</b> (recevoir une carte) ou <b>Stop</b> (quitter la manche en gardant ses cartes).</li>
+<li>Si vous recevez un <b>chiffre que vous avez déjà</b> : vous sautez, vous ne marquez rien cette manche.</li>
+<li>La manche s'arrête quand tout le monde a sauté ou dit stop, ou dès qu'un joueur a <b>7 chiffres différents</b>.</li>
+</ol>
+<h3>Cartes spéciales</h3>
+<ul>
+<li><b>Bonus</b> : +2, +4, +6, +8, +10 ajoutent des points ; ×2 double le total de vos cartes Numéro (pas les bonus).</li>
+<li><b>Stop</b> : le joueur visé (vous ou un autre) quitte immédiatement la manche en gardant ses points.</li>
+<li><b>Trois à la suite</b> : le joueur visé reçoit les 3 cartes suivantes d'affilée.</li>
+<li><b>Seconde chance</b> : gardez-la devant vous ; si vous recevez un doublon, défaussez-la avec le doublon et vous ne sautez pas.</li>
+</ul>
+<p>Si vous êtes le seul encore en jeu, vous devez viser vous-même.</p>
+<h3>Points</h3>
+<p>Additionnez vos chiffres, appliquez le ×2, ajoutez les bonus, puis <b>+15</b> si vous avez réussi le Flip 7. Premier à <b>200 points</b> en fin de manche : victoire (le plus haut score en cas d'égalité).</p>`
+},
+{
+  id:"traitres-a-bord", img:"https://www.espritjeu.com/upload/image/traitres-a-bord---p-image-88392", nom:"Traîtres à bord", min:3, max:8, duree:"20 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://media.play-in.com/pdf/rules_games/traitres_a_bord_-_regles_fr.pdf",reglesType:"PDF",
+  pitch:"Pirates contre mutins autour d'un coffre qu'on remplit en mentant.",
+  video:"Lw1zoBKH2po",
+  bref:[
+    "Rôle secret : Pirate (remplir le coffre) ou Mutin (saboter).",
+    "À votre tour : posez une carte Butin face cachée sur le coffre (+1, 0 ou -2) en annonçant sa valeur, vous avez le droit de mentir. Ou jouez une carte Action.",
+    "Carte Planche : posez-la devant un joueur suspect. 3 planches = à l'eau, il révèle son rôle.",
+    "Au début de son tour, un Pirate peut affirmer que le coffre a atteint l'objectif : il le vérifie. Raté = les Mutins gagnent.",
+    "Pioche vide = les Mutins gagnent. Tous les Mutins à l'eau = les Pirates gagnent."
+  ],
+  full:`
+<h3>Mise en place</h3>
+<ul>
+<li>Préparez les rôles et le nombre de Planches selon le nombre de joueurs : 3 joueurs = 2 Pirates, 1 Mutin ; 4 = 3/1 ; 5 = 4/1 ; 6 = 4/2 ; 7 = 5/2 ; 8 = 6/2 (tableau du livret).</li>
+<li>Chacun reçoit un rôle face cachée et le regarde en secret.</li>
+<li>Mélangez les cartes Butin et Action : chacun reçoit <b>3 cartes</b>.</li>
+<li>Valeur du coffre à atteindre : 3 joueurs = <b>5</b> · 4 = <b>8</b> · 5 = <b>11</b> · 6 = <b>6</b> · 7 = <b>9</b> · 8 = <b>12</b>.</li>
+<li>Le joueur le plus bavard commence.</li>
+</ul>
+<h3>Tour de jeu</h3>
+<p>Une action au choix :</p>
+<ul>
+<li><b>Butin</b> : posez une carte +1, 0 ou -2 face cachée sur le coffre et <b>annoncez sa valeur</b> (mentir est autorisé). Jamais de carte Action dans le coffre.</li>
+<li><b>Action</b> : révélez-la et appliquez son effet. <b>Planche</b> : posez-la devant un autre joueur. <b>Bon débarras</b> : défaussez les 2 cartes du dessus du coffre sans les regarder. <b>Longue-vue</b> : regardez en secret les 3 cartes du dessus du coffre et remettez-les dans l'ordre de votre choix. <b>Vide tes poches</b> : un autre joueur défausse toute sa main et repioche 3 cartes. <b>Pêche miraculeuse</b> : piochez 3 cartes, puis remettez-en 2 de votre main sur la pioche dans l'ordre de votre choix.</li>
+</ul>
+<p>Puis complétez votre main à 3 cartes.</p>
+<h3>À l'eau</h3>
+<p>Un joueur qui a <b>3 Planches</b> devant lui est poussé à l'eau : il révèle son rôle, défausse sa main et quitte la partie (il peut encore participer aux discussions).</p>
+<h3>Fin de partie</h3>
+<ul>
+<li>Au début de son tour, un <b>Pirate</b> peut annoncer que le coffre a atteint la valeur demandée. Il révèle son rôle et compte : s'il a raison, les Pirates gagnent ; sinon, les Mutins gagnent.</li>
+<li>Tous les Mutins à l'eau : les <b>Pirates</b> gagnent.</li>
+<li>Il reste autant de Mutins que de Pirates, ou la pioche est vide : les <b>Mutins</b> gagnent.</li>
+</ul>
+<p>Parlez, accusez, mentez : c'est le cœur du jeu.</p>`
+},
+{
+  id:"loup-garou-une-nuit", img:"https://www.espritjeu.com/upload/image/loup-garou-pour-une-nuit---edition-2016-p-image-57050", nom:"Loup-Garou pour une nuit", min:3, max:10, duree:"10 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://www.letempledujeu.fr/IMG/pdf/loup_garou_pour_une_nuit.pdf",reglesType:"PDF",
+  pitch:"Une seule nuit, un seul vote : trouvez un loup-garou en 10 minutes.",
+  video:"8cfwU5pss1Q",
+  bref:[
+    "Une carte rôle par joueur, plus 3 cartes face cachée au centre.",
+    "La nuit : les rôles se réveillent un par un et agissent (regarder, échanger des cartes).",
+    "Le jour : tout le monde discute quelques minutes. Attention, votre carte a peut-être changé pendant la nuit.",
+    "Vote : au signal, tout le monde pointe un joueur. Le plus désigné meurt.",
+    "Village : gagne si au moins un loup-garou meurt. Loups : gagnent si aucun loup ne meurt."
+  ],
+  full:`
+<h3>Mise en place</h3>
+<p>Prenez autant de rôles que de joueurs <b>+ 3</b>. Distribuez-en un à chacun, posez les 3 autres face cachée au centre. Chacun regarde sa carte puis la repose face cachée.</p>
+<h3>La nuit (une personne ou l'appli fait le narrateur)</h3>
+<p>Tout le monde ferme les yeux. Les rôles se réveillent dans cet ordre (seulement ceux en jeu) :</p>
+<ol>
+<li><b>Loups-Garous</b> : se reconnaissent. Un loup seul peut regarder une carte du centre.</li>
+<li><b>Sbire</b> : voit qui sont les loups (eux ne le voient pas).</li>
+<li><b>Francs-Maçons</b> : se reconnaissent.</li>
+<li><b>Voyante</b> : regarde la carte d'un joueur ou 2 cartes du centre.</li>
+<li><b>Voleur</b> : échange sa carte avec celle d'un joueur et regarde sa nouvelle carte.</li>
+<li><b>Noiseuse</b> : échange les cartes de deux autres joueurs sans les regarder.</li>
+<li><b>Soûlard</b> : échange sa carte avec une carte du centre sans la regarder.</li>
+<li><b>Insomniaque</b> : regarde sa propre carte à la fin de la nuit.</li>
+</ol>
+<p>Important : votre camp est celui de la carte que vous avez <b>à la fin de la nuit</b>.</p>
+<h3>Le jour</h3>
+<p>Discussion libre (environ 5 minutes). On peut dire la vérité, mentir, bluffer. Interdit de regarder sa carte.</p>
+<h3>Le vote</h3>
+<p>Au signal, chacun pointe un joueur. Celui qui a le plus de votes meurt (égalité : tous les ex æquo meurent). Si chacun n'a reçu qu'un vote, personne ne meurt. On révèle les cartes.</p>
+<h3>Victoire</h3>
+<ul>
+<li><b>Village</b> : au moins un loup-garou meurt. S'il n'y a aucun loup parmi les joueurs, le village gagne si personne ne meurt.</li>
+<li><b>Loups-Garous</b> (et Sbire) : aucun loup ne meurt.</li>
+<li><b>Tanneur</b> : gagne s'il meurt.</li>
+<li><b>Chasseur</b> : s'il meurt, le joueur qu'il a désigné meurt aussi.</li>
+</ul>`
+},
+{
+  id:"lovecraft-letter", img:"https://www.espritjeu.com/upload/image/horreur-a-arkham---lovecraft-letter-p-image-99546", nom:"Horreur à Arkham : Lovecraft Letter", min:2, max:6, duree:"25 min", cat:"BLUFF & TRAHISON",diff:2,debut:false,regles:"https://nfc.accessijeux.com/regles-du-jeu-lovecraft-letter/",reglesType:"fr",
+  pitch:"Love Letter version Cthulhu : plus puissant quand on devient fou, mais plus risqué.",
+  video:"DpYq7id-DaI",
+  bref:[
+    "Vous avez 1 carte en main. À votre tour, piochez-en une et jouez-en une des deux (appliquez son effet).",
+    "But d'une manche : être le dernier en jeu, ou avoir la carte la plus forte quand la pioche est vide.",
+    "Si une carte Autre Monde est devant vous, vous devenez Fou : vous pouvez utiliser ses effets puissants.",
+    "Mais un Fou fait un test de santé mentale à chaque tour : s'il révèle une carte Autre Monde, il est éliminé.",
+    "Victoire : 2 manches gagnées en étant sain d'esprit, ou 3 en étant fou (ou l'effet fou de Cthulhu)."
+  ],
+  full:`
+<h3>Une manche</h3>
+<ul>
+<li>Mélangez les cartes, écartez-en une face cachée et donnez <b>1 carte</b> à chaque joueur. À 2 joueurs, écartez aussi 5 cartes face visible. Tout le monde commence <b>sain d'esprit</b>.</li>
+<li>À votre tour : piochez 1 carte, puis jouez l'une de vos 2 cartes devant vous et appliquez son effet.</li>
+</ul>
+<h3>Folie</h3>
+<ul>
+<li>Il y a deux types de cartes : <b>Arkham</b> (un seul effet) et <b>Autre Monde</b> (un effet sain d'esprit et un effet fou).</li>
+<li>Dès qu'une carte Autre Monde est dans votre zone de défausse, vous êtes <b>Fou</b> pour le reste de la manche : vous choisissez l'effet de vos cartes Autre Monde.</li>
+<li><b>Test de santé mentale</b> : un joueur fou, au début de son tour et avant de piocher, révèle autant de cartes de la pioche que de cartes Autre Monde devant lui. Si l'une est une carte Autre Monde, il quitte la manche.</li>
+</ul>
+<h3>Gagner une manche</h3>
+<p>Être le dernier joueur en jeu, ou avoir la carte de plus forte valeur en main quand la pioche est vide. Le gagnant prend un pion Mythe, face <b>sain d'esprit</b> ou <b>fou</b> selon son état.</p>
+<h3>Gagner la partie</h3>
+<ul>
+<li><b>2 pions sain d'esprit</b>,</li>
+<li>ou <b>3 pions fou</b>,</li>
+<li>ou réussir l'effet fou de <b>Cthulhu</b>.</li>
+</ul>
+<p>Pour débuter, on peut retirer les cartes Autre Monde et jouer comme à Love Letter classique.</p>`
+},
+{
+  id:"tarot", nom:"Tarot", min:3, max:5, duree:"45 min", cat:"RÉFLEXION",diff:3,debut:false,regles:"https://www.fftarot.fr/assets/documents/R-RO201206.pdf",reglesType:"PDF",
+  pitch:"Le grand classique français : un preneur contre tous, au jeu de 78 cartes.",
+  video:"WjdpLlTnmBI",
+  bref:[
+    "À 4 joueurs : 18 cartes chacun, 6 au chien. Un joueur prend (fait un contrat) et joue seul contre les 3 autres.",
+    "Contrats du plus faible au plus fort : Prise (ou Petite), Garde, Garde sans le chien, Garde contre le chien.",
+    "Il faut fournir la couleur demandée ; sinon on doit couper à l'atout, et monter à l'atout si possible.",
+    "Le preneur doit atteindre 56, 51, 41 ou 36 points selon qu'il a 0, 1, 2 ou 3 bouts (le 1, le 21, l'Excuse).",
+    "L'Excuse se joue n'importe quand, ne gagne pas le pli et revient à son propriétaire."
+  ],
+  full:`
+<h3>Les cartes (78)</h3>
+<ul>
+<li>4 couleurs de 14 cartes (1 à 10, Valet, Cavalier, Dame, Roi).</li>
+<li>21 atouts (1 à 21) et l'<b>Excuse</b>.</li>
+<li><b>Bouts</b> (oudlers) : le 1 d'atout (le Petit), le 21 et l'Excuse.</li>
+</ul>
+<h3>Distribution (à 4)</h3>
+<p>Le donneur distribue <b>3 par 3</b> dans le sens inverse des aiguilles d'une montre : <b>18 cartes</b> chacun et <b>6 cartes au chien</b> (posées une par une, jamais la première ni la dernière carte).</p>
+<h3>Enchères</h3>
+<p>En commençant à droite du donneur, chacun passe ou annonce un contrat plus fort que le précédent :</p>
+<table><tr><th>Contrat</th><th>Chien</th><th>Coefficient</th></tr>
+<tr><td>Prise (ou Petite)</td><td>le preneur le prend et écarte 6 cartes</td><td>×1</td></tr>
+<tr><td>Garde</td><td>idem</td><td>×2</td></tr>
+<tr><td>Garde sans</td><td>non regardé, compte pour le preneur</td><td>×4</td></tr>
+<tr><td>Garde contre</td><td>non regardé, compte pour la défense</td><td>×6</td></tr></table>
+<p>Dans l'écart, interdit de mettre des Rois ou des bouts (atouts seulement si nécessaire, montrés).</p>
+<h3>Le jeu</h3>
+<ul>
+<li>Il faut <b>fournir la couleur</b> demandée.</li>
+<li>Sans la couleur : on doit <b>couper</b> (jouer un atout) et, si un atout est déjà posé, <b>monter</b> au-dessus si possible.</li>
+<li>Sans atout : on joue n'importe quelle carte.</li>
+<li>L'<b>Excuse</b> peut être jouée à tout moment, ne remporte pas le pli, et reste à son camp (en échange d'une carte basse).</li>
+</ul>
+<h3>Compter les points (total 91)</h3>
+<p>Bouts et Rois 4,5 · Dames 3,5 · Cavaliers 2,5 · Valets 1,5 · autres cartes 0,5.</p>
+<table><tr><th>Bouts du preneur</th><th>Points à faire</th></tr>
+<tr><td>0</td><td>56</td></tr><tr><td>1</td><td>51</td></tr><tr><td>2</td><td>41</td></tr><tr><td>3</td><td>36</td></tr></table>
+<p>Score de la donne : (25 + écart par rapport au seuil) × coefficient, gagné ou perdu par le preneur face à chaque défenseur. Bonus : Petit au bout (dernier pli), poignées, chelem (voir règles de la FFT pour le détail).</p>
+<p>À 3 : 24 cartes chacun, chien de 6. À 5 : 15 cartes, chien de 3, le preneur appelle un Roi pour désigner son partenaire secret.</p>`
+},
+{
+  id:"cartes-54", nom:"2 jeux de 54 cartes", min:2, max:10, duree:"Variable", cat:"RAPIDE & FUN",diff:1,debut:false,regles:"",reglesType:"liste",
+  pitch:"Sept classiques à lancer avec les deux jeux de cartes, du plus calme au plus bruyant.",
+  video:"", recherche:"règles kems jeu de cartes",
+  liste:[
+    {nom:"Kem's", info:"4, 6 ou 8 · en équipes · ambiance", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-kems-pour-joueur-debutant.pdf"},
+    {nom:"Kilo de merde", info:"3 à 10 · rapide et bruyant", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-kilo-de-merde-pour-joueur-debutant.pdf"},
+    {nom:"Président", info:"4 à 8 · le classique", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-president-pour-joueur-debutant.pdf"},
+    {nom:"8 américain", info:"2 à 6 · facile", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-8-americain.pdf"},
+    {nom:"Bataille corse", info:"2 à 6 · réflexes", url:"https://www.jeux-ducale.fr/nos-regles/bataille-corse/"},
+    {nom:"Belote", info:"4 · en équipes · avec 32 cartes", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-belote-pour-joueur-debutant.pdf"},
+    {nom:"Crapette", info:"2 · avec les deux jeux", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-crapette-2-2.pdf"}
+  ],
+  bref:[
+    "Kem's (4, 6 ou 8, en équipes de 2) : réunissez 4 cartes identiques et prévenez votre partenaire avec un signe secret.",
+    "Kilo de merde (3 à 10) : passez une carte à gauche pour faire un carré, puis tapez sur le tas. Le dernier à taper prend des « kilos ».",
+    "Président (4 à 8) : débarrassez-vous de vos cartes en jouant plus fort que le précédent.",
+    "8 américain (2 à 6) : même couleur ou même valeur, le 8 change la couleur.",
+    "Bataille corse (2 à 6), Belote (4) et Crapette (2) : détails et PDF dans l'onglet Règles détaillées."
+  ],
+  full:`
+<h3>Kem's (4, 6 ou 8 joueurs, en équipes de 2)</h3>
+<ul>
+<li>Les partenaires se placent en diagonale et conviennent en secret d'un <b>signe</b> (se toucher l'oreille, poser la main à plat…).</li>
+<li>4 cartes chacun, 4 cartes face visible au centre. Au signal « la chasse est ouverte », tout le monde échange en même temps ses cartes avec celles du centre, une contre une, en posant avant de prendre. Quand plus personne n'échange, on renouvelle les 4 cartes du centre.</li>
+<li>Si vous avez <b>4 cartes identiques</b>, faites le signe discrètement. Votre partenaire crie « Kem's ! » : 1 point.</li>
+<li>Si un adversaire repère le signe, il crie « Contre-Kem's ! » en désignant le joueur : 1 point pour son équipe s'il a raison, 1 point pour l'autre équipe s'il se trompe.</li>
+</ul>
+<h3>Kilo de merde (3 à 10 joueurs)</h3>
+<ul>
+<li>On prend un carré de valeurs par joueur (Rois, Dames, Valets à 3, puis on ajoute d'autres valeurs). 4 cartes chacun, le reste forme le tas des « kilos ».</li>
+<li>Tout le monde passe en même temps une carte à son voisin de gauche, encore et encore, pour réunir 4 cartes identiques.</li>
+<li>Le premier qui a son carré tape sur le tas. <b>Le dernier à taper</b> prend une carte du tas : ce sont ses kilos (As 100, Roi 13, Dame 12, Valet 11…).</li>
+<li>On joue un nombre de tours fixé d'avance. Le moins de kilos gagne. Détail des cartes et des points dans le PDF.</li>
+</ul>
+<h3>Président (4 à 8 joueurs)</h3>
+<ul>
+<li>Distribuez toutes les cartes. Ordre : 3 (le plus faible) … As, 2 (le plus fort).</li>
+<li>Le premier pose une carte seule, une paire, un brelan ou un carré. Les suivants posent la même quantité, de valeur égale ou supérieure, ou passent.</li>
+<li>Quand tout le monde passe, on nettoie la table et le dernier à avoir joué repart.</li>
+<li>Premier sans carte = Président, dernier = Trou du cul. À la manche suivante, le dernier donne ses 2 meilleures cartes au Président, qui lui rend 2 cartes de son choix.</li>
+</ul>
+<h3>8 américain (2 à 6 joueurs)</h3>
+<ul>
+<li>7 ou 8 cartes chacun, une carte retournée au centre, le reste en pioche.</li>
+<li>Posez une carte de <b>même couleur ou même valeur</b>. Sinon, piochez.</li>
+<li><b>8</b> : se pose sur tout et change la couleur. Variantes courantes : 2 = le suivant pioche 2, Valet = passe le tour, As = change de sens.</li>
+<li>Annoncez « carte » quand il vous en reste une. Premier sans carte gagne.</li>
+</ul>
+<h3>Bataille corse (2 à 6 joueurs)</h3>
+<ul>
+<li>Toutes les cartes sont distribuées, chacun garde son paquet face cachée.</li>
+<li>À tour de rôle, on retourne la carte du dessus de son paquet au centre.</li>
+<li>Figure ou As : le joueur suivant a 1 chance (Valet), 2 (Dame), 3 (Roi) ou 4 (As) pour sortir une figure ou un As à son tour, sinon le poseur de la figure ramasse le tas.</li>
+<li>Deux cartes identiques qui se suivent (ou « sandwich » selon la variante) : le premier qui tape sur le tas le ramasse. Taper à tort coûte une carte.</li>
+<li>Celui qui a toutes les cartes gagne.</li>
+</ul>
+<h3>Belote (4 joueurs, en équipes)</h3>
+<p>Se joue avec 32 cartes (retirez les 2 à 6 et les jokers). Jeu de plis avec atout : Valet (20) et 9 (14) sont les plus forts à l'atout. Règle complète et décompte des points dans le PDF.</p>
+<h3>Crapette (2 joueurs)</h3>
+<p>Une réussite à deux, un jeu de cartes chacun : on monte les As au centre, on descend les colonnes en alternant rouge et noir, et le premier qui vide son talon gagne. Détail dans le PDF.</p>
+<p class="note">Les règles des jeux de cartes traditionnels varient d'une table à l'autre : mettez-vous d'accord avant de commencer.</p>`
+},
+{
+  id:"galerapagos", img:"https://www.espritjeu.com/upload/image/galerapagos-p-image-62543", nom:"Galèrapagos", min:3, max:12, duree:"30 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://cdn.1j1ju.com/medias/ad/6d/e3-galerapagos-regle.pdf",reglesType:"PDF",
+  pitch:"Naufragés sur une île : construisez un radeau ensemble… et votez qui sacrifier.",
+  video:"UFcuUSBWK8U",
+  bref:[
+    "Tout le monde veut quitter l'île en radeau avant l'ouragan.",
+    "À votre tour, une action : pêcher, récupérer de l'eau, couper du bois ou fouiller l'épave (carte perso).",
+    "À la fin de chaque tour, chaque survivant doit avoir 1 eau et 1 nourriture.",
+    "Pas assez pour tout le monde ? On vote pour éliminer quelqu'un.",
+    "Quand le radeau a assez de places pour tous les survivants, on part et on gagne. L'ouragan arrive : dernier tour."
+  ],
+  full:`
+<h3>But du jeu</h3>
+<p>Quitter l'île vivant sur le radeau avant l'ouragan. Tous ceux qui partent gagnent.</p>
+<h3>Mise en place</h3>
+<ul>
+<li>Plateau au centre, sac avec les <b>6 boules</b> (5 blanches, 1 noire).</li>
+<li>Cartes Épave : <b>4</b> par joueur de 3 à 8 joueurs, <b>3</b> de 9 à 12.</li>
+<li>Pioche Météo : 5 cartes Météo au hasard mélangées avec la carte Ouragan.</li>
+</ul>
+<h3>Un tour</h3>
+<ol>
+<li>Le premier joueur change (il passe à droite), puis on révèle une carte Météo.</li>
+<li>Chacun à son tour fait <b>une action</b> :
+<ul>
+<li><b>Pêcher</b> : piochez une boule dans le sac, elle indique le nombre de poissons. Avancez le compteur de nourriture d'autant.</li>
+<li><b>Eau</b> : avancez le compteur d'eau du nombre de gouttes de la carte Météo (grand soleil = rien).</li>
+<li><b>Bois</b> : avancez d'une case sur la piste Radeau, puis vous pouvez tenter d'en gagner plus en piochant 1 à 5 boules. Si la boule noire sort, c'est une morsure de serpent : pas de bois supplémentaire et vous êtes empoisonné.</li>
+<li><b>Fouiller l'épave</b> : piochez une carte Épave, gardée secrète dans votre main.</li>
+</ul></li>
+<li>Quand la piste Radeau atteint 6, une place de radeau est construite.</li>
+<li><b>Survie</b> : chaque survivant consomme <b>1 eau</b> puis <b>1 nourriture</b>. S'il en manque, on peut jouer des cartes Épave (eau, nourriture). Sinon, <b>vote</b> : chacun pointe un joueur, le plus désigné meurt (égalité : le premier joueur tranche). On recommence jusqu'à avoir assez.</li>
+</ol>
+<h3>Cartes Épave</h3>
+<p>Ressources, objets utiles (revolver, cartouches…), cartes qui influencent les votes, et objets inutiles pour bluffer. Elles restent secrètes et se jouent en général à tout moment.</p>
+<h3>Fin de partie</h3>
+<ul>
+<li>Le radeau a assez de places pour tous les survivants et il y a de quoi boire et manger : on embarque, les survivants gagnent.</li>
+<li>La carte <b>Ouragan</b> est révélée : c'est le dernier tour, il faut partir à la fin, en sacrifiant s'il le faut ceux qui n'ont pas de place.</li>
+<li>Tout le monde meurt : l'île a gagné.</li>
+</ul>`
+}
+];
+
+/* =====================================================================
+   APPLICATION
+   ===================================================================== */
+const app = document.getElementById('app');
+let filtreJoueurs = 0;
+let filtreCat = '';
+let recherche = '';
+let scrollListe = 0;
+
+const CATS = [
+  {nom:"RAPIDE & FUN", desc:"Règles en deux minutes, parties courtes", coul:"#C0522A"},
+  {nom:"AMBIANCE & RIRES", desc:"On parle, on dessine, on rigole", coul:"#9A6A2E"},
+  {nom:"BLUFF & TRAHISON", desc:"Rôles cachés, on ment, on se méfie", coul:"#3A2313"},
+  {nom:"RÉFLEXION", desc:"On se pose, on construit, on optimise", coul:"#2F6E62"},
+  {nom:"DUEL", desc:"Pour ceux qui viennent à deux", coul:"#5C3A21"}
+];
+function coulCat(c){const x=CATS.find(k=>k.nom===c);return x?x.coul:'#2F6E62'}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function joueursTxt(j){return j.min===j.max ? j.min+' joueurs' : j.min+' à '+j.max+' joueurs'}
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+function diffTxt(d){return '<span class="diff" title="Difficulté">'+'●'.repeat(d)+'<i>'+'●'.repeat(3-d)+'</i></span>'}
+function tagCat(c){return `<span class="tag" style="color:${coulCat(c)};border-color:${coulCat(c)}">${esc(c)}</span>`}
+
+function photo(j,cls){
+  if(!j.img) return `<div class="${cls} sans" aria-hidden="true">${esc(j.nom.charAt(0))}</div>`;
+  return `<img class="${cls}" src="${esc(j.img)}-moyenne.jpg" alt="Boîte de ${esc(j.nom)}" loading="lazy" data-base="${esc(j.img)}" data-essai="0" onerror="imgSecours(this)">`;
+}
+function imgSecours(el){
+  const tailles=['-petite.jpg','-grande.jpg'];
+  const n=+el.dataset.essai;
+  if(n<tailles.length){el.dataset.essai=n+1;el.src=el.dataset.base+tailles[n];}
+  else{el.replaceWith(Object.assign(document.createElement('div'),{className:el.className+' sans',textContent:el.alt.replace('Boîte de ','').charAt(0)}));}
+}
+
+function carteJeu(j){return `
+    <a class="jeu" href="#${j.id}" style="border-left:5px solid ${coulCat(j.cat)}">
+      ${photo(j,'vignette')}
+      <div class="txt">
+      <h2>${esc(j.nom)}</h2>
+      <div class="meta"><span><b>${joueursTxt(j)}</b></span><span>${esc(j.duree)}</span>${diffTxt(j.diff)}</div>
+      <p>${esc(j.pitch)}</p>
+      </div>
+    </a>`}
+
+function vueListe(){
+  document.title = "Jeux de la soirée · Play Thau'Gether";
+  const tailles = [2,3,4,5,6,7,8];
+  app.innerHTML = `
+  <header>
+    <span class="badge">PTG</span>
+    <h1>Les jeux de la soirée</h1>
+    <div class="trait"></div>
+    <p class="sous">Choisissez un jeu : règles en bref, règles détaillées, <b>vidéo</b> et règles officielles. Besoin d'aide ? Demandez à un organisateur.</p>
+  </header>
+  <div class="filtres">
+    <input class="recherche" id="q" type="search" placeholder="Chercher un jeu…" value="${esc(recherche)}" autocomplete="off">
+    <div class="label">On est combien ?</div>
+    <div class="chips" id="chips">
+      <button class="chip ${filtreJoueurs===0?'actif':''}" data-n="0">Tous</button>
+      ${tailles.map(n=>`<button class="chip ${filtreJoueurs===n?'actif':''}" data-n="${n}">${n===8?'8+':n}</button>`).join('')}
+    </div>
+    <div class="label">Envie de quoi ?</div>
+    <div class="chips" id="cats">
+      <button class="chip ${filtreCat===''?'actif':''}" data-c="">Tout</button>
+      ${CATS.map(c=>`<button class="chip ${filtreCat===c.nom?'actif':''}" data-c="${esc(c.nom)}">${esc(c.nom)}</button>`).join('')}
+    </div>
+    <p class="legende">Difficulté : ${diffTxt(1)} facile · ${diffTxt(2)} moyen · ${diffTxt(3)} costaud</p>
+  </div>
+  <div class="compte" id="compte"></div>
+  <div id="liste"></div>
+  <footer>Play Thau'Gether · En cas de doute, le livret de la boîte fait foi.</footer>`;
+  const q = document.getElementById('q');
+  q.addEventListener('input',()=>{recherche=q.value;remplirListe()});
+  document.getElementById('chips').addEventListener('click',e=>{
+    const b=e.target.closest('.chip'); if(!b) return;
+    filtreJoueurs=+b.dataset.n;
+    document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('actif',c===b));
+    remplirListe();
+  });
+  document.getElementById('cats').addEventListener('click',e=>{
+    const b=e.target.closest('.chip'); if(!b) return;
+    filtreCat=b.dataset.c;
+    document.querySelectorAll('#cats .chip').forEach(c=>c.classList.toggle('actif',c===b));
+    remplirListe();
+  });
+  remplirListe();
+  window.scrollTo(0,scrollListe);
+}
+
+function remplirListe(){
+  const r = norm(recherche.trim());
+  const res = JEUX.filter(j=>{
+    if(r && !norm(j.nom+' '+j.cat).includes(r)) return false;
+    if(filtreCat && j.cat!==filtreCat) return false;
+    if(filtreJoueurs){
+      if(filtreJoueurs===8) return j.max>=8;
+      return j.min<=filtreJoueurs && j.max>=filtreJoueurs;
+    }
+    return true;
+  });
+  document.getElementById('compte').textContent = res.length+(res.length>1?' jeux':' jeu');
+  if(!res.length){document.getElementById('liste').innerHTML=`<div class="vide">Aucun jeu ne correspond. Essayez un autre filtre.</div>`;return}
+  let html='';
+  const sansFiltre = !r && !filtreCat && !filtreJoueurs;
+  if(sansFiltre){
+    const deb = JEUX.filter(j=>j.debut);
+    html += `<section class="groupe debut"><h2 class="gtitre">Pour commencer</h2><p class="gdesc">Vous ne savez pas quoi prendre ? Ces jeux s'expliquent en deux minutes et marchent avec tout le monde.</p><div class="liste">${deb.map(carteJeu).join('')}</div></section>`;
+  }
+  CATS.forEach(c=>{
+    const g=res.filter(j=>j.cat===c.nom); if(!g.length) return;
+    html += `<section class="groupe"><h2 class="gtitre" style="color:${c.coul}">${esc(c.nom)}</h2><p class="gdesc">${esc(c.desc)}</p><div class="liste">${g.map(carteJeu).join('')}</div></section>`;
+  });
+  document.getElementById('liste').innerHTML = html;
+}
+
+function blocRegles(j){
+  if(j.liste) return '<div class="offi"><b>Règles officielles (Ducale)</b><ul class="rliste">'+j.liste.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.nom)}</a> <span>${esc(x.info)}</span></li>`).join('')+'</ul></div>';
+  if(!j.regles) return '<p class="offi">Pas de règle officielle en ligne pour ce jeu : le livret est dans la boîte.</p>';
+  const lib = {"PDF":"Règles officielles (PDF)","PDF-en":"Règles officielles (PDF, en anglais)","site":"Règles sur le site de l'éditeur","faq":"FAQ officielle de l'éditeur","fr":"Règles complètes en français"}[j.reglesType]||"Règles officielles";
+  return `<div class="offi"><a class="btn" href="${esc(j.regles)}" target="_blank" rel="noopener">${lib}</a></div>`;
+}
+
+function vueJeu(j){
+  document.title = j.nom+" · Règles";
+  const ytLien = j.video ? 'https://www.youtube.com/watch?v='+j.video
+    : 'https://www.youtube.com/results?search_query='+encodeURIComponent(j.recherche||('règles '+j.nom));
+  app.innerHTML = `
+  <a class="retour" href="#">‹ Tous les jeux</a>
+  <div class="fiche">
+    ${photo(j,'couverture')}
+    <h1>${esc(j.nom)}</h1>
+    <div class="trait"></div>
+    <div class="meta"><span><b>${joueursTxt(j)}</b></span><span>${esc(j.duree)}</span>${diffTxt(j.diff)}${tagCat(j.cat)}</div>
+    <p style="margin-top:8px">${esc(j.pitch)}</p>
+    <div class="onglets" role="tablist">
+      <button class="onglet actif" role="tab" aria-selected="true" data-p="bref">En bref</button>
+      <button class="onglet" role="tab" aria-selected="false" data-p="full">Règles détaillées</button>
+      <button class="onglet" role="tab" aria-selected="false" data-p="video">Vidéo</button>
+    </div>
+    <div class="panneau actif" id="p-bref">
+      <h3>Pour démarrer vite</h3>
+      <ol class="bref">${j.bref.map(l=>`<li>${esc(l)}</li>`).join('')}</ol>
+      <p class="note">Pour tous les cas particuliers : onglet Règles détaillées.</p>
+    </div>
+    <div class="panneau" id="p-full">
+      ${blocRegles(j)}
+      ${j.full}
+      <p class="note">Règles résumées par Play Thau'Gether. En cas de doute, le livret de la boîte fait foi.</p>
+    </div>
+    <div class="panneau" id="p-video">
+      ${j.video ? `
+      <div class="video-box" id="vbox"><button class="btn" id="play">Lancer la vidéo</button></div>
+      <div class="actions"><a class="btn second" href="${esc(ytLien)}" target="_blank" rel="noopener">Ouvrir dans YouTube</a></div>
+      <p class="note">La vidéo ne se charge pas ? Ouvrez-la dans YouTube. Pensez au son : un écouteur, c'est plus confortable dans le bruit.</p>`
+      : `<p>Pas de vidéo unique pour ce jeu : les règles changent selon le jeu de cartes choisi.</p>
+      <div class="actions"><a class="btn" href="${esc(ytLien)}" target="_blank" rel="noopener">Chercher une vidéo sur YouTube</a></div>`}
+    </div>
+  </div>
+  <footer><a href="#">Retour à la liste des jeux</a></footer>`;
+  document.querySelector('.onglets').addEventListener('click',e=>{
+    const b=e.target.closest('.onglet'); if(!b) return;
+    document.querySelectorAll('.onglet').forEach(o=>{o.classList.toggle('actif',o===b);o.setAttribute('aria-selected',o===b);});
+    document.querySelectorAll('.panneau').forEach(p=>p.classList.toggle('actif',p.id==='p-'+b.dataset.p));
+  });
+  const play=document.getElementById('play');
+  if(play) play.addEventListener('click',()=>{
+    document.getElementById('vbox').innerHTML =
+      `<iframe src="https://www.youtube-nocookie.com/embed/${j.video}?autoplay=1&rel=0&playsinline=1" title="${esc(j.nom)} - règles en vidéo" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  });
+  window.scrollTo(0,0);
+}
+
+function router(){
+  if(!document.querySelector('.fiche')) scrollListe = window.scrollY;
+  const id = decodeURIComponent(location.hash.slice(1));
+  const j = JEUX.find(x=>x.id===id);
+  if(j) vueJeu(j); else vueListe();
+}
+window.addEventListener('hashchange',router);
+router();
+</script>
+</body>
+</html>
