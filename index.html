@@ -8,6 +8,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ludothèque PTG">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="La collection de jeux de société de Play Thau'Gether">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -304,6 +309,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
         <button class="icon-btn" id="btnLogout" title="Se déconnecter" aria-label="Se déconnecter">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>
         </button>
+        <button class="btn sm hidden" id="btnInstall" type="button">Installer l'appli</button>
         <span class="badge">PTG</span>
       </div>
     </div>
@@ -669,7 +675,10 @@ async function initFirebase(){
     import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`)
   ]);
   const app = initializeApp(firebaseConfig);
-  const db = fs.getFirestore(app);
+  // Cache local : la collection reste consultable sans réseau (soirées sans wifi)
+  let db;
+  try { db = fs.initializeFirestore(app, { localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
+  catch { db = fs.getFirestore(app); }
   const auth = au.getAuth(app);
 
   store = {
@@ -2149,6 +2158,23 @@ document.querySelectorAll("dialog").forEach(d => {
     else if (e.target === d) d.close();
   });
 });
+
+/* ---------- PWA : service worker + bouton d'installation ---------- */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+let installEvt = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); installEvt = e;
+  $("#btnInstall").classList.remove("hidden");
+});
+$("#btnInstall").addEventListener("click", async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  try { await installEvt.userChoice; } catch {}
+  installEvt = null; $("#btnInstall").classList.add("hidden");
+});
+window.addEventListener("appinstalled", () => { $("#btnInstall").classList.add("hidden"); toast("Appli installée"); });
 
 /* ---------- Démarrage ---------- */
 if (USE_FIREBASE) {
