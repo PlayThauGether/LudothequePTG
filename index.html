@@ -1644,6 +1644,7 @@ const DEFAULT_SECTIONS = [
   { id: "s2", kind: "familial",  nom: "Familial",         sous: "Accessible, on comprend vite",              couleur: "#2F6E62" },
   { id: "s3", kind: "ambiance",  nom: "Ambiance",         sous: "On parle, on dessine, on négocie",          couleur: "#C0522A" },
   { id: "s4", kind: "duo",       nom: "À deux",           sous: "Conçus pour le duel, rien d'autre",         couleur: "#5C3A21" },
+  { id: "s10", kind: "enquete",  nom: "Enquête",          sous: "Indices, déductions et mystères à résoudre", couleur: "#5C3A21" },
   { id: "s9", kind: "coop",      nom: "Coopératif",       sous: "Tous ensemble contre le jeu",               couleur: "#2F6E62" },
   { id: "s8", kind: "strategie", nom: "Stratégie",        sous: "Pour ceux qui aiment réfléchir un peu",     couleur: "#5C3A21" },
   { id: "s5", kind: "classique", nom: "Classiques",       sous: "Les cartes traditionnelles",                couleur: "#C9A57E" },
@@ -1657,6 +1658,7 @@ function classify(g){
   if (has("Classique") || /54 cartes|tarot|belote|poker|rami\b/i.test(g.nom || "")) return "classique";
   if (has("Duo") || (g.joueursMax === 2 && (g.joueursMin || 2) <= 2)) return "duo";
   if (g.difficulte === 3 || has("Expert")) return "expert";
+  if (has("Enquête", "Escape game")) return "enquete";
   if (has("Rôles cachés")) return "bluff";
   if (has("Ambiance", "Party game", "Dessin", "Mots", "Quiz", "Rapidité")) return "ambiance";
   if (has("Bluff")) return "bluff";
