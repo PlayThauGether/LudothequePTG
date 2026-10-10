@@ -62,6 +62,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .pl-clear{border:none;background:transparent;color:var(--terra)}
 #fPlayersN{width:46px;text-align:center;padding:6px 2px;border-radius:9px;border:1px solid var(--line);background:#fff;outline:none;font-weight:600;-moz-appearance:textfield}
 #fPlayersN::-webkit-outer-spin-button,#fPlayersN::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.more-filters{display:contents}
+#btnFilters{display:none}
+@media (max-width:699px){
+  .toolbar{position:static}
+  #btnFilters{display:inline-flex;align-items:center;gap:6px}
+  #btnFilters.on{border-color:var(--teal);background:#E3F0EC;color:var(--teal)}
+  .more-filters{display:none;width:100%;flex-wrap:wrap;gap:8px}
+  .more-filters.open{display:flex}
+  .more-filters select{flex:1 1 45%}
+}
+.filters select.on{border-color:var(--teal);background:#E3F0EC}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 @media (min-width:700px){.chips{flex-wrap:wrap;overflow:visible}}
@@ -336,7 +347,33 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
             <span class="pl-lbl">joueurs</span>
             <button type="button" class="pl-clear hidden" id="fPlayersClear" aria-label="Tous les nombres de joueurs">×</button>
           </div>
+          <button type="button" class="btn" id="btnFilters">Filtres</button>
+          <div class="more-filters" id="moreFilters">
           <select id="fOwner" aria-label="Propriétaire"><option value="">Propriétaire : tous</option></select>
+          <select id="fCat" aria-label="Catégorie"><option value="">Catégorie : toutes</option></select>
+          <select id="fDiff" aria-label="Difficulté">
+            <option value="">Difficulté : toutes</option>
+            <option value="1">Facile</option>
+            <option value="2">Moyen</option>
+            <option value="3">Costaud</option>
+          </select>
+          <select id="fAge" aria-label="Âge">
+            <option value="">Âge : tous</option>
+            <option value="4">Jouable à 4 ans</option>
+            <option value="6">Jouable à 6 ans</option>
+            <option value="8">Jouable à 8 ans</option>
+            <option value="10">Jouable à 10 ans</option>
+            <option value="12">Jouable à 12 ans</option>
+            <option value="14">Jouable à 14 ans</option>
+          </select>
+          <select id="fDuree" aria-label="Durée">
+            <option value="">Durée : toutes</option>
+            <option value="15">15 min max</option>
+            <option value="30">30 min max</option>
+            <option value="45">45 min max</option>
+            <option value="60">1 h max</option>
+            <option value="61">Plus d'1 h</option>
+          </select>
           <select id="fSort" aria-label="Tri">
             <option value="nom">Tri : A → Z</option>
             <option value="recent">Tri : ajoutés récemment</option>
@@ -347,6 +384,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
             <option value="out">Sortis de la collection</option>
             <option value="all">Tous les jeux</option>
           </select>
+          </div>
           <button class="btn" id="btnExp" type="button">Exporter la liste</button>
         </div>
       </div>
@@ -727,7 +765,14 @@ async function getPhoto(id){ const p = await store.get("photos", id); return p ?
 /* ---------- État ---------- */
 let games = [];
 let view = "jeux";
-const F = { q: "", players: "", owner: "", sort: "nom", statut: "in", types: new Set() };
+const F = { q: "", players: "", owner: "", cat: "", diff: "", age: "", duree: "", sort: "nom", statut: "in", types: new Set() };
+const DUREE_LBL = { "15": "15 min max", "30": "30 min max", "45": "45 min max", "60": "1 h max", "61": "plus d'1 h" };
+const extraFilt = () => [
+  F.cat ? (DEFAULT_SECTIONS.find(x => x.kind === F.cat) || {}).nom : "",
+  F.diff ? (DIFF[+F.diff] || "").toLowerCase() : "",
+  F.age ? `jouable à ${F.age} ans` : "",
+  F.duree ? DUREE_LBL[F.duree] : ""
+].filter(Boolean);
 const isOut = g => !!g.sortie;
 const inGames = () => games.filter(g => !isOut(g));
 
@@ -791,6 +836,13 @@ function refreshFilters(){
   $("#ownerList").innerHTML = owners().map(o => `<option value="${esc(o)}">`).join("");
 
 
+  const fc = $("#fCat"), curCat = fc.value;
+  const kinds = new Set(games.filter(g => !isOut(g)).map(classify));
+  const cats = DEFAULT_SECTIONS.filter(d => kinds.has(d.kind));
+  fc.innerHTML = `<option value="">Catégorie : toutes</option>` + cats.map(d => `<option value="${d.kind}">${esc(d.nom)}</option>`).join("");
+  fc.value = cats.some(d => d.kind === curCat) ? curCat : "";
+  F.cat = fc.value; fc.classList.toggle("on", !!F.cat);
+
   const types = usedTypes();
   [...F.types].forEach(t => { if (!types.includes(t)) F.types.delete(t); });
   $("#typeChips").innerHTML = (F.types.size ? `<button class="chip reset" data-reset>Effacer</button>` : "") +
@@ -802,6 +854,13 @@ function filtered(){
   let out = games.filter(g => {
     if (F.statut === "in" && isOut(g)) return false;
     if (F.statut === "out" && !isOut(g)) return false;
+    if (F.cat && classify(g) !== F.cat) return false;
+    if (F.diff && g.difficulte !== +F.diff) return false;
+    if (F.age && g.age && g.age > +F.age) return false;
+    if (F.duree) {
+      if (!g.duree) return false;
+      if (F.duree === "61" ? g.duree <= 60 : g.duree > +F.duree) return false;
+    }
     if (q && !norm([g.nom, ownersText(g), g.notes, (g.types||[]).join(" ")].join(" ")).includes(q)) return false;
     if (F.owner && !ownersOf(g).some(o => o.nom === F.owner)) return false;
     if (n) {
@@ -1005,6 +1064,7 @@ async function buildListImage(list){
   if (F.owner) filt.push(F.owner);
   F.types.forEach(t => filt.push(t));
   if (F.players) filt.push(`jouable à ${F.players} joueur${F.players === "1" ? "" : "s"}`);
+  filt.push(...extraFilt());
   if (F.q) filt.push(`« ${F.q} »`);
   const nbEx = list.reduce((n, g) => n + totalOf(g), 0);
   const title = F.statut === "out" ? "Jeux sortis" : "La ludothèque";
@@ -1133,6 +1193,7 @@ $("#btnDoc").addEventListener("click", async () => {
     if (F.owner) filt.push(F.owner);
     F.types.forEach(t => filt.push(t));
     if (F.players) filt.push(`jouable à ${F.players} joueur${F.players === "1" ? "" : "s"}`);
+  filt.push(...extraFilt());
     if (F.q) filt.push(`« ${F.q} »`);
     const nbEx = list.reduce((n, g) => n + totalOf(g), 0);
     const kids = [
@@ -2138,6 +2199,18 @@ $("#fPlayers").addEventListener("click", e => {
 });
 $("#fOwner").addEventListener("change", e => { F.owner = e.target.value; render(); });
 $("#fSort").addEventListener("change", e => { F.sort = e.target.value; render(); });
+function updateFilterBtn(){
+  const n = [F.owner, F.cat, F.diff, F.age, F.duree].filter(Boolean).length + (F.statut !== "in" ? 1 : 0) + (F.sort !== "nom" ? 1 : 0);
+  $("#btnFilters").textContent = n ? `Filtres (${n})` : "Filtres";
+  $("#btnFilters").classList.toggle("on", n > 0);
+}
+$("#btnFilters").addEventListener("click", () => $("#moreFilters").classList.toggle("open"));
+["Cat", "Diff", "Age", "Duree"].forEach(k => $("#f" + k).addEventListener("change", e => {
+  F[k.toLowerCase()] = e.target.value;
+  e.target.classList.toggle("on", !!e.target.value);
+  render();
+}));
+["#fOwner", "#fCat", "#fDiff", "#fAge", "#fDuree", "#fSort", "#fStatut"].forEach(id => $(id).addEventListener("change", updateFilterBtn));
 $("#fStatut").addEventListener("change", e => { F.statut = e.target.value; render(); });
 $("#typeChips").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
