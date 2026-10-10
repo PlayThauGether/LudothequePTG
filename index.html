@@ -52,6 +52,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .filters select{padding:11px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;max-width:100%}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
+@media (min-width:700px){.chips{flex-wrap:wrap;overflow:visible}}
 .chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;white-space:nowrap}
 .chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
 .chip.reset{border-style:dashed}
@@ -166,7 +167,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
 .panel[open] summary::after{transform:rotate(-135deg)}
 .panel[open] summary{margin-bottom:10px}
 .cnt{font-family:Poppins;font-size:12px;background:var(--teal);color:#fff;border-radius:999px;padding:1px 8px;letter-spacing:0}
-.panel select,.panel input:not([type=file]){padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
+.panel select,.panel input:not([type=file]):not([type=checkbox]){padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
 .carte-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .carte-top select{flex:1 1 160px;width:auto!important}
 .pick-list{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;margin-top:8px;padding-right:2px}
@@ -178,7 +179,9 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
 .pk-main b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pk-main small{font-size:11px;opacity:.75;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .pk-main .warn{color:var(--terra);opacity:1}
-.pick select{width:118px!important;flex:0 0 auto;padding:7px 6px!important;font-size:13px}
+.pk-main{display:block;cursor:pointer;position:relative;padding-right:40px!important}
+.pk-check{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:24px;height:24px;accent-color:var(--teal);cursor:pointer}
+.pk-sec{background:var(--beige);border:1px solid var(--line);border-radius:999px;padding:0 7px;font-size:10.5px}
 .star{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;padding:0;flex:0 0 auto}
 .star svg{width:18px;height:18px;fill:none;stroke:var(--gold);stroke-width:2}
 .star.on{background:var(--terra);border-color:var(--terra)}
@@ -319,6 +322,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
             <option value="all">Tous les jeux</option>
           </select>
           <button class="btn" id="btnXls" type="button">Exporter en Excel</button>
+          <button class="btn" id="btnImg" type="button">Exporter en image</button>
         </div>
       </div>
       <div class="chips" id="typeChips"></div>
@@ -925,6 +929,141 @@ $("#dOut").addEventListener("click", async () => {
   catch (err) { toast("Erreur : " + err.message); }
 });
 
+/* ---------- Export image (PNG) ---------- */
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function wrapText(ctx, text, maxW, maxLines){
+  const words = String(text).split(/\s+/), lines = []; let cur = "";
+  for (const w of words) {
+    const t = cur ? cur + " " + w : w;
+    if (ctx.measureText(t).width <= maxW || !cur) cur = t; else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > maxLines) {
+    const keep = lines.slice(0, maxLines); let last = keep[maxLines - 1] + "…";
+    while (ctx.measureText(last).width > maxW && last.length > 2) last = last.slice(0, -2) + "…";
+    keep[maxLines - 1] = last; return keep;
+  }
+  return lines.map(l => { let x = l; while (ctx.measureText(x).width > maxW && x.length > 2) x = x.slice(0, -2) + "…"; return x; });
+}
+async function buildListImage(list){
+  if (document.fonts) {
+    await Promise.all(["400 20px Poppins", "600 20px Poppins", "400 40px 'Bebas Neue'"].map(f => document.fonts.load(f).catch(() => {})));
+  }
+  const W = 1080, PAD = 60, GAP = 32, COLW = (W - 2 * PAD - GAP) / 2, IP = 20;
+  const FN = "600 26px Poppins", FI = "400 19px Poppins", FO = "600 18px Poppins";
+  const m = document.createElement("canvas").getContext("2d");
+  const items = list.map(g => {
+    m.font = FN; const name = wrapText(m, g.nom, COLW - 2 * IP, 2);
+    const info = [shortPlayers(g) ? shortPlayers(g) + " joueurs" : "", g.duree ? fmtDuree(g.duree) : "", g.age ? g.age + "+ ans" : ""].filter(Boolean).join(" · ");
+    m.font = FO; const own = ownersText(g) ? wrapText(m, ownersText(g), COLW - 2 * IP, 1)[0] : "";
+    const out = isOut(g) ? "Sorti : " + (g.sortie.motif || "") : "";
+    const h = IP + name.length * 34 + 4 + 28 + (own ? 26 : 0) + (out ? 26 : 0) + IP - 6;
+    return { g, name, info, own, out, h };
+  });
+  // En-tête
+  const filt = [];
+  if (F.owner) filt.push(F.owner);
+  F.types.forEach(t => filt.push(t));
+  if (F.players) filt.push(`à ${F.players === "13" ? "13+" : F.players} joueur${F.players === "1" ? "" : "s"}`);
+  if (F.q) filt.push(`« ${F.q} »`);
+  const nbEx = list.reduce((n, g) => n + totalOf(g), 0);
+  const title = F.statut === "out" ? "Jeux sortis" : "La ludothèque";
+  const sub = `${list.length} jeu${list.length > 1 ? "x" : ""}` + (nbEx > list.length ? ` · ${nbEx} exemplaires` : "") + ` · à jour le ${new Date().toLocaleDateString("fr-FR")}`;
+  let y0 = 210 + (filt.length ? 34 : 0);
+  // Placement en 2 colonnes, ligne par ligne
+  const rows = [];
+  for (let i = 0; i < items.length; i += 2) rows.push([items[i], items[i + 1]].filter(Boolean));
+  const rowH = rows.map(r => Math.max(...r.map(it => it.h)));
+  const H = y0 + rowH.reduce((a, b) => a + b + 16, 0) + 150;
+  const scale = Math.max(1, Math.min(2, 14000 / H, 16000000 / (W * H)) );
+  const cv = document.createElement("canvas"); cv.width = Math.round(W * scale); cv.height = Math.round(H * scale);
+  const ctx = cv.getContext("2d"); ctx.scale(scale, scale);
+  // Fond
+  ctx.fillStyle = "#EFE2D3"; ctx.fillRect(0, 0, W, H);
+  // Badge PTG
+  ctx.font = "600 22px Poppins"; const bw = ctx.measureText("PTG").width + 28;
+  ctx.fillStyle = "#C0522A"; roundRect(ctx, W - PAD - bw, 58, bw, 40, 8); ctx.fill();
+  ctx.fillStyle = "#FAE5D8"; ctx.textBaseline = "middle"; ctx.fillText("PTG", W - PAD - bw + 14, 79);
+  // Titre
+  ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#C0522A"; ctx.font = "400 92px 'Bebas Neue', sans-serif";
+  ctx.fillText(title.toUpperCase(), PAD, 136);
+  ctx.fillStyle = "#2F6E62"; roundRect(ctx, PAD, 152, 36, 4, 2); ctx.fill();
+  ctx.fillStyle = "#5C3A21"; ctx.font = "400 22px Poppins"; ctx.fillText(sub, PAD, 192);
+  if (filt.length) { ctx.fillStyle = "#2F6E62"; ctx.font = "600 21px Poppins"; ctx.fillText(wrapText(ctx, filt.join(" · "), W - 2 * PAD, 1)[0], PAD, 226); }
+  // Cartes
+  let y = y0;
+  rows.forEach((r, ri) => {
+    r.forEach((it, ci) => {
+      const x = PAD + ci * (COLW + GAP), h = rowH[ri];
+      ctx.fillStyle = "#FBF6EF"; roundRect(ctx, x, y, COLW, h, 14); ctx.fill();
+      ctx.strokeStyle = "rgba(92,58,33,.14)"; ctx.lineWidth = 1; ctx.stroke();
+      let ty = y + IP + 24;
+      ctx.fillStyle = it.out ? "#9a8878" : "#3A2313"; ctx.font = FN;
+      it.name.forEach(l => { ctx.fillText(l, x + IP, ty); ty += 34; });
+      ty += 0;
+      ctx.font = FI; ctx.fillStyle = "#5C3A21"; ctx.fillText(it.info || " ", x + IP, ty);
+      if (it.g.difficulte) {
+        const dx = x + COLW - IP - 3 * 16 + 4;
+        for (let k = 1; k <= 3; k++) {
+          ctx.beginPath(); ctx.arc(dx + (k - 1) * 16, ty - 6, 5.5, 0, Math.PI * 2);
+          ctx.strokeStyle = "#5C3A21"; ctx.lineWidth = 1.6; ctx.stroke();
+          if (k <= it.g.difficulte) { ctx.fillStyle = "#5C3A21"; ctx.fill(); }
+        }
+      }
+      ty += 28;
+      if (it.own) { ctx.font = FO; ctx.fillStyle = "#2F6E62"; ctx.fillText(it.own, x + IP, ty); ty += 26; }
+      if (it.out) { ctx.font = FO; ctx.fillStyle = "#C0522A"; ctx.fillText(it.out, x + IP, ty); }
+    });
+    y += rowH[ri] + 16;
+  });
+  // Légende + pied de page
+  y += 14;
+  ctx.fillStyle = "rgba(201,165,126,.8)"; ctx.fillRect(PAD, y, W - 2 * PAD, 1.5);
+  ctx.fillStyle = "#C0522A"; ctx.font = "400 40px 'Bebas Neue', sans-serif"; ctx.fillText("PLAY THAU'GETHER", PAD, y + 56);
+  ctx.font = "400 18px Poppins"; ctx.fillStyle = "#5C3A21";
+  const leg = "Difficulté :", LEG = [["facile",1],["moyen",2],["costaud",3]];
+  const legW = ctx.measureText(leg).width + 16 + LEG.reduce((n, [t]) => n + 3 * 12 + 4 + ctx.measureText(t).width + 18, 0) - 18;
+  let lx = W - PAD - legW; ctx.fillText(leg, lx, y + 50); lx += ctx.measureText(leg).width + 16;
+  LEG.forEach(([t, d]) => {
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath(); ctx.arc(lx + k * 12 + 4, y + 44, 4.2, 0, Math.PI * 2);
+      ctx.strokeStyle = "#5C3A21"; ctx.lineWidth = 1.4; ctx.stroke();
+      if (k < d) { ctx.fillStyle = "#5C3A21"; ctx.fill(); }
+    }
+    ctx.fillStyle = "#5C3A21";
+    lx += 3 * 12 + 4; ctx.fillText(t, lx, y + 50); lx += ctx.measureText(t).width + 18;
+  });
+  // Vague
+  ctx.fillStyle = "rgba(92,58,33,.1)"; ctx.beginPath(); ctx.moveTo(0, H - 30);
+  for (let x = 0; x <= W; x += 10) ctx.lineTo(x, H - 30 + Math.sin(x / W * Math.PI * 4) * 12);
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  return await new Promise(res => cv.toBlob(res, "image/png"));
+}
+$("#btnImg").addEventListener("click", async () => {
+  const list = filtered();
+  if (!list.length) { toast("Aucun jeu à exporter avec ces filtres."); return; }
+  const btn = $("#btnImg"); btn.disabled = true; btn.textContent = "Création…";
+  try {
+    const blob = await buildListImage(list);
+    const name = `jeux-ptg-${today()}.png`;
+    const file = new File([blob], name, { type: "image/png" });
+    let shared = false;
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "Jeux PTG" }); shared = true; }
+      catch (err) { if (err && err.name === "AbortError") shared = true; }
+    }
+    if (!shared) {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+      toast("Image enregistrée");
+    }
+  } catch (err) { toast("Erreur : " + err.message); }
+  finally { btn.disabled = false; btn.textContent = "Exporter en image"; }
+});
+
 /* ---------- Export Excel ---------- */
 let xlsxLoading = null;
 function loadXlsx(){
@@ -1400,20 +1539,47 @@ $("#gameForm").addEventListener("submit", async e => {
 let cartes = [], C = null, saveT = null;
 const PREF = LS + "carteCourante";
 
+const DEFAULT_SECTIONS = [
+  { id: "s1", kind: "bluff",     nom: "Bluff & trahison", sous: "Rôles cachés, mensonges et fausses pistes", couleur: "#3A2313" },
+  { id: "s2", kind: "familial",  nom: "Familial",         sous: "Accessible, on comprend vite",              couleur: "#2F6E62" },
+  { id: "s3", kind: "ambiance",  nom: "Ambiance",         sous: "On parle, on dessine, on négocie",          couleur: "#C0522A" },
+  { id: "s4", kind: "duo",       nom: "À deux",           sous: "Conçus pour le duel, rien d'autre",         couleur: "#5C3A21" },
+  { id: "s5", kind: "classique", nom: "Classiques",       sous: "Les cartes traditionnelles",                couleur: "#C9A57E" },
+  { id: "s6", kind: "expert",    nom: "Expert",           sous: "On réfléchit vraiment",                     couleur: "#1F140C" },
+  { id: "s7", kind: "enfants",   nom: "Enfants",          sous: "Pour les plus jeunes",                      couleur: "#2F6E62" }
+];
+// Range automatiquement un jeu dans une section selon ses types, sa difficulté et son nombre de joueurs
+function classify(g){
+  const T = new Set(g.types || []), has = (...k) => k.some(x => T.has(x));
+  if (has("Enfants")) return "enfants";
+  if (has("Classique") || /54 cartes|tarot|belote|poker|rami\b/i.test(g.nom || "")) return "classique";
+  if (has("Duo") || (g.joueursMax === 2 && (g.joueursMin || 2) <= 2)) return "duo";
+  if (g.difficulte === 3 || has("Expert")) return "expert";
+  if (has("Rôles cachés")) return "bluff";
+  if (has("Ambiance", "Party game", "Dessin", "Mots", "Quiz", "Rapidité")) return "ambiance";
+  if (has("Bluff")) return "bluff";
+  return "familial";
+}
+// Ajoute les sections manquantes (anciennes cartes) et un "kind" à chaque section
+function normalizeCarte(c){
+  const byName = { "bluff & trahison": "bluff", "familial": "familial", "ambiance": "ambiance", "à deux": "duo", "classiques": "classique", "expert": "expert", "enfants": "enfants" };
+  c.sections = (c.sections || []).map(sec => ({ ...sec, kind: sec.kind || DEFAULT_SECTIONS.find(d => d.id === sec.id)?.kind || byName[norm(sec.nom).replace("a deux", "à deux")] || null })).filter(sec => sec.kind);
+  DEFAULT_SECTIONS.forEach(d => { if (!c.sections.some(x => x.kind === d.kind)) c.sections.push({ ...d, id: c.sections.some(x => x.id === d.id) ? uid() : d.id }); });
+  c.jeux = c.jeux || {}; c.starters = c.starters || [];
+  const d = defaultCarte();
+  ["titre","sousTitre","startTitre","startLegende","tri","footQ","footT","signature","qrLegende"].forEach(k => { if (c[k] == null) c[k] = d[k]; });
+  return c;
+}
+const sectionOf = (c, g) => c.sections.find(x => x.kind === classify(g)) || c.sections.find(x => x.kind === "familial");
+const useCarte = x => normalizeCarte({ ...clone(x), _saved: true });
+
 function defaultCarte(){
   return {
     id: uid(), nom: "Soirée jeux",
     titre: "La carte des jeux", sousTitre: "Choisissez, on vous explique les règles.",
     startTitre: "Jamais joué ? Commencez par là", startLegende: "Quatre jeux qui se comprennent en deux minutes.",
     starters: [], tri: "difficulte",
-    sections: [
-      { id: "s1", nom: "Bluff & trahison", sous: "Rôles cachés, mensonges et fausses pistes", couleur: "#3A2313" },
-      { id: "s2", nom: "Familial", sous: "Accessible, on comprend vite", couleur: "#2F6E62" },
-      { id: "s3", nom: "Ambiance", sous: "On parle, on dessine, on négocie", couleur: "#C0522A" },
-      { id: "s4", nom: "À deux", sous: "Conçus pour le duel, rien d'autre", couleur: "#5C3A21" },
-      { id: "s5", nom: "Classiques", sous: "Les cartes traditionnelles", couleur: "#C9A57E" },
-      { id: "s6", nom: "Expert", sous: "On réfléchit vraiment", couleur: "#1F140C" }
-    ],
+    sections: clone(DEFAULT_SECTIONS),
     jeux: {},
     footQ: "Vous avez amené vos jeux ?", footT: "Posez-les sur la table, on les ajoute à la carte.",
     signature: "Play Thau'Gether",
@@ -1426,7 +1592,7 @@ function ensureCarte(){
   if (C) return;
   const pref = localStorage.getItem(PREF);
   const found = cartes.find(c => c.id === pref) || cartes[0];
-  C = found ? { ...clone(found), _saved: true } : defaultCarte();
+  C = found ? useCarte(found) : defaultCarte();
 }
 
 function onCartes(list){
@@ -1435,11 +1601,11 @@ function onCartes(list){
   if (saveT) return; // modification locale en attente : on ne l'écrase pas
   const fresh = cartes.find(c => c.id === C.id);
   if (fresh) {
-    if (fresh.updatedAt !== C.updatedAt) { C = { ...clone(fresh), _saved: true }; if (view === "carte") { renderEditor(); renderSheet(); } }
+    if (fresh.updatedAt !== C.updatedAt) { C = useCarte(fresh); if (view === "carte") { renderEditor(); renderSheet(); } }
   } else if (cartes.length) {
     // carte affichée supprimée ailleurs, ou carte par défaut jamais enregistrée alors que d'autres existent
     const pref = localStorage.getItem(PREF);
-    C = { ...clone(cartes.find(c => c.id === pref) || cartes[0]), _saved: true };
+    C = useCarte(cartes.find(c => c.id === pref) || cartes[0]);
     if (view === "carte") { renderEditor(); renderSheet(); }
   }
   if (view === "carte") renderCarteSelect();
@@ -1488,7 +1654,7 @@ function renderEditor(){
     <summary>Jeux sur la carte <span class="cnt" id="pickCount"></span></summary>
     <input id="pickFilter" type="search" placeholder="Filtrer la liste…" value="${esc(pickFilter)}">
     <div class="pick-list" id="pickList"></div>
-    <p class="hint">Choisis la section de chaque jeu. L'étoile le met dans l'encadré « ${esc(C.startTitre || "Jamais joué ?")} ». Touche le nom d'un jeu pour modifier sa fiche (difficulté…).</p>
+    <p class="hint">Coche les jeux à mettre sur la carte : ils sont rangés tout seuls dans la bonne section. L'étoile les met aussi dans l'encadré « ${esc(C.startTitre || "Jamais joué ?")} ».</p>
   </details>
 
   <details class="panel" data-p="sections"${op("sections")}>
@@ -1499,13 +1665,12 @@ function renderEditor(){
           <input data-sk="nom" value="${esc(s.nom)}" placeholder="Nom de la section">
           <button class="mini-btn" data-smove="-1" ${i === 0 ? "disabled" : ""} aria-label="Monter">↑</button>
           <button class="mini-btn" data-smove="1" ${i === C.sections.length - 1 ? "disabled" : ""} aria-label="Descendre">↓</button>
-          <button class="mini-btn" data-sdel aria-label="Supprimer la section">×</button>
         </div>
         <input data-sk="sous" value="${esc(s.sous)}" placeholder="Sous-titre">
         <div class="swatches">${PALETTE.map(([n, c]) => `<button class="sw${c === s.couleur ? " on" : ""}" style="background:${c}" data-scol="${c}" title="${n}" aria-label="${n}"></button>`).join("")}</div>
       </div>`).join("")}
     </div>
-    <button class="btn sm" data-act="addsec">Ajouter une section</button>
+    <p class="hint">Les jeux sont rangés automatiquement. Tu peux renommer les sections, changer leur couleur et leur ordre.</p>
   </details>
 
   <details class="panel" data-p="textes"${op("textes")}>
@@ -1544,25 +1709,23 @@ function renderPickList(){
   const box = $("#pickList"); if (!box) return;
   const nf = norm(pickFilter);
   const list = inGames().sort((a,b) => (C.jeux[b.id] ? 1 : 0) - (C.jeux[a.id] ? 1 : 0) || norm(a.nom).localeCompare(norm(b.nom), "fr"));
-  const opts = C.sections.map(s => `<option value="${esc(s.id)}">${esc(s.nom)}</option>`).join("");
   box.innerHTML = list.length ? list.map(g => {
-    const on = !!C.jeux[g.id] && C.sections.some(s => s.id === C.jeux[g.id]);
+    const on = !!C.jeux[g.id];
     const st = C.starters.includes(g.id);
     const info = [shortPlayers(g) && shortPlayers(g) + " j.", g.duree ? g.duree + " min" : ""].filter(Boolean).join(" · ");
     return `<div class="pick${on ? " on" : ""}" data-gid="${esc(g.id)}" data-n="${esc(norm(g.nom))}"${nf && !norm(g.nom).includes(nf) ? ' style="display:none"' : ""}>
       <div class="pk-thumb">${g.thumb ? imgTag(g.thumb, g.nom, "") : letterOf(g.nom)}</div>
-      <button class="pk-main" data-editg><b>${esc(g.nom)}</b><small>${esc(info)} ${g.difficulte ? miniDots(g.difficulte) : `<span class="warn">difficulté ?</span>`}</small></button>
-      <select data-gsec aria-label="Section"><option value="">Pas sur la carte</option>${opts}</select>
-      <button class="star${st ? " on" : ""}" data-star ${on ? "" : "disabled"} aria-label="Jamais joué ? Commencez par là"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" stroke-linejoin="round"/></svg></button>
+      <label class="pk-main"><b>${esc(g.nom)}</b><small>${esc(info)} ${g.difficulte ? miniDots(g.difficulte) : ""} <span class="pk-sec">${esc(sectionOf(C, g).nom)}</span></small>
+        <input type="checkbox" class="pk-check" data-gon ${on ? "checked" : ""} aria-label="Mettre sur la carte"></label>
+      <button class="star${st ? " on" : ""}" data-star aria-label="Jamais joué ? Commencez par là"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" stroke-linejoin="round"/></svg></button>
     </div>`;
   }).join("") : `<div class="hint">Ajoute d'abord des jeux dans l'onglet « Les jeux ».</div>`;
-  box.querySelectorAll(".pick").forEach(row => { row.querySelector("select").value = C.jeux[row.dataset.gid] || ""; });
   updatePickCount();
 }
 function updatePickCount(){
   const el = $("#pickCount"); if (!el) return;
-  const ids = new Set(inGames().map(g => g.id)), secIds = new Set(C.sections.map(s => s.id));
-  el.textContent = Object.entries(C.jeux).filter(([g, s]) => ids.has(g) && secIds.has(s)).length;
+  const ids = new Set(inGames().map(g => g.id));
+  el.textContent = Object.keys(C.jeux).filter(g => C.jeux[g] && ids.has(g)).length;
 }
 
 /* Événements éditeur */
@@ -1585,16 +1748,15 @@ ed.addEventListener("change", async e => {
   if (t.id === "cSel") {
     await flushSave();
     const c = cartes.find(x => x.id === t.value);
-    if (c) { C = { ...clone(c), _saved: true }; localStorage.setItem(PREF, C.id); renderEditor(); renderSheet(); }
+    if (c) { C = useCarte(c); localStorage.setItem(PREF, C.id); renderEditor(); renderSheet(); }
     return;
   }
   if (t.dataset.k === "tri") { C.tri = t.value; changed(); return; }
-  if (t.hasAttribute("data-gsec")) {
+  if (t.hasAttribute("data-gon")) {
     const row = t.closest(".pick"), gid = row.dataset.gid;
-    if (t.value) C.jeux[gid] = t.value;
+    if (t.checked) C.jeux[gid] = true;
     else { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); row.querySelector(".star").classList.remove("on"); }
-    row.classList.toggle("on", !!t.value);
-    row.querySelector(".star").disabled = !t.value;
+    row.classList.toggle("on", t.checked);
     updatePickCount(); changed();
   }
 });
@@ -1602,12 +1764,14 @@ ed.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   const secRow = b.closest("[data-sid]");
   if (b.hasAttribute("data-star")) {
-    const gid = b.closest(".pick").dataset.gid;
+    const row = b.closest(".pick"), gid = row.dataset.gid;
     if (C.starters.includes(gid)) C.starters = C.starters.filter(x => x !== gid);
-    else C.starters.push(gid);
+    else {
+      C.starters.push(gid);
+      if (!C.jeux[gid]) { C.jeux[gid] = true; row.classList.add("on"); row.querySelector("[data-gon]").checked = true; updatePickCount(); }
+    }
     b.classList.toggle("on"); changed(); return;
   }
-  if (b.hasAttribute("data-editg")) { openForm(b.closest(".pick").dataset.gid); return; }
   if (b.dataset.scol && secRow) {
     const s = C.sections.find(x => x.id === secRow.dataset.sid); s.couleur = b.dataset.scol;
     secRow.style.setProperty("--c", s.couleur);
@@ -1620,19 +1784,7 @@ ed.addEventListener("click", async e => {
     [C.sections[i], C.sections[j]] = [C.sections[j], C.sections[i]];
     renderEditor(); changed(); return;
   }
-  if (b.hasAttribute("data-sdel") && secRow) {
-    const s = C.sections.find(x => x.id === secRow.dataset.sid);
-    const n = Object.values(C.jeux).filter(v => v === s.id).length;
-    if (!confirm(`Supprimer la section « ${s.nom} »${n ? ` et retirer ses ${n} jeu(x) de la carte` : ""} ?`)) return;
-    C.sections = C.sections.filter(x => x.id !== s.id);
-    Object.keys(C.jeux).forEach(g => { if (C.jeux[g] === s.id) { delete C.jeux[g]; C.starters = C.starters.filter(x => x !== g); } });
-    renderEditor(); changed(); return;
-  }
   switch (b.dataset.act) {
-    case "addsec":
-      openPanels.add("sections");
-      C.sections.push({ id: uid(), nom: "Nouvelle section", sous: "", couleur: "#5C3A21" });
-      renderEditor(); changed(); break;
     case "new": {
       await flushSave();
       C = defaultCarte(); C.nom = "Nouvelle carte";
@@ -1650,7 +1802,7 @@ ed.addEventListener("click", async e => {
       const id = C.id;
       try { if (cartes.some(c => c.id === id)) await store.del("cartes", id); } catch (err) { toast("Erreur : " + err.message); return; }
       const next = cartes.find(c => c.id !== id);
-      C = next ? { ...clone(next), _saved: true } : defaultCarte();
+      C = next ? useCarte(next) : defaultCarte();
       renderEditor(); renderSheet(); toast("Carte supprimée"); break;
     }
     case "qrimg": $("#qrFile").click(); break;
@@ -1690,8 +1842,9 @@ function sheetHTML(c){
   const sorter = c.tri === "alpha"
     ? (a,b) => norm(a.nom).localeCompare(norm(b.nom), "fr")
     : (a,b) => (a.difficulte || 9) - (b.difficulte || 9) || (a.duree || 999) - (b.duree || 999) || norm(a.nom).localeCompare(norm(b.nom), "fr");
-  const secs = c.sections.map(s => ({ ...s, items: Object.entries(c.jeux).filter(([g, sid]) => sid === s.id && byId.has(g)).map(([g]) => byId.get(g)).sort(sorter) })).filter(s => s.items.length);
-  const starters = c.starters.map(id => byId.get(id)).filter(g => g && c.jeux[g.id] && c.sections.some(s => s.id === c.jeux[g.id]));
+  const onCard = Object.keys(c.jeux).filter(g => c.jeux[g] && byId.has(g)).map(g => byId.get(g));
+  const secs = c.sections.map(s => ({ ...s, items: onCard.filter(g => sectionOf(c, g) === s).sort(sorter) })).filter(s => s.items.length);
+  const starters = c.starters.map(id => byId.get(id)).filter(g => g && c.jeux[g.id]);
   const qr = c.qrImg || qrData(c.qrUrl);
 
   return `
