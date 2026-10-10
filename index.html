@@ -1,1183 +1,1868 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jeux de la soirée · Play Thau'Gether</title>
-<meta name="theme-color" content="#5C3A21">
+<title>Ludothèque PTG</title>
+<meta name="theme-color" content="#C0522A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ludothèque PTG">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
-  --beige:#EFE2D3; --beige-clair:#FAE5D8; --marron:#5C3A21; --terracotta:#C0522A;
-  --teal:#2F6E62; --dore:#C9A57E; --carte:#FBF5EE; --ligne:#E2D0BC;
+  --beige:#EFE2D3; --brown:#5C3A21; --terra:#C0522A; --teal:#2F6E62;
+  --light:#FAE5D8; --gold:#C9A57E; --dark:#3A2313; --card:#FBF6EF;
+  --line:rgba(92,58,33,.16);
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-text-size-adjust:100%}
-body{background:var(--beige);color:var(--marron);font-family:Poppins,system-ui,sans-serif;font-size:16px;line-height:1.55;min-height:100vh;padding-bottom:40px}
-a{color:var(--teal)}
-.wrap{max-width:760px;margin:0 auto;padding:0 16px}
-header{padding:22px 0 8px;position:relative}
-.badge{position:absolute;top:22px;right:0;background:var(--terracotta);color:var(--beige-clair);font-weight:600;font-size:13px;letter-spacing:1px;padding:5px 10px;border-radius:6px}
-h1,h2,h3{font-family:"Bebas Neue",Impact,sans-serif;font-weight:400;letter-spacing:.5px;color:var(--terracotta);line-height:1.05}
-h1{font-size:44px;padding-right:70px}
-.trait{width:32px;height:3px;background:var(--teal);margin:10px 0 12px;border-radius:2px}
-.sous{font-size:15px}
-.sous b{color:var(--teal)}
-/* Filtres */
-.filtres{margin:18px 0 6px}
-.recherche{width:100%;font:inherit;padding:12px 14px;border:2px solid var(--ligne);border-radius:10px;background:var(--carte);color:var(--marron);outline:none}
-.recherche:focus{border-color:var(--teal)}
-.label{font-weight:600;font-size:14px;margin:14px 0 8px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{font:inherit;font-size:14px;border:2px solid var(--ligne);background:var(--carte);color:var(--marron);padding:6px 12px;border-radius:999px;cursor:pointer}
-.chip.actif{background:var(--teal);border-color:var(--teal);color:#fff}
-.compte{font-size:13px;margin:14px 0 8px;opacity:.8}
-/* Liste */
-.liste{display:grid;gap:10px}
-.jeu{display:block;text-decoration:none;color:inherit;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:14px 16px;position:relative}
-.jeu:active{transform:scale(.99)}
-.jeu{display:flex!important;gap:12px;align-items:flex-start}
-.jeu .txt{flex:1;min-width:0}
-.jeu h2{font-size:26px;padding-right:24px}
-.vignette{width:72px;height:72px;flex:none;object-fit:contain;background:#fff;border-radius:8px;border:1px solid var(--ligne)}
-.couverture{display:block;width:100%;max-height:230px;object-fit:contain;background:#fff;border-radius:12px;border:1px solid var(--ligne);margin:6px 0 14px}
-.sans{display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",Impact,sans-serif;font-size:34px;color:var(--beige-clair);background:var(--terracotta)}
-.couverture.sans{height:110px;font-size:60px}
-.jeu .meta{font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:2px}
-.jeu .meta span b{color:var(--teal)}
-.jeu p{font-size:14px;margin-top:6px}
-.jeu:after{content:"›";position:absolute;right:16px;top:12px;font-size:28px;color:var(--teal)}
-.tag{display:inline-block;font-size:12px;font-weight:600;color:var(--teal);border:1px solid var(--teal);border-radius:6px;padding:0 6px}
-.vide{padding:24px;text-align:center;background:var(--carte);border-radius:12px}
-/* Fiche */
-.retour{display:inline-block;margin:20px 0 4px;font:inherit;font-weight:600;background:none;border:none;color:var(--teal);cursor:pointer;padding:6px 0;text-decoration:none}
-.fiche h1{font-size:46px;padding-right:0}
-.fiche .meta{font-size:14px;display:flex;flex-wrap:wrap;gap:6px 16px}
-.fiche .meta b{color:var(--teal)}
-.onglets{display:flex;gap:6px;margin:18px 0 0;position:sticky;top:0;background:var(--beige);padding:8px 0;z-index:5}
-.onglet{flex:1;font:inherit;font-size:14px;font-weight:600;padding:10px 6px;border:2px solid var(--ligne);border-radius:10px;background:var(--carte);color:var(--marron);cursor:pointer}
-.onglet.actif{background:var(--marron);border-color:var(--marron);color:var(--beige-clair)}
-.panneau{display:none;background:var(--carte);border:1px solid var(--ligne);border-radius:12px;padding:18px 16px;margin-top:10px}
-.panneau.actif{display:block}
-.panneau h3{font-size:24px;margin:16px 0 6px}
-.panneau h3:first-child{margin-top:0}
-.panneau p{margin:6px 0}
-.panneau ul,.panneau ol{padding-left:22px;margin:6px 0}
-.panneau li{margin:4px 0}
-.panneau b{color:var(--teal)}
-.bref li{margin:8px 0}
-.note{font-size:13px;opacity:.8;margin-top:14px;border-top:1px solid var(--ligne);padding-top:10px}
-.video-box{position:relative;width:100%;aspect-ratio:16/9;background:var(--marron);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.video-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.btn{display:inline-block;font:inherit;font-weight:600;background:var(--terracotta);color:var(--beige-clair);border:none;border-radius:10px;padding:12px 18px;cursor:pointer;text-decoration:none;text-align:center}
-.btn.second{background:none;color:var(--teal);border:2px solid var(--teal);padding:10px 16px}
-.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
-td,th{border:1px solid var(--ligne);padding:6px 8px;text-align:left}
-th{background:var(--beige)}
-.diff{letter-spacing:1px;color:var(--terracotta);font-size:12px}
-.diff i{font-style:normal;color:var(--ligne)}
-.legende{font-size:13px;margin-top:12px}
-.groupe{margin-top:22px}
-.gtitre{font-size:30px}
-.gdesc{font-size:13px;margin:0 0 10px;opacity:.85}
-.debut{background:var(--beige-clair);border:2px dashed var(--terracotta);border-radius:14px;padding:14px 12px 12px}
-.rliste{margin-top:6px}.rliste li{margin:6px 0}.rliste span{font-size:13px;opacity:.8}
-.offi{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--ligne);font-size:14px}
-footer{text-align:center;font-size:13px;margin-top:28px;opacity:.75}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--beige);color:var(--brown);font-family:Poppins,system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent;min-height:100vh;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.wrap{width:100%;max-width:1280px;margin:0 auto;padding:0 16px}
+
+/* Header */
+header{padding-top:20px;padding-bottom:4px}
+.head-row{display:flex;align-items:flex-start;gap:12px}
+.head-row .titles{flex:1;min-width:0}
+h1{font-family:'Bebas Neue',sans-serif;font-weight:400;color:var(--terra);font-size:clamp(32px,9vw,44px);overflow-wrap:anywhere;line-height:1;margin:0;letter-spacing:.5px}
+.accent{width:32px;height:3px;background:var(--teal);border-radius:2px;margin:8px 0 6px}
+.sub{font-size:13px;margin:0;opacity:.85}
+.actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.badge{background:var(--terra);color:var(--light);font-weight:600;font-size:12px;padding:4px 8px;border-radius:6px;letter-spacing:1px}
+.icon-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;padding:0;flex:0 0 auto}
+.icon-btn svg{width:20px;height:20px;stroke:var(--brown)}
+.icon-btn:active{transform:scale(.96)}
+.tabs{display:inline-flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;margin-top:12px;max-width:100%}
+.tab{border:none;background:transparent;padding:8px 16px;border-radius:9px;font-weight:600;font-size:14px;white-space:nowrap}
+.tab.on{background:var(--terra);color:var(--light)}
+
+/* Toolbar */
+.toolbar{position:sticky;top:0;z-index:5;background:var(--beige);padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.search{flex:1 1 220px;position:relative}
+.search input{width:100%;padding:11px 12px 11px 38px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-shadow:0 0 0 3px rgba(47,110,98,.15)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--brown);opacity:.6}
+.filters select{padding:11px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;max-width:100%}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;white-space:nowrap}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.chip.reset{border-style:dashed}
+
+/* Grid */
+#jeuxView{flex:1;padding-top:16px;padding-bottom:110px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;text-align:left;padding:0;transition:transform .12s}
+.card:active{transform:scale(.98)}
+.thumb{aspect-ratio:1/1;background:var(--light);display:grid;place-items:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .ph{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--terra);opacity:.5}
+.card .body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.card h3{margin:0;font-size:15px;font-weight:600;line-height:1.25}
+.meta{font-size:12px;opacity:.8}
+.owner{font-size:12px;color:var(--teal);font-weight:600}
+.owner-head,.owner-line{display:grid;grid-template-columns:1fr 90px 40px;gap:8px;align-items:center}
+.owner-line{margin-bottom:8px}
+.card.out{opacity:.6}
+.card.out .thumb img{filter:grayscale(1)}
+.out-tag{position:absolute;left:8px;top:8px;background:var(--dark);color:var(--light);font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
+.out-box{background:#F3E4DA;border-left:4px solid var(--terra);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.out-box b{color:var(--terra)}
+.hist{font-size:13px;display:flex;flex-direction:column;gap:4px}
+.hist div{padding:6px 10px;background:var(--beige);border-radius:8px}
+.owner-line input{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
+.owner-line .mini-btn{width:40px;height:40px}
+.owners-list{display:flex;flex-direction:column;gap:2px}
+.thumb{position:relative}
+.qte{position:absolute;top:8px;right:8px;background:var(--terra);color:var(--light);font-weight:600;font-size:12px;padding:2px 8px;border-radius:999px}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--beige);border:1px solid var(--line)}
+.empty{text-align:center;padding:60px 16px;opacity:.8}
+.empty b{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:28px;color:var(--terra);display:block;letter-spacing:.5px}
+.mini-dots{display:inline-flex;gap:3px;vertical-align:middle}
+.mini-dots i{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--brown);display:block}
+.mini-dots i.f{background:var(--brown)}
+
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:6;background:var(--terra);color:var(--light);border:none;border-radius:14px;padding:14px 20px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 6px 18px rgba(58,35,19,.25)}
+.fab svg{width:20px;height:20px;stroke:var(--light)}
+footer.wave svg{display:block;width:100%;height:60px}
+
+/* Dialogs */
+dialog{border:none;padding:0;border-radius:18px;width:calc(100% - 24px);max-width:640px;max-height:92vh;background:var(--card);color:var(--brown);box-shadow:0 20px 50px rgba(58,35,19,.35)}
+dialog::backdrop{background:rgba(58,35,19,.55)}
+.dlg-head{position:sticky;top:0;background:var(--card);padding:16px 16px 10px;display:flex;align-items:flex-start;gap:10px;z-index:2;border-bottom:1px solid var(--line)}
+.dlg-head h2{font-family:'Bebas Neue',sans-serif;font-weight:400;color:var(--terra);font-size:32px;line-height:1.05;margin:0;flex:1;letter-spacing:.4px;word-break:break-word}
+.dlg-body{padding:16px}
+.dlg-foot{position:sticky;bottom:0;background:var(--card);padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--line);flex-wrap:wrap}
+.btn{padding:11px 18px;border-radius:12px;border:1px solid var(--line);background:var(--beige);font-weight:600}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.btn.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.danger{background:transparent;color:var(--terra);border-color:rgba(192,82,42,.4);margin-right:auto}
+.btn.ghost-danger{background:transparent;color:var(--terra);border-color:rgba(192,82,42,.4)}
+.btn:disabled{opacity:.5}
+
+/* Detail */
+.photo-big{width:100%;border-radius:12px;overflow:hidden;background:var(--light);margin-bottom:14px}
+.photo-big img{width:100%;max-height:420px;object-fit:contain;display:block;background:var(--light)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+.fact{background:var(--beige);border-radius:10px;padding:8px 10px}
+.fact small{display:block;font-size:11px;opacity:.75}
+.fact b{font-weight:600;white-space:pre-line}
+.sec{margin-top:16px}
+.sec h4{font-family:'Bebas Neue',sans-serif;font-weight:400;color:var(--terra);font-size:22px;margin:0;letter-spacing:.4px}
+.sec .accent{margin:4px 0 8px;width:28px}
+.rules{white-space:pre-wrap;word-wrap:break-word}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.link{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:var(--beige);border:1px solid var(--line);color:var(--teal);font-weight:600;text-decoration:none;font-size:14px}
+.video{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;margin-top:10px;background:#000}
+.video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+/* Form */
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.field label,.lbl{font-size:13px;font-weight:600}
+.field input,.field select,.field textarea{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
+.field textarea{min-height:140px;resize:vertical}
+.hint{font-size:12px;opacity:.7;margin:4px 0 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:520px){.grid4{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+.photo-pick{display:flex;gap:12px;align-items:center}
+.photo-pick .prev{width:96px;height:96px;border-radius:12px;background:var(--light);overflow:hidden;display:grid;place-items:center;flex:0 0 auto;border:1px dashed var(--gold)}
+.photo-pick .prev img{width:100%;height:100%;object-fit:cover}
+.photo-pick .prev span{font-size:11px;opacity:.7;text-align:center;padding:4px}
+.photo-pick .btns{display:flex;flex-direction:column;gap:6px}
+.type-pick,.seg{display:flex;flex-wrap:wrap;gap:6px}
+.type-add{display:flex;gap:6px;margin-top:6px}
+.type-add input{flex:1;min-width:0}
+.import-box{background:var(--beige);border-radius:12px;padding:12px;border:1px solid var(--line);margin-bottom:16px}
+.src-results{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.src-results button{text-align:left;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:14px}
+.src-results button small{opacity:.6}
+.src-results .msg{font-size:13px;opacity:.85}
+.paste-msg{margin-top:8px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:600}
+.paste-msg.ok{background:#E3F0EC;color:var(--teal)}
+.paste-msg.ko{background:#F8E1D8;color:var(--terra)}
+@keyframes flash{from{background:#CFE7DF}to{background:#fff}}
+.flash{animation:flash 2s ease-out}
+.alt-names{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.alt-names .lbl{font-weight:400;opacity:.8;font-size:12px}
+
+/* Carte des jeux — éditeur */
+#carteView{flex:1;padding-top:16px;padding-bottom:40px}
+.carte-layout{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:20px;align-items:start}
+.carte-layout > *{min-width:0}
+@media (max-width:900px){.carte-layout{grid-template-columns:minmax(0,1fr)}.preview{position:static}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.panel summary{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--terra);letter-spacing:.4px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.panel summary::-webkit-details-marker{display:none}
+.panel summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--brown);border-bottom:2px solid var(--brown);transform:rotate(45deg);transition:.2s}
+.panel[open] summary::after{transform:rotate(-135deg)}
+.panel[open] summary{margin-bottom:10px}
+.cnt{font-family:Poppins;font-size:12px;background:var(--teal);color:#fff;border-radius:999px;padding:1px 8px;letter-spacing:0}
+.panel select,.panel input:not([type=file]){padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
+.carte-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.carte-top select{flex:1 1 160px;width:auto!important}
+.pick-list{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;margin-top:8px;padding-right:2px}
+.pick{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px;border:1px solid var(--line);background:#fff}
+.pick.on{border-color:var(--teal);background:#F2F7F5}
+.pk-thumb{width:40px;height:40px;border-radius:8px;overflow:hidden;background:var(--light);display:grid;place-items:center;flex:0 0 auto;font-family:'Bebas Neue';color:var(--terra);font-size:20px}
+.pk-thumb img{width:100%;height:100%;object-fit:cover}
+.pk-main{flex:1;min-width:0;text-align:left;background:none;border:none;padding:0}
+.pk-main b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk-main small{font-size:11px;opacity:.75;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pk-main .warn{color:var(--terra);opacity:1}
+.pick select{width:118px!important;flex:0 0 auto;padding:7px 6px!important;font-size:13px}
+.star{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;padding:0;flex:0 0 auto}
+.star svg{width:18px;height:18px;fill:none;stroke:var(--gold);stroke-width:2}
+.star.on{background:var(--terra);border-color:var(--terra)}
+.star.on svg{fill:var(--light);stroke:var(--light)}
+.star:disabled{opacity:.3}
+.sec-row{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px;background:#fff;border-left:5px solid var(--c)}
+.sec-row .row{flex-wrap:nowrap;align-items:center}
+.sec-row .row input{flex:1;min-width:0}
+.sec-row > input{margin-top:6px}
+.mini-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--card);flex:0 0 auto;padding:0;font-weight:600}
+.swatches{display:flex;gap:6px;margin-top:6px}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);padding:0}
+.sw.on{box-shadow:0 0 0 2px var(--teal)}
+.preview{position:sticky;top:12px}
+.preview-bar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.preview-bar .lbl{font-family:'Bebas Neue';font-size:22px;color:var(--terra);font-weight:400;letter-spacing:.4px;flex:1}
+.sheet-wrap{position:relative;overflow:hidden;border-radius:4px;box-shadow:0 8px 30px rgba(58,35,19,.18)}
+
+/* Carte des jeux — feuille A4 */
+.sheet{--k:1;width:210mm;height:297mm;background:#fff;color:#3A2313;transform-origin:top left;padding:12mm 12mm 9mm;display:flex;flex-direction:column;overflow:hidden;font-family:Poppins,sans-serif;font-size:calc(var(--k) * 4mm);line-height:1.2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sh-title,.sh-start h2,.s h3,.sh-foot .sig{text-transform:uppercase}
+.sh-title{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:5.4em;text-align:center;line-height:.9;color:#5C3A21;margin:0;letter-spacing:.01em}
+.sh-bar{width:6.4em;height:.2em;background:#C0522A;margin:.45em auto 0}
+.sh-tag{text-align:center;color:#2F6E62;font-size:.95em;margin-top:.9em}
+.sh-start{margin-top:1.4em;border:.09em solid #C9A57E;border-left:.5em solid #C0522A;padding:.7em 1em .65em;text-align:center}
+.sh-start h2{font-family:'Bebas Neue',sans-serif;font-weight:400;color:#C0522A;font-size:1.75em;margin:0;line-height:1;letter-spacing:.01em}
+.sh-start .g{font-weight:600;font-size:1.05em;margin-top:.45em}
+.sh-start .g .sep{margin:0 .55em;font-weight:600}
+.sh-start .c{font-size:.68em;color:#9a8878;margin-top:.2em}
+.sh-leg{display:flex;justify-content:center;align-items:center;gap:1.5em;font-size:.7em;margin-top:1.3em;flex-wrap:wrap}
+.sh-leg b{font-weight:600}
+.sh-leg span{display:inline-flex;align-items:center;gap:.4em}
+.sh-leg .dot{--c:#3A2313}
+.sh-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;column-gap:2.6em;row-gap:1.9em;margin-top:2em;align-content:start}
+.sh-grid .none{grid-column:1/-1;text-align:center;color:#b3a294;font-size:.8em;padding-top:3em}
+.s h3{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:2.15em;margin:0;line-height:1;color:var(--c);border-bottom:.06em solid var(--c);padding-bottom:.08em;letter-spacing:.01em}
+.s .ss{font-size:.66em;color:#9a8878;margin:.4em 0 .45em}
+.r{display:flex;align-items:baseline;padding:.36em 0}
+.r .n{font-weight:600;font-size:1.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64%}
+.r .l{flex:1;min-width:.8em;border-bottom:.14em dotted #C9A57E;margin:0 .45em;transform:translateY(-.2em)}
+.r .i{font-size:.7em;white-space:nowrap}
+.r .d{flex:0 0 3.6em;display:flex;justify-content:flex-end;gap:.32em;align-self:center}
+.dot{width:.66em;height:.66em;border-radius:50%;border:.12em solid var(--c);display:block;flex:0 0 auto}
+.dot.f{background:var(--c)}
+.sh-foot{border-top:.06em solid #C9A57E;padding-top:1.1em;margin-top:1.4em;display:flex;justify-content:space-between;align-items:flex-end;gap:1em}
+.sh-foot .q{color:#2F6E62;font-weight:600;font-size:.85em}
+.sh-foot .t{font-size:.72em;margin-top:.25em}
+.sh-foot .sig{font-family:'Bebas Neue',sans-serif;color:#C0522A;font-size:1.65em;margin-top:.9em;line-height:1}
+.qr{width:7.6em;text-align:center;flex:0 0 auto}
+.qr img{width:100%;height:auto;display:block}
+.qr .cap{font-size:.6em;color:#2F6E62;margin-top:.3em;white-space:nowrap}
+
+/* Login */
+.login{flex:1;display:grid;place-items:center;padding:24px 16px}
+.login form{background:var(--card);border-radius:18px;padding:24px;width:100%;max-width:380px;border:1px solid var(--line)}
+.login .err{color:var(--terra);font-size:13px;min-height:18px;margin:4px 0 8px}
+.demo{background:var(--dark);color:var(--light);font-size:12px;text-align:center;padding:6px 12px}
+.demo b{color:var(--gold)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--dark);color:var(--light);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{text-align:center;padding:40px;opacity:.7}
+
+/* Impression */
+@media screen{#printArea{display:none}}
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff!important;min-height:0!important;display:block!important}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+  #printArea .sheet{transform:none!important;height:296.5mm}
+}
 </style>
 </head>
 <body>
-<div class="wrap" id="app"></div>
 
-<script>
-/* =====================================================================
-   DONNÉES DES JEUX
-   Pour ajouter / retirer un jeu : modifier ce tableau.
-   video : identifiant YouTube (la partie après "v=" dans l'URL). Vide = lien de recherche.
-   ===================================================================== */
-const JEUX = [
-{
-  id:"7-wonders", img:"https://www.espritjeu.com/upload/image/7-wonders--nouvelle-edition-2020--p-image-72122", nom:"7 Wonders", min:3, max:7, duree:"30 min", cat:"RÉFLEXION",diff:3,debut:false,regles:"https://cdn.1j1ju.com/medias/ce/c4/60-7-wonders-regle.pdf",reglesType:"PDF",
-  pitch:"Développez votre cité antique en 3 âges en choisissant une carte à la fois.",
-  video:"0EI9OkSnVeM",
-  bref:[
-    "Chacun dirige une cité avec sa merveille. La partie dure 3 âges.",
-    "À chaque tour : choisissez une carte de votre main, posez-la face cachée, puis tout le monde révèle en même temps. Passez le reste de votre main à votre voisin.",
-    "Avec la carte choisie, vous pouvez : la construire (en payant son coût), l'utiliser pour construire une étape de votre merveille, ou la défausser pour 3 pièces.",
-    "S'il vous manque une ressource, achetez-la à un voisin direct pour 2 pièces.",
-    "À la fin de chaque âge, comparez votre force militaire (boucliers) avec vos deux voisins.",
-    "Après le 3e âge, on compte les points : le plus haut score gagne."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Avoir le plus de points de victoire à la fin du 3e âge, grâce aux bâtiments, à la merveille, à l'armée, à la science et à l'argent.</p>
-<h3>Mise en place</h3>
-<ul>
-<li>Chaque joueur reçoit un plateau Merveille et <b>3 pièces</b>.</li>
-<li>On prépare le paquet de l'âge I selon le nombre de joueurs (indiqué au dos des cartes) et on distribue <b>7 cartes</b> à chacun.</li>
-</ul>
-<h3>Déroulement d'un tour</h3>
-<ol>
-<li>Tout le monde choisit une carte de sa main et la pose face cachée.</li>
-<li>On révèle en même temps. Chaque joueur fait une des 3 actions avec sa carte :
-<ul>
-<li><b>Construire le bâtiment</b> : payer son coût en ressources (produites par vos cartes marron/grises ou votre merveille) et/ou en pièces. Si vous possédez déjà le bâtiment indiqué comme « chaînage », la construction est gratuite.</li>
-<li><b>Construire une étape de merveille</b> : payer le coût de l'étape et glisser la carte face cachée sous le plateau.</li>
-<li><b>Défausser</b> la carte pour prendre <b>3 pièces</b>.</li>
-</ul></li>
-<li>On passe les cartes restantes au voisin : <b>à gauche</b> à l'âge I, <b>à droite</b> à l'âge II, <b>à gauche</b> à l'âge III.</li>
-</ol>
-<p>Au 6e tour, il reste 2 cartes : on en joue une, la dernière est défaussée.</p>
-<h3>Commerce</h3>
-<p>Vous pouvez acheter une ressource produite par un <b>voisin direct</b> (gauche ou droite) pour <b>2 pièces</b> par ressource. Le voisin ne peut pas refuser. Certaines cartes jaunes réduisent ce prix.</p>
-<h3>Conflits militaires</h3>
-<p>À la fin de chaque âge, chacun compare ses boucliers avec ses deux voisins : victoire = jeton de <b>+1</b> (âge I), <b>+3</b> (âge II), <b>+5</b> (âge III) ; défaite = jeton <b>-1</b> ; égalité = rien.</p>
-<h3>Décompte final</h3>
-<ul>
-<li>Jetons militaires.</li>
-<li>Pièces : <b>1 point par lot de 3 pièces</b>.</li>
-<li>Étapes de merveille construites.</li>
-<li>Bâtiments civils (bleus) : points indiqués.</li>
-<li>Bâtiments commerciaux (jaunes) et guildes (violettes) : selon leur texte.</li>
-<li>Science (vertes) : pour chaque symbole, le nombre de cartes identiques <b>au carré</b> (3 roues = 9 points), plus <b>7 points par série de 3 symboles différents</b>.</li>
-</ul>
-<p>Égalité : celui qui a le plus de pièces gagne.</p>`
-},
-{
-  id:"esquisse", img:"https://www.espritjeu.com/upload/image/esquisse-r-8-joueurs-p-image-78058", nom:"Esquissé ?", min:4, max:8, duree:"20 min", cat:"AMBIANCE & RIRES",diff:1,debut:true,regles:"https://cdn.1j1ju.com/medias/e6/62/9e-esquisse-regle.pdf",reglesType:"PDF",
-  pitch:"Le téléphone arabe avec des dessins. Moins vous savez dessiner, plus c'est drôle.",
-  video:"F7dwfyVymSs",
-  bref:[
-    "Chacun a un carnet et un feutre. Tout le monde joue en même temps.",
-    "Écrivez votre mot secret sur la première page, puis passez votre carnet au voisin (ou dessinez-le vous-même selon le nombre de joueurs).",
-    "On alterne : dessiner le mot qu'on lit, puis deviner et écrire ce qu'on voit sur le dessin. À chaque fois, on passe le carnet au voisin.",
-    "Pas de lettres ni de chiffres dans les dessins. Le sablier limite le temps.",
-    "Quand votre carnet revient, on déroule chaque carnet page par page et on rigole."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Surtout rigoler. Si vous voulez des points : retrouver le mot de départ à la fin de votre carnet.</p>
-<h3>Mise en place</h3>
-<ul>
-<li>Chaque joueur prend un carnet et un feutre et écrit son prénom en première page.</li>
-<li>Chacun reçoit une carte Mots. Un joueur lance le dé : le chiffre indique quel mot de la carte chacun doit faire deviner. Écrivez-le en page 0.</li>
-</ul>
-<h3>Déroulement</h3>
-<ol>
-<li><b>Nombre de joueurs pair</b> : chacun dessine son propre mot en page 1. <b>Impair</b> : on passe d'abord son carnet au voisin de gauche, qui dessine le mot.</li>
-<li>Retournez le sablier : on dessine jusqu'à la fin du temps. Interdit d'écrire des lettres ou des chiffres.</li>
-<li>Passez le carnet fermé à gauche. Le voisin regarde le dessin, tourne la page et écrit ce qu'il pense que c'est.</li>
-<li>Passez à gauche. Le suivant lit le mot, tourne la page et le dessine.</li>
-<li>On alterne ainsi jusqu'à ce que chaque carnet revienne à son propriétaire.</li>
-</ol>
-<h3>Révélation et points</h3>
-<ul>
-<li>Chacun présente son carnet page par page.</li>
-<li><b>+1 point</b> au propriétaire si le dernier mot est le même que celui de départ.</li>
-<li>Le propriétaire donne <b>1 point</b> au dessin qu'il préfère. Si le mot final est raté, il donne aussi 1 point à la proposition la plus drôle.</li>
-<li>On joue 3 manches ; le plus de points gagne.</li>
-</ul>`
-},
-{
-  id:"viva-catrina", img:"https://www.espritjeu.com/upload/image/viva-catrina-p-image-103194", nom:"Viva Catrina", min:2, max:6, duree:"30 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"https://media.play-in.com/pdf/rules_games/viva_catrina_fr.pdf",reglesType:"PDF",
-  pitch:"Construisez le plus beau village du Día de los Muertos avec des tuiles.",
-  video:"vfL-_f1Z7-Y",
-  bref:[
-    "À votre tour, prenez une tuile disponible sur le plateau, mais seulement au bout d'une ligne.",
-    "Posez-la dans votre village, à côté d'une tuile déjà posée (on part de sa tuile de départ).",
-    "Seuls les éléments reliés à votre tuile de départ par un chemin comptent.",
-    "Points : visiteurs sur les routes pavées, papillons sur les sentiers fleuris, échoppes différentes, ballons, chimères, autels.",
-    "Deux échoppes identiques dans votre village : piochez une tuile en plus dans le sac.",
-    "À la fin, on compte sur le carnet de score : le plus de points gagne."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Organiser la plus belle fête : avoir le plus de points à la fin de la partie grâce à votre village de tuiles.</p>
-<h3>Tour de jeu</h3>
-<ol>
-<li>Choisissez une tuile sur le plateau, <b>uniquement à l'une des extrémités d'une ligne</b>.</li>
-<li>Posez-la dans votre village, adjacente à votre tuile de départ ou à une tuile déjà posée.</li>
-<li>Appliquez les effets éventuels (échoppes, ballons, chimères).</li>
-</ol>
-<p>La partie compte <b>autant de manches que de joueurs</b>. Le pion Catrina désigne le premier joueur et passe à gauche à chaque manche.</p>
-<p>Le plateau présente les tuiles disponibles pour la manche, réparties sur deux lignes. Quand une ligne est vide, le choix se réduit : pensez-y en fin de manche.</p>
-<h3>Ce qui rapporte des points</h3>
-<p>Seul ce qui est <b>relié à votre tuile de départ</b> par une route pavée ou un sentier compte.</p>
-<ul>
-<li><b>Routes pavées</b> : 1 point par visiteur présent dessus.</li>
-<li><b>Sentiers fleuris</b> : 2 points par papillon.</li>
-<li><b>Échoppes</b> (6 types) : des points selon le nombre de types d'échoppes <b>différents</b>. Dès que vous avez 2 échoppes identiques, piochez une tuile supplémentaire dans le sac.</li>
-<li><b>Ballons</b> : une course par couleur. Le premier à avoir 3 ballons d'une couleur prend le meilleur jeton ; à 6 de la même couleur, le jeton est retourné. Les jetons suivants rapportent moins.</li>
-<li><b>Chimères</b> : construisez un socle fermé de la taille exacte demandée pour attirer une chimère.</li>
-<li><b>Autels</b> : multiplient des points selon d'autres éléments de votre village.</li>
-</ul>
-<h3>Fin de partie</h3>
-<p>À la fin de la dernière manche, faites le décompte sur le carnet de score. Le plus haut total gagne.</p>`
-},
-{
-  id:"secret-identity", img:"https://www.espritjeu.com/upload/image/secret-identity-p-image-93899", nom:"Secret Identity", min:3, max:8, duree:"30 min", cat:"AMBIANCE & RIRES",diff:1,debut:false,regles:"https://funnyfox.fr/wp-content/uploads/sites/21/2024/05/Regles.pdf",reglesType:"PDF",
-  pitch:"Faites deviner votre personnage secret avec des pictogrammes, tout en devinant celui des autres.",
-  video:"A1gNicQnTZc",
-  bref:[
-    "8 personnages sont posés au centre, numérotés de 1 à 8. Chacun reçoit en secret un numéro : c'est son personnage.",
-    "Avec 1 à 3 cartes Picto, donnez des indices : côté vert = « ça lui correspond », côté rouge = « ça ne lui correspond pas ».",
-    "Tout le monde joue en même temps, puis chacun vote pour le personnage de chaque autre joueur.",
-    "1 point par bonne réponse, 1 point par joueur qui a trouvé votre personnage.",
-    "Attention : vos cartes Picto ne sont jamais renouvelées. 4 manches, le plus de points gagne."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Marquer le plus de points en 4 manches : faire deviner son personnage et deviner celui des autres.</p>
-<h3>Mise en place</h3>
-<ul>
-<li>Chaque joueur prend son boîtier (coffre-fort), ses cartes ou clés Vote (numérotées de 1 à 8) et <b>10 cartes Picto</b> pour toute la partie.</li>
-<li>On révèle 8 cartes Personnage au centre, numérotées de 1 à 8.</li>
-</ul>
-<h3>Une manche</h3>
-<ol>
-<li>Chacun pioche une carte (ou clé) Mystère en secret : son numéro indique votre personnage.</li>
-<li>Choisissez <b>1 à 3 cartes Picto</b> et glissez-les dans votre boîtier : en face de la zone <b>verte</b> si le picto évoque votre personnage, de la zone <b>rouge</b> s'il ne lui correspond pas du tout.</li>
-<li>Quand tout le monde est prêt, on tourne les boîtiers vers la table.</li>
-<li>Chacun glisse un de ses votes dans le boîtier de chaque autre joueur, avec le numéro du personnage qu'il pense avoir trouvé.</li>
-<li>On ouvre les boîtiers un par un.</li>
-</ol>
-<h3>Points</h3>
-<ul>
-<li><b>+1</b> pour chaque joueur qui a trouvé votre personnage.</li>
-<li><b>+1</b> pour chaque personnage que vous avez trouvé chez les autres.</li>
-</ul>
-<p>Les cartes Picto utilisées sont défaussées : 10 cartes pour 4 manches, dosez bien. On change les personnages à chaque manche.</p>`
-},
-{
-  id:"toy-battle", img:"https://www.espritjeu.com/upload/image/toy-battle-p-image-99655", nom:"Toy Battle", min:2, max:2, duree:"20 min", cat:"DUEL",diff:2,debut:false,regles:"https://cdn.svc.asmodee.net/production-rprod/storage/games/toy_battle/rules/toy-fr01-rules-1744030098Pk1fi.pdf",reglesType:"PDF",
-  pitch:"Duel tactique de jouets : prenez le QG adverse ou raflez les médailles.",
-  video:"m3qpV5Ri7sw",
-  bref:[
-    "À votre tour, une seule action : piocher 2 troupes OU poser 1 troupe sur le terrain.",
-    "On peut poser sur une base vide, sur sa propre troupe, ou sur une troupe adverse plus faible (force strictement inférieure).",
-    "Toute troupe posée doit être reliée à votre QG par un chemin de bases que vous occupez.",
-    "Occupez toutes les bases autour d'une région : vous prenez ses médailles.",
-    "Victoire immédiate : poser une troupe sur le QG adverse, ou atteindre l'objectif de médailles du terrain."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Poser une troupe sur le quartier général adverse, ou atteindre le nombre de médailles indiqué sur le terrain.</p>
-<h3>Mise en place</h3>
-<ul>
-<li>Choisissez un terrain (pour une première partie : <b>la plaine des châteaux</b>). Le symbole face à vous indique votre couleur et l'objectif de médailles.</li>
-<li>Posez une médaille sur chaque emplacement prévu.</li>
-<li>Chacun mélange ses troupes face cachée (sa réserve) et en retire <b>4 au hasard</b> sans les regarder.</li>
-<li>Le premier joueur pioche <b>3 troupes</b>, l'autre <b>4</b>, sur leur support.</li>
-</ul>
-<h3>Tour de jeu : une action au choix</h3>
-<ul>
-<li><b>Piocher 2 troupes</b> de votre réserve (maximum 8 sur votre support).</li>
-<li><b>Poser 1 troupe</b> sur le terrain puis appliquer son effet (et celui de la base spéciale, si vous jouez avec).</li>
-</ul>
-<p>Passer son tour est interdit si une action est possible.</p>
-<h3>Règles de pose (les deux conditions sont obligatoires)</h3>
-<ol>
-<li><b>Emplacement</b> : une base vide, une base où vous êtes déjà, une base adverse dont la troupe visible a une force <b>strictement inférieure</b>, ou le QG adverse. Jamais sur votre propre QG. On pose par-dessus la pile ; seule la troupe du dessus compte.</li>
-<li><b>Connexion</b> : un chemin continu de bases que vous occupez doit relier la base à votre QG.</li>
-</ol>
-<h3>Régions et médailles</h3>
-<p>Dès que vous occupez <b>toutes les bases autour d'une région</b>, prenez ses médailles. Vous les gardez même si vous perdez la région ensuite.</p>
-<h3>Fin de partie</h3>
-<ul>
-<li><b>Troupe sur le QG adverse</b> : victoire immédiate.</li>
-<li><b>Objectif de médailles atteint</b> : victoire immédiate.</li>
-<li>Un joueur ne peut ni piocher ni poser : le plus de médailles gagne. En cas d'égalité, celui qui a déclenché la fin perd.</li>
-</ul>`
-},
-{
-  id:"shadow-hunters", img:"https://www.espritjeu.com/upload/image/shadow-hunters-p-image-112616", nom:"Shadow Hunters", min:4, max:8, duree:"45 min", cat:"BLUFF & TRAHISON",diff:2,debut:false,regles:"https://cdn.1j1ju.com/medias/bf/1f/fa-shadow-hunters-regle.pdf",reglesType:"PDF",
-  pitch:"Hunters, Shadows et Neutres s'affrontent sans savoir qui est qui.",
-  video:"vz-BtQyuFgI",
-  bref:[
-    "Votre personnage est secret : Hunter (gentil), Shadow (monstre) ou Neutre (objectif perso).",
-    "À votre tour : lancez les 2 dés et allez sur le lieu correspondant, appliquez son effet, puis attaquez si vous le voulez.",
-    "Attaque : relancez les 2 dés, la différence entre les deux = dégâts infligés à un joueur de votre zone.",
-    "Cartes Vision : vous en donnez une à un joueur, il doit répondre honnêtement. C'est comme ça qu'on devine les camps.",
-    "Hunters : tuer tous les Shadows. Shadows : tuer tous les Hunters (ou 3 Neutres). Neutres : leur carte."
-  ],
-  full:`
-<h3>Les camps</h3>
-<ul>
-<li><b>Hunters</b> : gagnent quand tous les Shadows sont morts.</li>
-<li><b>Shadows</b> : gagnent quand tous les Hunters sont morts, ou quand 3 personnages Neutres sont morts.</li>
-<li><b>Neutres</b> : chacun a sa propre condition de victoire écrite sur sa carte.</li>
-</ul>
-<h3>Mise en place</h3>
-<p>Répartition : 4 joueurs = 2 Hunters, 2 Shadows · 5 = 2/2 + 1 Neutre · 6 = 2/2 + 2 Neutres · 7 = 2/2 + 3 Neutres (sans Bob) · 8 = 3/3 + 2 Neutres (sans Bob).</p>
-<p>On mélange les personnages retenus et on en distribue un face cachée à chacun. Vous pouvez regarder le vôtre à tout moment. Chacun a un pion sur la piste de dégâts.</p>
-<h3>Tour de jeu</h3>
-<ol>
-<li><b>Se déplacer</b> : lancez le dé à 6 faces et le dé à 4 faces, additionnez et allez sur le lieu portant ce nombre (7 : lieu au choix ; si vous tombez sur votre lieu actuel, relancez).</li>
-<li><b>Effet du lieu</b> (facultatif) : piocher une carte Vision, Lumière ou Ténèbres, infliger ou soigner des dégâts, voler un équipement, etc.</li>
-<li><b>Attaquer</b> (facultatif) : un joueur situé dans votre zone (les lieux sont regroupés par 2). Lancez les deux dés : la <b>différence</b> est le nombre de dégâts (0 = raté).</li>
-</ol>
-<h3>Cartes Vision</h3>
-<p>Quand vous piochez une carte Vision, lisez-la en secret et donnez-la à un autre joueur. Il doit appliquer honnêtement l'effet (ou dire « rien ne se passe ») sans révéler le texte. Certains personnages peuvent mentir : c'est écrit sur leur carte.</p>
-<h3>Révélation et mort</h3>
-<ul>
-<li>Vous pouvez révéler votre personnage à votre tour pour utiliser son pouvoir spécial.</li>
-<li>Quand les dégâts atteignent vos points de vie, vous mourez : révélez votre carte. Le tueur prend vos équipements.</li>
-</ul>
-<p>La partie s'arrête dès qu'un camp atteint son objectif (plusieurs joueurs peuvent gagner en même temps).</p>`
-},
-{
-  id:"tag-team", img:"https://www.espritjeu.com/upload/image/tag-team-p-image-102330", nom:"Tag Team", min:2, max:2, duree:"20 min", cat:"DUEL",diff:2,debut:false,regles:"https://randolphca.sharepoint.com/sites/msteams_2ac136_352300/Jeux_Scorpion/Forms/AllItems.aspx?id=%2Fsites%2Fmsteams%5F2ac136%5F352300%2FJeux%5FScorpion%2FTag%20Team%2F%5Fmarketing%2FSite%20Web%2F%5Farchives%2FTT%5FRules%5F01%5FFR%5F07may2025%2Epdf&parent=%2Fsites%2Fmsteams%5F2ac136%5F352300%2FJeux%5FScorpion%2FTag%20Team%2F%5Fmarketing%2FSite%20Web%2F%5Farchives&p=true&ga=1",reglesType:"PDF",
-  pitch:"Baston d'arcade 2 contre 2 : vous préparez votre deck, le combat se joue tout seul.",
-  video:"oEWgSZwcjbs",
-  bref:[
-    "Chaque joueur choisit 2 combattants parmi 12.",
-    "Votre deck de combat démarre avec seulement 2 cartes (la carte de départ de chaque combattant).",
-    "Avant chaque round : piochez 3 cartes, gardez-en 1 et insérez-la où vous voulez dans votre deck. L'ordre des autres cartes ne change jamais.",
-    "Combat : les deux joueurs révèlent la carte du dessus en même temps et appliquent les effets, jusqu'au bout du deck.",
-    "Dès qu'un combattant tombe à 0 point de vie, son équipe perd."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Mettre KO un des deux combattants adverses (0 point de vie).</p>
-<h3>Mise en place</h3>
-<ul>
-<li>Les joueurs choisissent chacun <b>2 combattants</b> parmi les 12 (en draft ou à l'amiable).</li>
-<li>Chaque combattant a son plateau, ses points de vie et un paquet de 10 cartes.</li>
-<li>Les 2 cartes de départ forment votre <b>deck de combat</b>. Les 18 autres forment votre <b>deck de construction</b>.</li>
-</ul>
-<h3>Un round</h3>
-<ol>
-<li><b>Préparation</b> : piochez 3 cartes de votre deck de construction, choisissez-en <b>1</b> et insérez-la <b>à l'endroit de votre choix</b> dans votre deck de combat, sans changer l'ordre des cartes déjà présentes. Les 2 autres retournent sous le deck de construction.</li>
-<li><b>Combat</b> : les deux joueurs révèlent en même temps la première carte de leur deck de combat et appliquent les effets. Le combattant de la carte révélée est le <b>combattant actif</b> (il reçoit les coups) ; l'autre est le partenaire.</li>
-<li>On continue carte par carte jusqu'à la fin des decks de combat.</li>
-</ol>
-<p>Effets courants : attaquer, gagner de la puissance, bloquer, se soigner, infliger des dégâts directs. Chaque combattant a ses mécaniques propres (voir le Guide des Combattants).</p>
-<h3>Fin de partie</h3>
-<ul>
-<li>Un combattant à 0 point de vie : son équipe perd immédiatement.</li>
-<li>Deux combattants KO en même temps (un de chaque côté), ou impossible de piocher 3 cartes : match nul.</li>
-</ul>`
-},
-{
-  id:"citadelles", img:"https://www.espritjeu.com/upload/image/citadelles--4eme-ed--p-image-103635", nom:"Citadelles", min:2, max:8, duree:"45 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"https://cdn.1j1ju.com/medias/cb/4e/c5-citadelles-regle.pdf",reglesType:"PDF",
-  pitch:"Bâtissez la plus belle cité en choisissant chaque tour un personnage secret.",
-  video:"26uq22x_Wac",
-  bref:[
-    "Chaque tour, chacun choisit en secret un personnage (Assassin, Voleur, Roi…). On joue dans l'ordre des numéros.",
-    "À votre tour : prenez 2 pièces d'or OU piochez 2 quartiers et gardez-en 1.",
-    "Puis construisez 1 quartier en payant son coût (jamais deux quartiers identiques).",
-    "Utilisez le pouvoir de votre personnage quand vous voulez pendant votre tour.",
-    "Dès qu'un joueur a 7 quartiers (8 dans les anciennes éditions), on finit le tour et on compte les points."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Avoir la cité qui rapporte le plus de points à la fin de la partie.</p>
-<h3>Mise en place</h3>
-<p>Chaque joueur reçoit <b>4 cartes Quartier</b> et <b>2 pièces d'or</b>. Un joueur reçoit la Couronne.</p>
-<h3>1. Choix des personnages</h3>
-<ul>
-<li>On mélange les 8 personnages et on en écarte certains (face visible ou cachée, selon le nombre de joueurs, voir livret).</li>
-<li>Le joueur qui a la Couronne choisit un personnage en secret, puis passe le paquet à gauche, etc.</li>
-</ul>
-<h3>2. Tours des personnages</h3>
-<p>La Couronne appelle les personnages dans l'ordre : 1 Assassin, 2 Voleur, 3 Magicien, 4 Roi, 5 Évêque, 6 Marchand, 7 Architecte, 8 Condottière / Seigneur de guerre. Le joueur appelé se révèle et joue :</p>
-<ol>
-<li>Prendre <b>2 pièces</b> OU piocher <b>2 quartiers</b> et en garder 1.</li>
-<li>Construire <b>1 quartier</b> (facultatif) en payant son coût. Interdit d'avoir deux quartiers identiques.</li>
-<li>Utiliser le pouvoir du personnage.</li>
-</ol>
-<h3>Pouvoirs</h3>
-<ul>
-<li><b>Assassin</b> : nomme un personnage, qui ne jouera pas ce tour.</li>
-<li><b>Voleur</b> : nomme un personnage (sauf l'Assassin et sa victime) et lui prend tout son or quand il se révèle.</li>
-<li><b>Magicien</b> : échange sa main avec un joueur, ou défausse des cartes pour en repiocher autant.</li>
-<li><b>Roi</b> : prend la Couronne ; or pour ses quartiers nobles (jaunes).</li>
-<li><b>Évêque</b> : ses quartiers sont protégés du Condottière ; or pour ses quartiers religieux (bleus).</li>
-<li><b>Marchand</b> : 1 pièce en plus ; or pour ses quartiers marchands (verts).</li>
-<li><b>Architecte</b> : pioche 2 cartes en plus et peut construire jusqu'à 3 quartiers.</li>
-<li><b>Condottière</b> : or pour ses quartiers militaires (rouges) ; peut détruire un quartier adverse en payant son coût moins 1.</li>
-</ul>
-<h3>Fin et points</h3>
-<p>Quand un joueur construit son <b>7e quartier</b> (4e édition) ou son <b>8e quartier</b> (éditions précédentes), on termine le tour en cours. Vérifiez sur le livret de votre boîte.</p>
-<ul>
-<li>Somme du coût de vos quartiers.</li>
-<li><b>+3</b> si vous avez les 5 types de quartiers.</li>
-<li><b>+4</b> au premier joueur à avoir complété sa cité, <b>+2</b> aux autres qui l'ont complétée.</li>
-<li>Bonus des quartiers violets (merveilles).</li>
-</ul>`
-},
-{
-  id:"miams", img:"https://www.espritjeu.com/upload/image/miams-p-image-105556", nom:"Miams", min:2, max:5, duree:"30 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"",reglesType:"",
-  pitch:"Le Yams survitaminé : brochettes de fruits, combos de cartes et course aux cœurs.",
-  video:"71ZwiphNAe8",
-  bref:[
-    "À votre tour : lancez les 5 dés, vous avez droit à une relance.",
-    "Formez une combinaison de fruits (paire, brelan, full, carré, suite, Miams = 5 identiques) et cochez-la sur votre feuille.",
-    "Les cases cochées font avancer votre piste de cœurs et donnent des bonus (étoiles, dé rouge, relances).",
-    "Avec vos étoiles, achetez des cartes Miams : leurs pouvoirs s'ajoutent tour après tour.",
-    "Quand un joueur atteint 50 cœurs, on finit le tour : cœurs + étoiles restantes, le plus haut total gagne."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Remplir sa piste de cœurs le plus vite possible et avoir le meilleur total à la fin.</p>
-<h3>Tour de jeu</h3>
-<ol>
-<li><b>Lancer</b> les 5 dés blancs. Vous pouvez relancer une fois les dés de votre choix (plus si vous avez des jetons Relance).</li>
-<li><b>Dé rouge</b> : si vous avez un jeton Dé rouge, vous pouvez l'utiliser pour lancer un dé supplémentaire.</li>
-<li><b>Cocher</b> une combinaison réalisée sur votre feuille : paire, brelan, full, carré, suite ou Miams (5 fruits identiques). La face croix est un échec… qui peut profiter à vos adversaires.</li>
-<li><b>Bonus</b> : certaines cases rapportent des étoiles (la monnaie du jeu), un jeton Dé rouge ou un jeton Relance.</li>
-<li><b>Acheter</b> une carte Miams dans le marché en payant son coût en étoiles (de gratuit à 3 étoiles). Ses effets s'appliquent dès le tour suivant et se cumulent avec vos autres cartes.</li>
-</ol>
-<h3>Fin de partie</h3>
-<p>Dès qu'un joueur atteint <b>50 cœurs</b>, on termine le tour. On additionne les cœurs et les étoiles restantes : le plus haut total gagne.</p>
-<p>Mode solo disponible contre « l'Incroyable Affamé » (voir livret).</p>`
-},
-{
-  id:"mindbug", img:"https://www.espritjeu.com/upload/image/mindbug-p-image-84053", nom:"Mindbug", min:2, max:2, duree:"20 min", cat:"DUEL",diff:2,debut:false,regles:"https://iello.fr/wp-content/uploads/2023/03/Mindbug_Rulebook_FR_V3_Revised4-light.pdf",reglesType:"PDF",
-  pitch:"Duel de créatures hybrides où l'adversaire peut voler ce que vous jouez.",
-  video:"PzafI51T7E8",
-  bref:[
-    "Chacun a 10 cartes, une main de 5, 3 points de vie et 2 Mindbugs.",
-    "À votre tour : jouer une créature OU attaquer avec une créature.",
-    "Quand vous jouez une créature, l'adversaire peut dépenser un Mindbug pour la voler. Vous rejouez alors un tour.",
-    "Attaque : l'adversaire bloque avec une créature (la plus faible meurt, égalité = les deux) ou perd 1 point de vie.",
-    "Adversaire à 0 point de vie, ou incapable de jouer ou d'attaquer : vous gagnez."
-  ],
-  full:`
-<h3>Mise en place</h3>
-<ul>
-<li>Chaque joueur reçoit <b>10 cartes</b> face cachée (sa pioche), en pioche <b>5</b>.</li>
-<li>Chacun pose ses <b>2 Mindbugs</b> face visible et règle son compteur à <b>3 points de vie</b>.</li>
-</ul>
-<h3>Tour de jeu : une action</h3>
-<ul>
-<li><b>Jouer une carte</b> : posez une créature de votre main. L'adversaire choisit :
-<ul>
-<li>la laisser : elle arrive chez vous et vous appliquez son effet « Jouer » ;</li>
-<li>la voler avec un Mindbug (usage unique) : il la place chez lui et applique l'effet « Jouer ». Vous terminez votre tour puis jouez immédiatement <b>un tour supplémentaire</b>. Impossible de reprendre une créature volée avec un Mindbug.</li>
-</ul>
-Puis complétez votre main à 5 cartes si votre pioche le permet.</li>
-<li><b>Attaquer</b> avec une de vos créatures. L'adversaire bloque avec une de ses créatures ou prend <b>1 dégât</b>. En cas de blocage, la plus faible est détruite ; égalité : les deux.</li>
-</ul>
-<h3>Mots-clés</h3>
-<ul>
-<li><b>Furie</b> : peut attaquer deux fois par tour.</li>
-<li><b>Coriace</b> : la première fois qu'elle devrait être détruite, on l'incline à la place.</li>
-<li><b>Chasseur</b> : choisit quelle créature adverse doit bloquer.</li>
-<li><b>Venimeux</b> : détruit toute créature qu'il combat.</li>
-<li><b>Furtif</b> : ne peut être bloqué que par une créature Furtive.</li>
-</ul>
-<h3>Victoire</h3>
-<p>L'adversaire tombe à 0 point de vie, ou ne peut ni jouer de carte ni attaquer à son tour.</p>`
-},
-{
-  id:"oriflamme", img:"https://www.espritjeu.com/upload/image/oriflamme-p-image-69870", nom:"Oriflamme", min:3, max:5, duree:"25 min", cat:"BLUFF & TRAHISON",diff:2,debut:false,regles:"https://nfc.accessijeux.com/regles-du-jeu-oriflamme/",reglesType:"fr",
-  pitch:"Complots pour le trône : posez vos cartes face cachée et révélez-les au bon moment.",
-  video:"h-okQkOEXzI",
-  bref:[
-    "Chaque joueur a les mêmes 10 cartes, en garde 7 au hasard, et commence avec 1 point d'Influence.",
-    "6 tours. À chaque tour, chacun pose une carte face cachée au début ou à la fin de la file centrale.",
-    "Puis on résout la file de gauche à droite : pour chacune de vos cartes, révélez-la (et appliquez son effet) ou laissez-la cachée et ajoutez-y 1 Influence.",
-    "Quand vous révélez une carte, vous gagnez l'Influence accumulée dessus.",
-    "Après 6 tours, le plus d'Influence gagne."
-  ],
-  full:`
-<h3>Mise en place</h3>
-<ul>
-<li>Chaque joueur prend les 10 cartes de sa famille, en écarte <b>3 au hasard</b> sans les regarder et garde 7 en main.</li>
-<li>Chacun prend <b>1 point d'Influence</b>. Le premier joueur prend la tuile Premier joueur.</li>
-</ul>
-<h3>Un tour en 2 phases</h3>
-<ol>
-<li><b>Placement</b> : en commençant par le premier joueur, chacun pose une carte face cachée <b>au début ou à la fin</b> de la file, ou <b>par-dessus une de ses propres cartes</b> déjà dans la file.</li>
-<li><b>Résolution</b> : on parcourt la file dans le sens de résolution. Pour chaque carte cachée, son propriétaire choisit :
-<ul>
-<li>la <b>laisser cachée</b> et poser <b>1 Influence</b> dessus ;</li>
-<li>la <b>révéler</b> : il prend l'Influence posée dessus et applique son effet.</li>
-</ul></li>
-</ol>
-<p>Les cartes révélées restent dans la file (leur effet ne se déclenche qu'une fois). Quand une carte est éliminée, on resserre la file. Éliminer une carte adverse rapporte de l'Influence (voir texte des cartes).</p>
-<h3>Les cartes (résumé)</h3>
-<p>Soldat, Archer, Espion, Héritier, Seigneur, Changeforme, Assassinat, Embuscade, Complot, Décret royal. Leurs effets sont écrits dessus : éliminer une carte voisine, la première ou la dernière de la file, voler de l'Influence, déplacer une carte, etc.</p>
-<h3>Fin de partie</h3>
-<p>Après le <b>6e tour</b> (il reste 1 carte en main à chacun), le joueur avec le plus d'Influence gagne. Égalité : celui qui a le plus de cartes de sa famille encore dans la file.</p>`
-},
-{
-  id:"skull-king", img:"https://www.espritjeu.com/upload/image/skull-king-vf-p-image-80958", nom:"Skull King", min:2, max:8, duree:"45 min", cat:"AMBIANCE & RIRES",diff:2,debut:false,regles:"https://cdn.1j1ju.com/medias/eb/6c/1c-skull-king-regle-2022.pdf",reglesType:"PDF",
-  pitch:"Jeu de plis pirate : pariez le nombre exact de plis que vous allez gagner.",
-  video:"yBFsFFrmSVA",
-  bref:[
-    "10 manches : 1 carte à la manche 1, 2 cartes à la manche 2… jusqu'à 10.",
-    "Après avoir regardé sa main, tout le monde annonce en même temps combien de plis il pense faire.",
-    "Il faut suivre la couleur demandée si possible. Le noir (drapeau pirate) est l'atout. Les cartes spéciales se jouent à tout moment.",
-    "Pari exact : 20 points par pli. Raté : -10 par pli d'écart. Pari de zéro : 10 × numéro de manche (gagné ou perdu).",
-    "Le plus de points après 10 manches gagne."
-  ],
-  full:`
-<h3>Les cartes</h3>
-<ul>
-<li><b>Couleurs</b> (1 à 14) : vert (perroquet), violet (carte au trésor), jaune (coffre). <b>Noir</b> (drapeau pirate) = atout, bat les autres couleurs.</li>
-<li><b>Fuite</b> : ne gagne jamais (sauf si tout le monde joue une Fuite).</li>
-<li><b>Pirates</b> : battent toutes les cartes de couleur.</li>
-<li><b>Sirènes</b> : battent les couleurs, mais perdent contre les Pirates.</li>
-<li><b>Skull King</b> : bat les Pirates… mais se fait capturer par une Sirène.</li>
-<li><b>Tigresse</b> : jouée au choix comme Pirate ou comme Fuite.</li>
-</ul>
-<p>Les éditions varient un peu (Kraken, Baleine blanche, etc. sont en option) : vérifiez l'aide de jeu de la boîte.</p>
-<h3>Une manche</h3>
-<ol>
-<li>Distribuez autant de cartes que le numéro de la manche.</li>
-<li><b>Pari</b> : tout le monde annonce en même temps (poing fermé, « Yo-ho-ho ! », puis doigts) le nombre de plis qu'il va faire.</li>
-<li><b>Plis</b> : le premier joueur pose une carte ; les autres doivent fournir la couleur demandée s'ils le peuvent. Les cartes spéciales peuvent toujours être jouées. Le vainqueur du pli ouvre le suivant.</li>
-</ol>
-<h3>Points</h3>
-<ul>
-<li>Pari réussi (1 ou plus) : <b>20 points par pli</b> annoncé.</li>
-<li>Pari raté : <b>-10 points par pli d'écart</b>.</li>
-<li>Pari de 0 réussi : <b>10 × numéro de la manche</b>. Raté : <b>-10 × numéro de la manche</b>.</li>
-<li>Bonus (seulement si le pari est réussi) : chaque 14 de couleur remporté <b>+10</b>, le 14 noir <b>+20</b> ; Sirène battue par un Pirate <b>+20</b>, Pirate battu par le Skull King <b>+30</b>, Skull King battu par une Sirène <b>+40</b>.</li>
-</ul>`
-},
-{
-  id:"presages", img:"https://www.espritjeu.com/upload/image/presages-p-image-101688", nom:"Présages", min:4, max:6, duree:"25 min", cat:"RÉFLEXION",diff:2,debut:false,regles:"https://static.fnac-static.com/multimedia/editorial/pdf/3770026418024.pdf",reglesType:"PDF",
-  pitch:"Jeu de défausse en équipes, sans parler : aidez votre partenaire à vider sa main.",
-  video:"BoR8FvGwuiE",
-  bref:[
-    "On joue en équipes, désignées au début par les cartes « L'Absolu ». Interdit de communiquer sur son jeu.",
-    "Chaque tour, tout le monde joue une carte devant soi.",
-    "Effet éclair : s'applique tout de suite. Effet sablier : s'applique à la fin du tour, en même temps pour tous.",
-    "La carte la plus forte gagne le tour et est défaussée. Les autres cartes reviennent en main, sauf si un effet les défausse.",
-    "Une équipe gagne la manche quand un de ses membres n'a plus qu'une carte en main. 2 manches pour gagner."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Qu'un membre de votre équipe soit le premier à n'avoir plus <b>qu'une seule carte</b> en main à la fin d'un tour. La première équipe à gagner <b>2 manches</b> remporte la partie.</p>
-<h3>Mise en place</h3>
-<ul>
-<li>On distribue une carte <b>L'Absolu</b> (les plus fortes valeurs) à chaque joueur, face visible : elles forment les équipes selon le tableau du livret.</li>
-<li>Chacun reçoit ensuite ses cartes Arcane : <b>5</b> à 4 joueurs, <b>4</b> à 6 joueurs ; à 5, l'équipe de 3 en a 5 et l'équipe de 2 en a 4. À 4 : le plus fort Absolu fait équipe avec le plus faible. À 6 : 3 équipes de 2.</li>
-<li>Le joueur qui a L'Absolu le plus fort commence.</li>
-</ul>
-<h3>Un tour</h3>
-<ol>
-<li>Dans le sens horaire, chacun joue une carte devant lui et <b>annonce son effet</b>.</li>
-<li>Effet <b>éclair</b> : résolu immédiatement, avant que le joueur suivant ne joue.</li>
-<li>Quand tout le monde a joué : on résout <b>en même temps</b> tous les effets <b>sablier</b> et on désigne le vainqueur du tour.</li>
-<li>Sauf effet contraire, la carte de <b>plus forte valeur</b> gagne : elle est défaussée. Les cartes défaussées par des effets le sont aussi. Les autres reviennent en main.</li>
-<li>Le vainqueur du tour commence le suivant.</li>
-</ol>
-<h3>À savoir</h3>
-<ul>
-<li>Aucune communication sur votre main ou vos intentions, sauf si un effet le permet.</li>
-<li>Un effet est obligatoire ; s'il ne peut pas s'appliquer, la carte est jouée sans effet.</li>
-<li>Égalité en fin de tour : on compare la dernière carte en main des joueurs concernés.</li>
-</ul>`
-},
-{
-  id:"time-bomb-evolution", img:"https://www.espritjeu.com/upload/image/time-bomb-evolution-p-image-70633", nom:"Time Bomb Évolution", min:4, max:6, duree:"15 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://cdn.1j1ju.com/medias/fa/16/c1-time-bomb-evolution-regle.pdf",reglesType:"PDF",
-  pitch:"Sherlock contre Moriarty : coupez les bons câbles… ou faites tout sauter.",
-  video:"8mVf2MahZbA",
-  bref:[
-    "Rôle secret : équipe Sherlock (désamorcer) ou équipe Moriarty (faire exploser).",
-    "Chacun reçoit des cartes Câble, les regarde, annonce ce qu'il a (on peut mentir), puis les mélange face cachée devant lui.",
-    "Le joueur qui a la pince coupe (retourne) un câble chez un autre joueur. Ce joueur prend la pince.",
-    "Sherlock gagne si tous les câbles de désamorçage sont coupés. Moriarty gagne si une 4e bombe d'une même couleur est révélée.",
-    "4 manches maximum : si Sherlock n'a pas réussi à la fin, Moriarty gagne."
-  ],
-  full:`
-<h3>Les équipes</h3>
-<p>Rôles : à 4 ou 5 joueurs, 3 Sherlock et 2 Moriarty ; à 6 joueurs, 4 Sherlock et 2 Moriarty. On mélange et on distribue un rôle face cachée à chacun (à 4, un rôle reste caché). Chacun regarde le sien en secret.</p>
-<h3>Les câbles</h3>
-<ul>
-<li><b>Câbles de désamorçage</b> : autant que de joueurs. Quand on en coupe un, on le pose sur une couleur de bombe déjà révélée (sauf jaune, une seule fois par couleur) : cette couleur ne peut plus exploser. Tous coupés = victoire de Sherlock.</li>
-<li><b>Bombes colorées</b> : autant de couleurs que de joueurs (5 cartes par couleur, on en retire au hasard autant que de joueurs). <b>4 cartes d'une même couleur révélées</b> = explosion, victoire de Moriarty.</li>
-</ul>
-<h3>Une manche</h3>
-<ol>
-<li>Distribuez <b>5 cartes Câble</b> à chacun. Chacun les regarde, annonce ce qu'il possède (vrai ou faux), puis les mélange et les pose face cachée devant lui.</li>
-<li>Le joueur qui a la pince choisit une carte devant <b>un autre joueur</b> et la retourne.</li>
-<li>Le joueur chez qui on a coupé prend la pince et coupe à son tour chez quelqu'un d'autre.</li>
-<li>La manche s'arrête quand on a coupé <b>autant de câbles que de joueurs</b>.</li>
-<li>On ramasse les cartes non coupées, on les mélange et on redistribue : chacun a une carte de moins qu'à la manche précédente.</li>
-</ol>
-<h3>Fin de partie</h3>
-<ul>
-<li>Tous les câbles de désamorçage coupés : <b>Sherlock gagne</b>.</li>
-<li>4e bombe d'une même couleur : <b>Moriarty gagne</b>.</li>
-<li>Fin de la 4e manche sans vainqueur : <b>Moriarty gagne</b>.</li>
-</ul>
-<h3>Variante Évolution</h3>
-<p>Chaque couleur de bombe a un effet (feuillet dans la boîte) : la jaune ne peut pas être désamorcée, la verte explose dès la 3e carte, la rose explose si deux sortent à la suite, la rouge impose chez qui couper, la bleue annule un désamorçage, l'orange raccourcit la dernière manche. </p>`
-},
-{
-  id:"bang-des", img:"https://www.espritjeu.com/upload/image/bang--le-jeu-de-des-p-image-53222", nom:"Bang! Le jeu de dés", min:3, max:8, duree:"15 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://cdn.1j1ju.com/medias/c6/03/e0-bang-le-jeu-de-des-regle.pdf",reglesType:"PDF",
-  pitch:"Shérif, adjoints, hors-la-loi et renégat s'affrontent à coups de dés.",
-  video:"6SSCg7rf91Y",
-  bref:[
-    "Rôle secret, sauf le Shérif qui se révèle. Chacun a aussi un personnage avec un pouvoir.",
-    "À votre tour : lancez les 5 dés, relancez ceux que vous voulez jusqu'à 2 fois (3 lancers en tout).",
-    "Faces : 1 et 2 = tirer à distance 1 ou 2, bière = soigner, flèche = prendre une flèche, 3 dynamites = perdre 1 vie, 3 gatlings = 1 dégât à tous les autres.",
-    "Quand il n'y a plus de flèches, les Indiens attaquent : chacun perd 1 vie par flèche qu'il a.",
-    "Shérif et adjoints : éliminer hors-la-loi et renégat. Hors-la-loi : tuer le Shérif. Renégat : être le dernier en vie."
-  ],
-  full:`
-<h3>Rôles et objectifs</h3>
-<ul>
-<li><b>Shérif</b> (révélé, +2 points de vie) et <b>Adjoints</b> : éliminer tous les Hors-la-loi et le Renégat.</li>
-<li><b>Hors-la-loi</b> : éliminer le Shérif.</li>
-<li><b>Renégat</b> : être le dernier joueur en vie.</li>
-</ul>
-<p>Chacun reçoit aussi un personnage (points de vie + pouvoir). Le Shérif commence.</p>
-<h3>Tour de jeu</h3>
-<ol>
-<li>Lancez les 5 dés. Vous pouvez relancer tout ou partie des dés <b>deux fois</b>.</li>
-<li><b>Dynamite</b> : ne peut pas être relancée. 3 dynamites : vous perdez 1 point de vie et ne relancez plus (les autres dés s'appliquent quand même).</li>
-<li><b>Flèche</b> : prenez un jeton Flèche dès qu'elle sort (même lors d'une relance).</li>
-<li>Appliquez ensuite les dés :
-<ul>
-<li><b>1</b> : 1 dégât à un joueur à distance 1 (voisin direct).</li>
-<li><b>2</b> : 1 dégât à un joueur à distance 2. S'il ne reste que 2 ou 3 joueurs, la distance 2 compte comme 1.</li>
-<li><b>Bière</b> : 1 point de vie à n'importe quel joueur (sans dépasser son maximum).</li>
-<li><b>3 Gatlings</b> : 1 dégât à chaque autre joueur, et vous défaussez toutes vos flèches.</li>
-</ul></li>
-</ol>
-<h3>Attaque des Indiens</h3>
-<p>Quand on prend la dernière flèche de la pile, les Indiens attaquent : chaque joueur perd <b>1 point de vie par flèche</b> qu'il possède, puis toutes les flèches retournent dans la pile.</p>
-<h3>Élimination</h3>
-<p>À 0 point de vie, révélez votre rôle. La partie s'arrête dès qu'une équipe a atteint son objectif.</p>`
-},
-{
-  id:"dekal", img:"https://www.espritjeu.com/upload/image/dekal-p-image-92910", nom:"Dékal", min:2, max:6, duree:"15 min", cat:"RAPIDE & FUN",diff:1,debut:true,regles:"https://www.gigamic.com/index.php?controller=attachment&id_attachment=500",reglesType:"PDF",
-  pitch:"Faites glisser vos cartes pour coller les chiffres identiques et faire le moins de points.",
-  video:"vrXmNyhgk0w",
-  bref:[
-    "Chacun a une grille de 4 × 4 cartes face cachée. La partie dure 16 tours.",
-    "À chaque tour, tout le monde retourne en même temps une carte de sa grille au centre de la table.",
-    "Dans l'ordre, chacun prend une carte du centre et la fait glisser dans sa grille en poussant la ligne ou la colonne qui a un trou.",
-    "À la fin, les cartes identiques qui se touchent (côté à côté) s'annulent.",
-    "On additionne ce qui reste : le plus petit total gagne."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Avoir le <b>moins de points</b> possible dans sa grille à la fin.</p>
-<h3>Mise en place</h3>
-<p>Mélangez les 100 cartes (1 à 10, dix exemplaires de chaque). Chacun reçoit <b>16 cartes</b> qu'il pose sans les regarder en carré de 4 × 4, face cachée. Le reste retourne dans la boîte.</p>
-<h3>Un tour</h3>
-<ol>
-<li>Tous les joueurs choisissent une carte face cachée de leur grille et la retournent <b>en même temps</b> au milieu de la table. Un trou apparaît dans chaque grille.</li>
-<li>En commençant par le premier joueur, dans le sens horaire, chacun choisit une carte du milieu. Le dernier prend celle qui reste.</li>
-<li>Pour l'insérer : posez-la au bord de la grille, dans la ligne ou la colonne qui contient le trou, et poussez toute la rangée vers l'intérieur pour combler le trou. On reforme ainsi un carré de 4 × 4.</li>
-<li>Interdit de poser directement dans le trou, interdit de pousser en diagonale.</li>
-<li>Le jeton Premier joueur passe au voisin de gauche.</li>
-</ol>
-<h3>Fin et décompte</h3>
-<ul>
-<li>Après 16 tours, toutes les cartes sont visibles.</li>
-<li>Les cartes de même valeur <b>adjacentes horizontalement ou verticalement</b> s'annulent et sont retirées.</li>
-<li>Additionnez les cartes restantes : le plus petit score gagne. Égalité : celui qui a le moins de cartes dans sa grille.</li>
-</ul>`
-},
-{
-  id:"trio", img:"https://www.espritjeu.com/upload/image/trio-p-image-92302", nom:"Trio", min:3, max:6, duree:"15 min", cat:"RAPIDE & FUN",diff:1,debut:true,regles:"https://www.cocktailgames.com/wp-content/uploads/2022/11/trio_regles_BD.pdf",reglesType:"PDF",
-  pitch:"Mémoire et déduction : trouvez trois cartes identiques avant les autres.",
-  video:"dXSjx9fLRZI",
-  bref:[
-    "Cartes de 1 à 12, trois exemplaires de chaque. Chacun a une main triée, et des cartes sont posées face cachée au centre.",
-    "À votre tour, révélez des cartes une par une : demandez à un joueur sa plus petite ou sa plus grande carte, ou retournez une carte du centre.",
-    "Tant que les cartes révélées sont identiques, continuez. Dès qu'elles sont différentes, votre tour s'arrête et tout est remis en place.",
-    "Trois cartes identiques : vous gagnez ce trio.",
-    "Victoire : 3 trios, ou le trio de 7."
-  ],
-  full:`
-<h3>Mise en place</h3>
-<p>Selon le nombre de joueurs, distribuez une main à chacun et posez le reste face cachée au centre (tableau dans le livret). Triez votre main du plus petit au plus grand, sans la montrer.</p>
-<h3>Tour de jeu</h3>
-<p>Révélez une carte à la fois, de l'une de ces façons :</p>
-<ul>
-<li>demander à un joueur (vous compris) de révéler sa <b>plus petite</b> ou sa <b>plus grande</b> carte ;</li>
-<li>retourner une carte <b>du centre</b>.</li>
-</ul>
-<p>Jamais une carte du milieu d'une main. Si les cartes révélées sont identiques, continuez. Si deux cartes sont différentes, votre tour s'arrête immédiatement : les cartes retournent à leur place, face cachée.</p>
-<p>Si vous révélez <b>3 cartes identiques</b>, vous prenez ce trio devant vous.</p>
-<h3>Victoire (mode simple)</h3>
-<ul>
-<li>Avoir <b>3 trios</b>,</li>
-<li>ou obtenir <b>le trio de 7</b>.</li>
-</ul>
-<p>Le livret propose aussi un mode « Picante » (plus exigeant) et une variante par équipes.</p>`
-},
-{
-  id:"flip-7", img:"https://www.espritjeu.com/upload/image/flip-7-p-image-98426", nom:"Flip 7", min:3, max:18, duree:"20 min", cat:"RAPIDE & FUN",diff:1,debut:true,regles:"https://media.play-in.com/pdf/rules_games/flip_7_fr.pdf",reglesType:"PDF",
-  pitch:"Stop ou encore : accumulez des cartes différentes sans jamais tirer un doublon.",
-  video:"u23JgPadx48",
-  bref:[
-    "Cartes de 0 à 12 : il y a autant d'exemplaires que la valeur (douze 12, onze 11… un seul 1, et un 0).",
-    "À votre tour : prenez une carte de plus, ou arrêtez-vous et gardez vos points.",
-    "Si vous tirez un chiffre que vous avez déjà : vous sautez et ne marquez rien cette manche.",
-    "7 chiffres différents : +15 points et la manche s'arrête pour tout le monde.",
-    "Premier à 200 points à la fin d'une manche : il gagne."
-  ],
-  full:`
-<h3>Une manche</h3>
-<ol>
-<li>Le donneur donne une carte face visible à chaque joueur.</li>
-<li>Ensuite, à son tour, chaque joueur encore en jeu choisit : <b>Encore</b> (recevoir une carte) ou <b>Stop</b> (quitter la manche en gardant ses cartes).</li>
-<li>Si vous recevez un <b>chiffre que vous avez déjà</b> : vous sautez, vous ne marquez rien cette manche.</li>
-<li>La manche s'arrête quand tout le monde a sauté ou dit stop, ou dès qu'un joueur a <b>7 chiffres différents</b>.</li>
-</ol>
-<h3>Cartes spéciales</h3>
-<ul>
-<li><b>Bonus</b> : +2, +4, +6, +8, +10 ajoutent des points ; ×2 double le total de vos cartes Numéro (pas les bonus).</li>
-<li><b>Stop</b> : le joueur visé (vous ou un autre) quitte immédiatement la manche en gardant ses points.</li>
-<li><b>Trois à la suite</b> : le joueur visé reçoit les 3 cartes suivantes d'affilée.</li>
-<li><b>Seconde chance</b> : gardez-la devant vous ; si vous recevez un doublon, défaussez-la avec le doublon et vous ne sautez pas.</li>
-</ul>
-<p>Si vous êtes le seul encore en jeu, vous devez viser vous-même.</p>
-<h3>Points</h3>
-<p>Additionnez vos chiffres, appliquez le ×2, ajoutez les bonus, puis <b>+15</b> si vous avez réussi le Flip 7. Premier à <b>200 points</b> en fin de manche : victoire (le plus haut score en cas d'égalité).</p>`
-},
-{
-  id:"traitres-a-bord", img:"https://www.espritjeu.com/upload/image/traitres-a-bord---p-image-88392", nom:"Traîtres à bord", min:3, max:8, duree:"20 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://media.play-in.com/pdf/rules_games/traitres_a_bord_-_regles_fr.pdf",reglesType:"PDF",
-  pitch:"Pirates contre mutins autour d'un coffre qu'on remplit en mentant.",
-  video:"Lw1zoBKH2po",
-  bref:[
-    "Rôle secret : Pirate (remplir le coffre) ou Mutin (saboter).",
-    "À votre tour : posez une carte Butin face cachée sur le coffre (+1, 0 ou -2) en annonçant sa valeur, vous avez le droit de mentir. Ou jouez une carte Action.",
-    "Carte Planche : posez-la devant un joueur suspect. 3 planches = à l'eau, il révèle son rôle.",
-    "Au début de son tour, un Pirate peut affirmer que le coffre a atteint l'objectif : il le vérifie. Raté = les Mutins gagnent.",
-    "Pioche vide = les Mutins gagnent. Tous les Mutins à l'eau = les Pirates gagnent."
-  ],
-  full:`
-<h3>Mise en place</h3>
-<ul>
-<li>Préparez les rôles et le nombre de Planches selon le nombre de joueurs : 3 joueurs = 2 Pirates, 1 Mutin ; 4 = 3/1 ; 5 = 4/1 ; 6 = 4/2 ; 7 = 5/2 ; 8 = 6/2 (tableau du livret).</li>
-<li>Chacun reçoit un rôle face cachée et le regarde en secret.</li>
-<li>Mélangez les cartes Butin et Action : chacun reçoit <b>3 cartes</b>.</li>
-<li>Valeur du coffre à atteindre : 3 joueurs = <b>5</b> · 4 = <b>8</b> · 5 = <b>11</b> · 6 = <b>6</b> · 7 = <b>9</b> · 8 = <b>12</b>.</li>
-<li>Le joueur le plus bavard commence.</li>
-</ul>
-<h3>Tour de jeu</h3>
-<p>Une action au choix :</p>
-<ul>
-<li><b>Butin</b> : posez une carte +1, 0 ou -2 face cachée sur le coffre et <b>annoncez sa valeur</b> (mentir est autorisé). Jamais de carte Action dans le coffre.</li>
-<li><b>Action</b> : révélez-la et appliquez son effet. <b>Planche</b> : posez-la devant un autre joueur. <b>Bon débarras</b> : défaussez les 2 cartes du dessus du coffre sans les regarder. <b>Longue-vue</b> : regardez en secret les 3 cartes du dessus du coffre et remettez-les dans l'ordre de votre choix. <b>Vide tes poches</b> : un autre joueur défausse toute sa main et repioche 3 cartes. <b>Pêche miraculeuse</b> : piochez 3 cartes, puis remettez-en 2 de votre main sur la pioche dans l'ordre de votre choix.</li>
-</ul>
-<p>Puis complétez votre main à 3 cartes.</p>
-<h3>À l'eau</h3>
-<p>Un joueur qui a <b>3 Planches</b> devant lui est poussé à l'eau : il révèle son rôle, défausse sa main et quitte la partie (il peut encore participer aux discussions).</p>
-<h3>Fin de partie</h3>
-<ul>
-<li>Au début de son tour, un <b>Pirate</b> peut annoncer que le coffre a atteint la valeur demandée. Il révèle son rôle et compte : s'il a raison, les Pirates gagnent ; sinon, les Mutins gagnent.</li>
-<li>Tous les Mutins à l'eau : les <b>Pirates</b> gagnent.</li>
-<li>Il reste autant de Mutins que de Pirates, ou la pioche est vide : les <b>Mutins</b> gagnent.</li>
-</ul>
-<p>Parlez, accusez, mentez : c'est le cœur du jeu.</p>`
-},
-{
-  id:"loup-garou-une-nuit", img:"https://www.espritjeu.com/upload/image/loup-garou-pour-une-nuit---edition-2016-p-image-57050", nom:"Loup-Garou pour une nuit", min:3, max:10, duree:"10 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://www.letempledujeu.fr/IMG/pdf/loup_garou_pour_une_nuit.pdf",reglesType:"PDF",
-  pitch:"Une seule nuit, un seul vote : trouvez un loup-garou en 10 minutes.",
-  video:"8cfwU5pss1Q",
-  bref:[
-    "Une carte rôle par joueur, plus 3 cartes face cachée au centre.",
-    "La nuit : les rôles se réveillent un par un et agissent (regarder, échanger des cartes).",
-    "Le jour : tout le monde discute quelques minutes. Attention, votre carte a peut-être changé pendant la nuit.",
-    "Vote : au signal, tout le monde pointe un joueur. Le plus désigné meurt.",
-    "Village : gagne si au moins un loup-garou meurt. Loups : gagnent si aucun loup ne meurt."
-  ],
-  full:`
-<h3>Mise en place</h3>
-<p>Prenez autant de rôles que de joueurs <b>+ 3</b>. Distribuez-en un à chacun, posez les 3 autres face cachée au centre. Chacun regarde sa carte puis la repose face cachée.</p>
-<h3>La nuit (une personne ou l'appli fait le narrateur)</h3>
-<p>Tout le monde ferme les yeux. Les rôles se réveillent dans cet ordre (seulement ceux en jeu) :</p>
-<ol>
-<li><b>Loups-Garous</b> : se reconnaissent. Un loup seul peut regarder une carte du centre.</li>
-<li><b>Sbire</b> : voit qui sont les loups (eux ne le voient pas).</li>
-<li><b>Francs-Maçons</b> : se reconnaissent.</li>
-<li><b>Voyante</b> : regarde la carte d'un joueur ou 2 cartes du centre.</li>
-<li><b>Voleur</b> : échange sa carte avec celle d'un joueur et regarde sa nouvelle carte.</li>
-<li><b>Noiseuse</b> : échange les cartes de deux autres joueurs sans les regarder.</li>
-<li><b>Soûlard</b> : échange sa carte avec une carte du centre sans la regarder.</li>
-<li><b>Insomniaque</b> : regarde sa propre carte à la fin de la nuit.</li>
-</ol>
-<p>Important : votre camp est celui de la carte que vous avez <b>à la fin de la nuit</b>.</p>
-<h3>Le jour</h3>
-<p>Discussion libre (environ 5 minutes). On peut dire la vérité, mentir, bluffer. Interdit de regarder sa carte.</p>
-<h3>Le vote</h3>
-<p>Au signal, chacun pointe un joueur. Celui qui a le plus de votes meurt (égalité : tous les ex æquo meurent). Si chacun n'a reçu qu'un vote, personne ne meurt. On révèle les cartes.</p>
-<h3>Victoire</h3>
-<ul>
-<li><b>Village</b> : au moins un loup-garou meurt. S'il n'y a aucun loup parmi les joueurs, le village gagne si personne ne meurt.</li>
-<li><b>Loups-Garous</b> (et Sbire) : aucun loup ne meurt.</li>
-<li><b>Tanneur</b> : gagne s'il meurt.</li>
-<li><b>Chasseur</b> : s'il meurt, le joueur qu'il a désigné meurt aussi.</li>
-</ul>`
-},
-{
-  id:"lovecraft-letter", img:"https://www.espritjeu.com/upload/image/horreur-a-arkham---lovecraft-letter-p-image-99546", nom:"Horreur à Arkham : Lovecraft Letter", min:2, max:6, duree:"25 min", cat:"BLUFF & TRAHISON",diff:2,debut:false,regles:"https://nfc.accessijeux.com/regles-du-jeu-lovecraft-letter/",reglesType:"fr",
-  pitch:"Love Letter version Cthulhu : plus puissant quand on devient fou, mais plus risqué.",
-  video:"DpYq7id-DaI",
-  bref:[
-    "Vous avez 1 carte en main. À votre tour, piochez-en une et jouez-en une des deux (appliquez son effet).",
-    "But d'une manche : être le dernier en jeu, ou avoir la carte la plus forte quand la pioche est vide.",
-    "Si une carte Autre Monde est devant vous, vous devenez Fou : vous pouvez utiliser ses effets puissants.",
-    "Mais un Fou fait un test de santé mentale à chaque tour : s'il révèle une carte Autre Monde, il est éliminé.",
-    "Victoire : 2 manches gagnées en étant sain d'esprit, ou 3 en étant fou (ou l'effet fou de Cthulhu)."
-  ],
-  full:`
-<h3>Une manche</h3>
-<ul>
-<li>Mélangez les cartes, écartez-en une face cachée et donnez <b>1 carte</b> à chaque joueur. À 2 joueurs, écartez aussi 5 cartes face visible. Tout le monde commence <b>sain d'esprit</b>.</li>
-<li>À votre tour : piochez 1 carte, puis jouez l'une de vos 2 cartes devant vous et appliquez son effet.</li>
-</ul>
-<h3>Folie</h3>
-<ul>
-<li>Il y a deux types de cartes : <b>Arkham</b> (un seul effet) et <b>Autre Monde</b> (un effet sain d'esprit et un effet fou).</li>
-<li>Dès qu'une carte Autre Monde est dans votre zone de défausse, vous êtes <b>Fou</b> pour le reste de la manche : vous choisissez l'effet de vos cartes Autre Monde.</li>
-<li><b>Test de santé mentale</b> : un joueur fou, au début de son tour et avant de piocher, révèle autant de cartes de la pioche que de cartes Autre Monde devant lui. Si l'une est une carte Autre Monde, il quitte la manche.</li>
-</ul>
-<h3>Gagner une manche</h3>
-<p>Être le dernier joueur en jeu, ou avoir la carte de plus forte valeur en main quand la pioche est vide. Le gagnant prend un pion Mythe, face <b>sain d'esprit</b> ou <b>fou</b> selon son état.</p>
-<h3>Gagner la partie</h3>
-<ul>
-<li><b>2 pions sain d'esprit</b>,</li>
-<li>ou <b>3 pions fou</b>,</li>
-<li>ou réussir l'effet fou de <b>Cthulhu</b>.</li>
-</ul>
-<p>Pour débuter, on peut retirer les cartes Autre Monde et jouer comme à Love Letter classique.</p>`
-},
-{
-  id:"tarot", nom:"Tarot", min:3, max:5, duree:"45 min", cat:"RÉFLEXION",diff:3,debut:false,regles:"https://www.fftarot.fr/assets/documents/R-RO201206.pdf",reglesType:"PDF",
-  pitch:"Le grand classique français : un preneur contre tous, au jeu de 78 cartes.",
-  video:"WjdpLlTnmBI",
-  bref:[
-    "À 4 joueurs : 18 cartes chacun, 6 au chien. Un joueur prend (fait un contrat) et joue seul contre les 3 autres.",
-    "Contrats du plus faible au plus fort : Prise (ou Petite), Garde, Garde sans le chien, Garde contre le chien.",
-    "Il faut fournir la couleur demandée ; sinon on doit couper à l'atout, et monter à l'atout si possible.",
-    "Le preneur doit atteindre 56, 51, 41 ou 36 points selon qu'il a 0, 1, 2 ou 3 bouts (le 1, le 21, l'Excuse).",
-    "L'Excuse se joue n'importe quand, ne gagne pas le pli et revient à son propriétaire."
-  ],
-  full:`
-<h3>Les cartes (78)</h3>
-<ul>
-<li>4 couleurs de 14 cartes (1 à 10, Valet, Cavalier, Dame, Roi).</li>
-<li>21 atouts (1 à 21) et l'<b>Excuse</b>.</li>
-<li><b>Bouts</b> (oudlers) : le 1 d'atout (le Petit), le 21 et l'Excuse.</li>
-</ul>
-<h3>Distribution (à 4)</h3>
-<p>Le donneur distribue <b>3 par 3</b> dans le sens inverse des aiguilles d'une montre : <b>18 cartes</b> chacun et <b>6 cartes au chien</b> (posées une par une, jamais la première ni la dernière carte).</p>
-<h3>Enchères</h3>
-<p>En commençant à droite du donneur, chacun passe ou annonce un contrat plus fort que le précédent :</p>
-<table><tr><th>Contrat</th><th>Chien</th><th>Coefficient</th></tr>
-<tr><td>Prise (ou Petite)</td><td>le preneur le prend et écarte 6 cartes</td><td>×1</td></tr>
-<tr><td>Garde</td><td>idem</td><td>×2</td></tr>
-<tr><td>Garde sans</td><td>non regardé, compte pour le preneur</td><td>×4</td></tr>
-<tr><td>Garde contre</td><td>non regardé, compte pour la défense</td><td>×6</td></tr></table>
-<p>Dans l'écart, interdit de mettre des Rois ou des bouts (atouts seulement si nécessaire, montrés).</p>
-<h3>Le jeu</h3>
-<ul>
-<li>Il faut <b>fournir la couleur</b> demandée.</li>
-<li>Sans la couleur : on doit <b>couper</b> (jouer un atout) et, si un atout est déjà posé, <b>monter</b> au-dessus si possible.</li>
-<li>Sans atout : on joue n'importe quelle carte.</li>
-<li>L'<b>Excuse</b> peut être jouée à tout moment, ne remporte pas le pli, et reste à son camp (en échange d'une carte basse).</li>
-</ul>
-<h3>Compter les points (total 91)</h3>
-<p>Bouts et Rois 4,5 · Dames 3,5 · Cavaliers 2,5 · Valets 1,5 · autres cartes 0,5.</p>
-<table><tr><th>Bouts du preneur</th><th>Points à faire</th></tr>
-<tr><td>0</td><td>56</td></tr><tr><td>1</td><td>51</td></tr><tr><td>2</td><td>41</td></tr><tr><td>3</td><td>36</td></tr></table>
-<p>Score de la donne : (25 + écart par rapport au seuil) × coefficient, gagné ou perdu par le preneur face à chaque défenseur. Bonus : Petit au bout (dernier pli), poignées, chelem (voir règles de la FFT pour le détail).</p>
-<p>À 3 : 24 cartes chacun, chien de 6. À 5 : 15 cartes, chien de 3, le preneur appelle un Roi pour désigner son partenaire secret.</p>`
-},
-{
-  id:"cartes-54", nom:"2 jeux de 54 cartes", min:2, max:10, duree:"Variable", cat:"RAPIDE & FUN",diff:1,debut:false,regles:"",reglesType:"liste",
-  pitch:"Sept classiques à lancer avec les deux jeux de cartes, du plus calme au plus bruyant.",
-  video:"", recherche:"règles kems jeu de cartes",
-  liste:[
-    {nom:"Kem's", info:"4, 6 ou 8 · en équipes · ambiance", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-kems-pour-joueur-debutant.pdf"},
-    {nom:"Kilo de merde", info:"3 à 10 · rapide et bruyant", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-kilo-de-merde-pour-joueur-debutant.pdf"},
-    {nom:"Président", info:"4 à 8 · le classique", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-president-pour-joueur-debutant.pdf"},
-    {nom:"8 américain", info:"2 à 6 · facile", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-8-americain.pdf"},
-    {nom:"Bataille corse", info:"2 à 6 · réflexes", url:"https://www.jeux-ducale.fr/nos-regles/bataille-corse/"},
-    {nom:"Belote", info:"4 · en équipes · avec 32 cartes", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-belote-pour-joueur-debutant.pdf"},
-    {nom:"Crapette", info:"2 · avec les deux jeux", url:"https://bk.jeux-ducale.fr/app/uploads/2022/06/cartes-a-jouer-Ducale-regle-jeu-crapette-2-2.pdf"}
-  ],
-  bref:[
-    "Kem's (4, 6 ou 8, en équipes de 2) : réunissez 4 cartes identiques et prévenez votre partenaire avec un signe secret.",
-    "Kilo de merde (3 à 10) : passez une carte à gauche pour faire un carré, puis tapez sur le tas. Le dernier à taper prend des « kilos ».",
-    "Président (4 à 8) : débarrassez-vous de vos cartes en jouant plus fort que le précédent.",
-    "8 américain (2 à 6) : même couleur ou même valeur, le 8 change la couleur.",
-    "Bataille corse (2 à 6), Belote (4) et Crapette (2) : détails et PDF dans l'onglet Règles détaillées."
-  ],
-  full:`
-<h3>Kem's (4, 6 ou 8 joueurs, en équipes de 2)</h3>
-<ul>
-<li>Les partenaires se placent en diagonale et conviennent en secret d'un <b>signe</b> (se toucher l'oreille, poser la main à plat…).</li>
-<li>4 cartes chacun, 4 cartes face visible au centre. Au signal « la chasse est ouverte », tout le monde échange en même temps ses cartes avec celles du centre, une contre une, en posant avant de prendre. Quand plus personne n'échange, on renouvelle les 4 cartes du centre.</li>
-<li>Si vous avez <b>4 cartes identiques</b>, faites le signe discrètement. Votre partenaire crie « Kem's ! » : 1 point.</li>
-<li>Si un adversaire repère le signe, il crie « Contre-Kem's ! » en désignant le joueur : 1 point pour son équipe s'il a raison, 1 point pour l'autre équipe s'il se trompe.</li>
-</ul>
-<h3>Kilo de merde (3 à 10 joueurs)</h3>
-<ul>
-<li>On prend un carré de valeurs par joueur (Rois, Dames, Valets à 3, puis on ajoute d'autres valeurs). 4 cartes chacun, le reste forme le tas des « kilos ».</li>
-<li>Tout le monde passe en même temps une carte à son voisin de gauche, encore et encore, pour réunir 4 cartes identiques.</li>
-<li>Le premier qui a son carré tape sur le tas. <b>Le dernier à taper</b> prend une carte du tas : ce sont ses kilos (As 100, Roi 13, Dame 12, Valet 11…).</li>
-<li>On joue un nombre de tours fixé d'avance. Le moins de kilos gagne. Détail des cartes et des points dans le PDF.</li>
-</ul>
-<h3>Président (4 à 8 joueurs)</h3>
-<ul>
-<li>Distribuez toutes les cartes. Ordre : 3 (le plus faible) … As, 2 (le plus fort).</li>
-<li>Le premier pose une carte seule, une paire, un brelan ou un carré. Les suivants posent la même quantité, de valeur égale ou supérieure, ou passent.</li>
-<li>Quand tout le monde passe, on nettoie la table et le dernier à avoir joué repart.</li>
-<li>Premier sans carte = Président, dernier = Trou du cul. À la manche suivante, le dernier donne ses 2 meilleures cartes au Président, qui lui rend 2 cartes de son choix.</li>
-</ul>
-<h3>8 américain (2 à 6 joueurs)</h3>
-<ul>
-<li>7 ou 8 cartes chacun, une carte retournée au centre, le reste en pioche.</li>
-<li>Posez une carte de <b>même couleur ou même valeur</b>. Sinon, piochez.</li>
-<li><b>8</b> : se pose sur tout et change la couleur. Variantes courantes : 2 = le suivant pioche 2, Valet = passe le tour, As = change de sens.</li>
-<li>Annoncez « carte » quand il vous en reste une. Premier sans carte gagne.</li>
-</ul>
-<h3>Bataille corse (2 à 6 joueurs)</h3>
-<ul>
-<li>Toutes les cartes sont distribuées, chacun garde son paquet face cachée.</li>
-<li>À tour de rôle, on retourne la carte du dessus de son paquet au centre.</li>
-<li>Figure ou As : le joueur suivant a 1 chance (Valet), 2 (Dame), 3 (Roi) ou 4 (As) pour sortir une figure ou un As à son tour, sinon le poseur de la figure ramasse le tas.</li>
-<li>Deux cartes identiques qui se suivent (ou « sandwich » selon la variante) : le premier qui tape sur le tas le ramasse. Taper à tort coûte une carte.</li>
-<li>Celui qui a toutes les cartes gagne.</li>
-</ul>
-<h3>Belote (4 joueurs, en équipes)</h3>
-<p>Se joue avec 32 cartes (retirez les 2 à 6 et les jokers). Jeu de plis avec atout : Valet (20) et 9 (14) sont les plus forts à l'atout. Règle complète et décompte des points dans le PDF.</p>
-<h3>Crapette (2 joueurs)</h3>
-<p>Une réussite à deux, un jeu de cartes chacun : on monte les As au centre, on descend les colonnes en alternant rouge et noir, et le premier qui vide son talon gagne. Détail dans le PDF.</p>
-<p class="note">Les règles des jeux de cartes traditionnels varient d'une table à l'autre : mettez-vous d'accord avant de commencer.</p>`
-},
-{
-  id:"galerapagos", img:"https://www.espritjeu.com/upload/image/galerapagos-p-image-62543", nom:"Galèrapagos", min:3, max:12, duree:"30 min", cat:"BLUFF & TRAHISON",diff:1,debut:false,regles:"https://cdn.1j1ju.com/medias/ad/6d/e3-galerapagos-regle.pdf",reglesType:"PDF",
-  pitch:"Naufragés sur une île : construisez un radeau ensemble… et votez qui sacrifier.",
-  video:"UFcuUSBWK8U",
-  bref:[
-    "Tout le monde veut quitter l'île en radeau avant l'ouragan.",
-    "À votre tour, une action : pêcher, récupérer de l'eau, couper du bois ou fouiller l'épave (carte perso).",
-    "À la fin de chaque tour, chaque survivant doit avoir 1 eau et 1 nourriture.",
-    "Pas assez pour tout le monde ? On vote pour éliminer quelqu'un.",
-    "Quand le radeau a assez de places pour tous les survivants, on part et on gagne. L'ouragan arrive : dernier tour."
-  ],
-  full:`
-<h3>But du jeu</h3>
-<p>Quitter l'île vivant sur le radeau avant l'ouragan. Tous ceux qui partent gagnent.</p>
-<h3>Mise en place</h3>
-<ul>
-<li>Plateau au centre, sac avec les <b>6 boules</b> (5 blanches, 1 noire).</li>
-<li>Cartes Épave : <b>4</b> par joueur de 3 à 8 joueurs, <b>3</b> de 9 à 12.</li>
-<li>Pioche Météo : 5 cartes Météo au hasard mélangées avec la carte Ouragan.</li>
-</ul>
-<h3>Un tour</h3>
-<ol>
-<li>Le premier joueur change (il passe à droite), puis on révèle une carte Météo.</li>
-<li>Chacun à son tour fait <b>une action</b> :
-<ul>
-<li><b>Pêcher</b> : piochez une boule dans le sac, elle indique le nombre de poissons. Avancez le compteur de nourriture d'autant.</li>
-<li><b>Eau</b> : avancez le compteur d'eau du nombre de gouttes de la carte Météo (grand soleil = rien).</li>
-<li><b>Bois</b> : avancez d'une case sur la piste Radeau, puis vous pouvez tenter d'en gagner plus en piochant 1 à 5 boules. Si la boule noire sort, c'est une morsure de serpent : pas de bois supplémentaire et vous êtes empoisonné.</li>
-<li><b>Fouiller l'épave</b> : piochez une carte Épave, gardée secrète dans votre main.</li>
-</ul></li>
-<li>Quand la piste Radeau atteint 6, une place de radeau est construite.</li>
-<li><b>Survie</b> : chaque survivant consomme <b>1 eau</b> puis <b>1 nourriture</b>. S'il en manque, on peut jouer des cartes Épave (eau, nourriture). Sinon, <b>vote</b> : chacun pointe un joueur, le plus désigné meurt (égalité : le premier joueur tranche). On recommence jusqu'à avoir assez.</li>
-</ol>
-<h3>Cartes Épave</h3>
-<p>Ressources, objets utiles (revolver, cartouches…), cartes qui influencent les votes, et objets inutiles pour bluffer. Elles restent secrètes et se jouent en général à tout moment.</p>
-<h3>Fin de partie</h3>
-<ul>
-<li>Le radeau a assez de places pour tous les survivants et il y a de quoi boire et manger : on embarque, les survivants gagnent.</li>
-<li>La carte <b>Ouragan</b> est révélée : c'est le dernier tour, il faut partir à la fin, en sacrifiant s'il le faut ceux qui n'ont pas de place.</li>
-<li>Tout le monde meurt : l'île a gagné.</li>
-</ul>`
-}
-];
+<div id="demoBar" class="demo hidden"><b>Mode local</b> — les données restent sur cet appareil. Renseigne la config Firebase dans le fichier pour partager avec l'asso.</div>
 
-/* =====================================================================
-   APPLICATION
-   ===================================================================== */
-const app = document.getElementById('app');
-let filtreJoueurs = 0;
-let filtreCat = '';
-let recherche = '';
-let scrollListe = 0;
+<!-- Connexion -->
+<section id="loginView" class="login hidden">
+  <form id="loginForm" autocomplete="on">
+    <div class="badge" style="display:inline-block;margin-bottom:12px">PTG</div>
+    <h1>Ludothèque</h1>
+    <div class="accent"></div>
+    <p class="sub" style="margin-bottom:16px">Accès réservé aux membres de Play Thau'Gether.</p>
+    <div class="field"><label for="lEmail">E-mail</label><input id="lEmail" type="email" required autocomplete="username"></div>
+    <div class="field"><label for="lPass">Mot de passe</label><input id="lPass" type="password" required autocomplete="current-password"></div>
+    <div class="err" id="lErr"></div>
+    <button class="btn primary" style="width:100%" type="submit">Se connecter</button>
+  </form>
+</section>
 
-const CATS = [
-  {nom:"RAPIDE & FUN", desc:"Règles en deux minutes, parties courtes", coul:"#C0522A"},
-  {nom:"AMBIANCE & RIRES", desc:"On parle, on dessine, on rigole", coul:"#9A6A2E"},
-  {nom:"BLUFF & TRAHISON", desc:"Rôles cachés, on ment, on se méfie", coul:"#3A2313"},
-  {nom:"RÉFLEXION", desc:"On se pose, on construit, on optimise", coul:"#2F6E62"},
-  {nom:"DUEL", desc:"Pour ceux qui viennent à deux", coul:"#5C3A21"}
-];
-function coulCat(c){const x=CATS.find(k=>k.nom===c);return x?x.coul:'#2F6E62'}
-
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function joueursTxt(j){return j.min===j.max ? j.min+' joueurs' : j.min+' à '+j.max+' joueurs'}
-function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
-function diffTxt(d){return '<span class="diff" title="Difficulté">'+'●'.repeat(d)+'<i>'+'●'.repeat(3-d)+'</i></span>'}
-function tagCat(c){return `<span class="tag" style="color:${coulCat(c)};border-color:${coulCat(c)}">${esc(c)}</span>`}
-
-function photo(j,cls){
-  if(!j.img) return `<div class="${cls} sans" aria-hidden="true">${esc(j.nom.charAt(0))}</div>`;
-  return `<img class="${cls}" src="${esc(j.img)}-moyenne.jpg" alt="Boîte de ${esc(j.nom)}" loading="lazy" data-base="${esc(j.img)}" data-essai="0" onerror="imgSecours(this)">`;
-}
-function imgSecours(el){
-  const tailles=['-petite.jpg','-grande.jpg'];
-  const n=+el.dataset.essai;
-  if(n<tailles.length){el.dataset.essai=n+1;el.src=el.dataset.base+tailles[n];}
-  else{el.replaceWith(Object.assign(document.createElement('div'),{className:el.className+' sans',textContent:el.alt.replace('Boîte de ','').charAt(0)}));}
-}
-
-function carteJeu(j){return `
-    <a class="jeu" href="#${j.id}" style="border-left:5px solid ${coulCat(j.cat)}">
-      ${photo(j,'vignette')}
-      <div class="txt">
-      <h2>${esc(j.nom)}</h2>
-      <div class="meta"><span><b>${joueursTxt(j)}</b></span><span>${esc(j.duree)}</span>${diffTxt(j.diff)}</div>
-      <p>${esc(j.pitch)}</p>
+<!-- App -->
+<div id="appView" class="hidden" style="display:flex;flex-direction:column;flex:1">
+  <header class="wrap">
+    <div class="head-row">
+      <div class="titles">
+        <h1>Ludothèque</h1>
+        <div class="accent"></div>
+        <p class="sub" id="count">—</p>
       </div>
-    </a>`}
-
-function vueListe(){
-  document.title = "Jeux de la soirée · Play Thau'Gether";
-  const tailles = [2,3,4,5,6,7,8];
-  app.innerHTML = `
-  <header>
-    <span class="badge">PTG</span>
-    <h1>Les jeux de la soirée</h1>
-    <div class="trait"></div>
-    <p class="sous">Choisissez un jeu : règles en bref, règles détaillées, <b>vidéo</b> et règles officielles. Besoin d'aide ? Demandez à un organisateur.</p>
+      <div class="actions">
+        <button class="icon-btn" id="btnExport" title="Exporter une sauvegarde" aria-label="Exporter une sauvegarde">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </button>
+        <button class="icon-btn" id="btnImport" title="Importer une sauvegarde" aria-label="Importer une sauvegarde">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 21h14"/></svg>
+        </button>
+        <button class="icon-btn" id="btnLogout" title="Se déconnecter" aria-label="Se déconnecter">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>
+        </button>
+        <span class="badge">PTG</span>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-view="jeux">Les jeux</button>
+      <button class="tab" data-view="carte">Carte des jeux</button>
+    </div>
   </header>
-  <div class="filtres">
-    <input class="recherche" id="q" type="search" placeholder="Chercher un jeu…" value="${esc(recherche)}" autocomplete="off">
-    <div class="label">On est combien ?</div>
-    <div class="chips" id="chips">
-      <button class="chip ${filtreJoueurs===0?'actif':''}" data-n="0">Tous</button>
-      ${tailles.map(n=>`<button class="chip ${filtreJoueurs===n?'actif':''}" data-n="${n}">${n===8?'8+':n}</button>`).join('')}
+
+  <div class="toolbar" id="toolbar">
+    <div class="wrap">
+      <div class="row">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input id="q" type="search" placeholder="Rechercher un jeu…" autocomplete="off">
+        </label>
+        <div class="row filters">
+          <select id="fPlayers" aria-label="Nombre de joueurs"><option value="">Joueurs : tous</option></select>
+          <select id="fOwner" aria-label="Propriétaire"><option value="">Propriétaire : tous</option></select>
+          <select id="fSort" aria-label="Tri">
+            <option value="nom">Tri : A → Z</option>
+            <option value="recent">Tri : ajoutés récemment</option>
+            <option value="duree">Tri : plus courts</option>
+          </select>
+          <select id="fStatut" aria-label="Statut">
+            <option value="in">Dans la collection</option>
+            <option value="out">Sortis de la collection</option>
+            <option value="all">Tous les jeux</option>
+          </select>
+          <button class="btn" id="btnXls" type="button">Exporter en Excel</button>
+        </div>
+      </div>
+      <div class="chips" id="typeChips"></div>
     </div>
-    <div class="label">Envie de quoi ?</div>
-    <div class="chips" id="cats">
-      <button class="chip ${filtreCat===''?'actif':''}" data-c="">Tout</button>
-      ${CATS.map(c=>`<button class="chip ${filtreCat===c.nom?'actif':''}" data-c="${esc(c.nom)}">${esc(c.nom)}</button>`).join('')}
-    </div>
-    <p class="legende">Difficulté : ${diffTxt(1)} facile · ${diffTxt(2)} moyen · ${diffTxt(3)} costaud</p>
   </div>
-  <div class="compte" id="compte"></div>
-  <div id="liste"></div>
-  <footer>Play Thau'Gether · En cas de doute, le livret de la boîte fait foi.</footer>`;
-  const q = document.getElementById('q');
-  q.addEventListener('input',()=>{recherche=q.value;remplirListe()});
-  document.getElementById('chips').addEventListener('click',e=>{
-    const b=e.target.closest('.chip'); if(!b) return;
-    filtreJoueurs=+b.dataset.n;
-    document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('actif',c===b));
-    remplirListe();
-  });
-  document.getElementById('cats').addEventListener('click',e=>{
-    const b=e.target.closest('.chip'); if(!b) return;
-    filtreCat=b.dataset.c;
-    document.querySelectorAll('#cats .chip').forEach(c=>c.classList.toggle('actif',c===b));
-    remplirListe();
-  });
-  remplirListe();
-  window.scrollTo(0,scrollListe);
+
+  <main id="jeuxView" class="wrap">
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty hidden"></div>
+    <div id="loading" class="loading">Chargement…</div>
+  </main>
+
+  <section id="carteView" class="wrap hidden">
+    <div class="carte-layout">
+      <div id="editor"></div>
+      <div class="preview">
+        <div class="preview-bar">
+          <span class="lbl">Aperçu A4</span>
+          <button class="btn primary" id="btnPrint">Imprimer / PDF</button>
+        </div>
+        <div class="sheet-wrap" id="sheetWrap"><div class="sheet" id="sheet"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 60" preserveAspectRatio="none"><path d="M0 30 C 100 0, 200 60, 300 30 S 500 0, 600 30 S 800 60, 900 30 S 1100 0, 1200 30 V60 H0Z" fill="#5C3A21" opacity=".12"/></svg>
+  </footer>
+
+  <button class="fab" id="btnAdd">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Ajouter un jeu
+  </button>
+</div>
+
+<input type="file" id="importFile" accept="application/json,.json" class="hidden">
+<input type="file" id="qrFile" accept="image/*" class="hidden">
+
+<!-- Fiche jeu -->
+<dialog id="detailDlg">
+  <div class="dlg-head">
+    <h2 id="dTitle"></h2>
+    <button class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dlg-body" id="dBody"></div>
+  <div class="dlg-foot">
+    <button class="btn danger" id="dDelete">Supprimer</button>
+    <button class="btn" id="dOut">Sortir de la collection</button>
+    <button class="btn primary" id="dEdit">Modifier</button>
+  </div>
+</dialog>
+
+<!-- Sortie de collection -->
+<dialog id="outDlg">
+  <form id="outForm" method="dialog" novalidate>
+    <div class="dlg-head">
+      <h2 id="oTitle">Sortir un jeu</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <div class="grid2" id="oWhich">
+        <div class="field"><label for="oOwner">Exemplaire de</label><select id="oOwner"></select></div>
+        <div class="field"><label for="oQte">Combien</label><input id="oQte" type="number" inputmode="numeric" min="1" value="1"></div>
+      </div>
+      <div class="field">
+        <label>Raison</label>
+        <div class="seg" id="oMotif">
+          <button type="button" class="chip on" data-m="Vendu">Vendu</button>
+          <button type="button" class="chip" data-m="Donné">Donné</button>
+          <button type="button" class="chip" data-m="Rendu au propriétaire">Rendu au propriétaire</button>
+          <button type="button" class="chip" data-m="Perdu / abîmé">Perdu / abîmé</button>
+          <button type="button" class="chip" data-m="Autre">Autre</button>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label for="oDate">Date</label><input id="oDate" type="date"></div>
+        <div class="field"><label for="oNote">Précision (prix, à qui…)</label><input id="oNote" maxlength="120" placeholder="Ex : vendu 15 € sur Vinted"></div>
+      </div>
+      <p class="hint" id="oHint"></p>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Annuler</button>
+      <button type="submit" class="btn primary">Valider la sortie</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Formulaire -->
+<dialog id="formDlg">
+  <form id="gameForm" method="dialog" novalidate>
+    <div class="dlg-head">
+      <h2 id="fTitle">Ajouter un jeu</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <div class="import-box">
+        <label class="lbl" for="iPaste">Remplir automatiquement</label>
+        <textarea id="iPaste" rows="2" placeholder="Colle ici la fiche du jeu (page Philibert, Ludum… : tout sélectionner, copier, coller) ou une image copiée" style="width:100%;margin-top:4px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;resize:vertical"></textarea>
+        <div class="type-add" style="justify-content:flex-end">
+          <button type="button" class="btn" id="btnPaste">Remplir depuis le texte</button>
+        </div>
+        <div id="pasteMsg" class="src-results"></div>
+        <div class="type-add" id="bggLine">
+          <input id="iSrc" placeholder="Lien BGG, lien boutique ou nom du jeu" autocomplete="off" style="padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none">
+          <button type="button" class="btn" id="btnFetch">Chercher</button>
+        </div>
+        <div id="srcResults" class="src-results"></div>
+        <div id="altNames" class="alt-names"></div>
+      </div>
+
+      <div class="field">
+        <label>Photo</label>
+        <div class="photo-pick">
+          <div class="prev" id="photoPrev"><span>Pas de photo</span></div>
+          <div class="btns">
+            <label class="btn" style="text-align:center">Choisir / prendre une photo<input type="file" id="photoInput" accept="image/*" class="hidden"></label>
+            <button type="button" class="btn" id="photoRemove">Retirer la photo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="iNom">Nom du jeu *</label>
+        <input id="iNom" required maxlength="120" placeholder="Ex : Dixit">
+      </div>
+
+      <div class="field">
+        <div class="owner-head"><label>À qui il appartient *</label><label>Exemplaires</label><span></span></div>
+        <div id="ownerRows"></div>
+        <datalist id="ownerList"></datalist>
+        <div><button type="button" class="btn sm" id="addOwner">+ Ajouter un propriétaire</button></div>
+      </div>
+
+      <div class="grid4">
+        <div class="field"><label for="iMin">Joueurs min</label><input id="iMin" type="number" inputmode="numeric" min="1" max="99"></div>
+        <div class="field"><label for="iMax">Joueurs max</label><input id="iMax" type="number" inputmode="numeric" min="1" max="99"></div>
+        <div class="field"><label for="iDuree">Durée (min)</label><input id="iDuree" type="number" inputmode="numeric" min="1" max="999"></div>
+        <div class="field"><label for="iAge">Âge min</label><input id="iAge" type="number" inputmode="numeric" min="1" max="99"></div>
+      </div>
+
+      <div class="field">
+        <label>Difficulté</label>
+        <div class="seg" id="diffPick">
+          <button type="button" class="chip" data-d="">Non renseignée</button>
+          <button type="button" class="chip" data-d="1">Facile</button>
+          <button type="button" class="chip" data-d="2">Moyen</button>
+          <button type="button" class="chip" data-d="3">Costaud</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Type de jeu</label>
+        <div class="type-pick" id="typePick"></div>
+        <div class="type-add">
+          <input id="iNewType" maxlength="30" placeholder="Autre type…">
+          <button type="button" class="btn" id="addType">Ajouter</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="iNotes">Notes (état, pièces manquantes, extensions…)</label>
+        <textarea id="iNotes" style="min-height:70px"></textarea>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" data-close>Annuler</button>
+      <button type="submit" class="btn primary" id="fSave">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<div id="printArea"></div>
+
+<script type="module">
+/* =========================================================
+   CONFIG
+   - Firebase : laisse apiKey vide pour tester en mode local.
+   - BGG_PROXY : URL de ta fonction Vercel (voir bgg.js),
+     ex. "https://ptg-bgg-proxy.vercel.app/api/bgg"
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCDTNlZIPxrI7BsGhwX-h7FlZKvY4ziSao",
+  authDomain: "jeuxsoiree-46bbc.firebaseapp.com",
+  projectId: "jeuxsoiree-46bbc",
+  storageBucket: "jeuxsoiree-46bbc.firebasestorage.app",
+  messagingSenderId: "518873056258",
+  appId: "1:518873056258:web:c34816342295677710931b"
+};
+const BGG_PROXY = "";
+
+const USE_FIREBASE = !!firebaseConfig.apiKey;
+const FB_VER = "10.12.2";
+const FB_PREFIX = "ludo_"; // collections Firestore : ludo_jeux, ludo_photos, ludo_cartes
+
+const DEFAULT_TYPES = [
+  "Ambiance","Stratégie","Coopératif","Familial","Expert","Party game",
+  "Déduction","Bluff","Rôles cachés","Enquête","Cartes","Dés",
+  "Placement","Gestion","Deck-building","Rapidité","Mots","Dessin","Escape game","Duo"
+];
+const DIFF = ["", "Facile", "Moyen", "Costaud"];
+const PALETTE = [["Marron foncé","#3A2313"],["Marron","#5C3A21"],["Teal","#2F6E62"],["Terracotta","#C0522A"],["Doré","#C9A57E"],["Noir","#1F140C"]];
+
+/* ---------- Utils ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2,10);
+const num = v => { const n = parseInt(v,10); return Number.isFinite(n) && n > 0 ? n : null; };
+const safeUrl = u => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch { return ""; } };
+const ytId = u => { const m = String(u||"").match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/|live\/)([\w-]{11})/); return m ? m[1] : null; };
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function fmtPlayers(g){
+  const a = g.joueursMin, b = g.joueursMax;
+  if (a && b) return a === b ? `${a} joueur${a>1?"s":""}` : `${a}–${b} joueurs`;
+  if (a) return `${a}+ joueurs`;
+  if (b) return `jusqu'à ${b} joueurs`;
+  return "";
+}
+function shortPlayers(g){
+  const a = g.joueursMin, b = g.joueursMax;
+  if (a && b) return a === b ? `${a}` : `${a}–${b}`;
+  if (a) return `${a}+`;
+  if (b) return `1–${b}`;
+  return "";
+}
+function fmtDuree(m){
+  if (!m) return "";
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m/60), r = m % 60;
+  return r ? `${h} h ${String(r).padStart(2,"0")}` : `${h} h`;
+}
+// Image (photo locale ou lien web) : si elle ne charge pas, on affiche l'initiale du jeu
+const letterOf = n => esc((n || "?").trim().charAt(0).toUpperCase());
+const imgTag = (src, nom, cls = "ph") => `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-l="${letterOf(nom)}" data-c="${cls}" onerror="this.outerHTML='<span class=&quot;'+this.dataset.c+'&quot;>'+this.dataset.l+'</span>'">`;
+const miniDots = d => d ? `<span class="mini-dots">${[1,2,3].map(i => `<i class="${i<=d?"f":""}"></i>`).join("")}</span>` : "";
+let toastT;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 3200);
 }
 
-function remplirListe(){
-  const r = norm(recherche.trim());
-  const res = JEUX.filter(j=>{
-    if(r && !norm(j.nom+' '+j.cat).includes(r)) return false;
-    if(filtreCat && j.cat!==filtreCat) return false;
-    if(filtreJoueurs){
-      if(filtreJoueurs===8) return j.max>=8;
-      return j.min<=filtreJoueurs && j.max>=filtreJoueurs;
+/* Compression photo -> JPEG dataURL */
+function loadImg(blob){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Image illisible")); };
+    img.src = url;
+  });
+}
+function toJpeg(img, maxSide, quality){
+  const r = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * r), h = Math.round(img.naturalHeight * r);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,w,h);
+  ctx.drawImage(img, 0, 0, w, h);
+  return c.toDataURL("image/jpeg", quality);
+}
+async function makePhotos(blob){
+  const img = await loadImg(blob);
+  let q = 0.78, full = toJpeg(img, 1100, q);
+  while (full.length > 650000 && q > 0.35) { q -= 0.1; full = toJpeg(img, 1100, q); }
+  return { full, thumb: toJpeg(img, 360, 0.7) };
+}
+
+/* ---------- Stockage local (mode test) ---------- */
+const LS = "ludoPTG.";
+function lsMap(col){
+  try {
+    const v = JSON.parse(localStorage.getItem(LS + col));
+    if (Array.isArray(v)) { const m = {}; v.forEach(g => { if (g && g.id) { const { id, ...r } = g; m[id] = r; } }); return m; }
+    return v || {};
+  } catch { return {}; }
+}
+const localStore = {
+  cbs: {},
+  _list(col){ return Object.entries(lsMap(col)).map(([id, d]) => ({ ...d, id })); },
+  _emit(col){ this.cbs[col] && this.cbs[col](this._list(col)); },
+  listen(col, cb){ this.cbs[col] = cb; cb(this._list(col)); },
+  async put(col, id, data){
+    try {
+      if (col === "photos") { localStorage.setItem(LS + "photo." + id, data.data); return; }
+      const m = lsMap(col); m[id] = data; localStorage.setItem(LS + col, JSON.stringify(m));
+    } catch { throw new Error("Stockage de l'appareil plein — configure Firebase."); }
+    this._emit(col);
+  },
+  async del(col, id){
+    if (col === "photos") { localStorage.removeItem(LS + "photo." + id); return; }
+    const m = lsMap(col); delete m[id]; localStorage.setItem(LS + col, JSON.stringify(m));
+    this._emit(col);
+  },
+  async get(col, id){
+    if (col === "photos") { const v = localStorage.getItem(LS + "photo." + id); return v ? { data: v } : null; }
+    return lsMap(col)[id] || null;
+  },
+  stopAll(){ this.cbs = {}; },
+  async logout(){}
+};
+
+/* ---------- Firebase ---------- */
+let store = localStore;
+async function initFirebase(){
+  const [{ initializeApp }, fs, au] = await Promise.all([
+    import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-app.js`),
+    import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-firestore.js`),
+    import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-auth.js`)
+  ]);
+  const app = initializeApp(firebaseConfig);
+  const db = fs.getFirestore(app);
+  const auth = au.getAuth(app);
+
+  store = {
+    unsubs: [],
+    listen(col, cb){
+      this.unsubs.push(fs.onSnapshot(fs.collection(db, FB_PREFIX + col),
+        snap => cb(snap.docs.map(d => ({ ...d.data(), id: d.id }))),
+        err => toast("Erreur de lecture : " + err.message)));
+    },
+    async put(col, id, data){ await fs.setDoc(fs.doc(db, FB_PREFIX + col, id), data); },
+    async del(col, id){ await fs.deleteDoc(fs.doc(db, FB_PREFIX + col, id)); },
+    async get(col, id){ const s = await fs.getDoc(fs.doc(db, FB_PREFIX + col, id)); return s.exists() ? s.data() : null; },
+    stopAll(){ this.unsubs.forEach(u => u()); this.unsubs = []; },
+    async logout(){ await au.signOut(auth); }
+  };
+
+  $("#loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    $("#lErr").textContent = "";
+    try {
+      await au.signInWithEmailAndPassword(auth, $("#lEmail").value.trim(), $("#lPass").value);
+    } catch (err) {
+      $("#lErr").textContent = /invalid|wrong|user-not-found/.test(err.code || "") ? "E-mail ou mot de passe incorrect." : "Connexion impossible : " + (err.code || err.message);
     }
+  });
+
+  au.onAuthStateChanged(auth, user => {
+    if (user) { showApp(); startData(); }
+    else { store.stopAll(); games = []; cartes = []; $("#appView").classList.add("hidden"); $("#loginView").classList.remove("hidden"); }
+  });
+}
+
+/* Accès jeux + photos */
+async function saveGame(id, data, photo){
+  if (photo === null) await store.del("photos", id).catch(() => {});
+  else if (photo) await store.put("photos", id, { data: photo });
+  await store.put("jeux", id, data);
+}
+async function removeGame(id){
+  await store.del("jeux", id);
+  await store.del("photos", id).catch(() => {});
+}
+async function getPhoto(id){ const p = await store.get("photos", id); return p ? p.data : null; }
+
+/* ---------- État ---------- */
+let games = [];
+let view = "jeux";
+const F = { q: "", players: "", owner: "", sort: "nom", statut: "in", types: new Set() };
+const isOut = g => !!g.sortie;
+const inGames = () => games.filter(g => !isOut(g));
+
+function showApp(){
+  $("#loginView").classList.add("hidden");
+  $("#appView").classList.remove("hidden");
+}
+function startData(){
+  store.listen("jeux", onGames);
+  store.listen("cartes", onCartes);
+}
+function onGames(list){
+  games = list;
+  $("#loading").classList.add("hidden");
+  refreshFilters();
+  render();
+  if (view === "carte") { renderPickList(); queueSheet(); }
+}
+
+function setView(v){
+  view = v;
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t.dataset.view === v));
+  $("#toolbar").classList.toggle("hidden", v !== "jeux");
+  $("#jeuxView").classList.toggle("hidden", v !== "jeux");
+  $("#btnAdd").classList.toggle("hidden", v !== "jeux");
+  $("#carteView").classList.toggle("hidden", v !== "carte");
+  if (v === "carte") { ensureCarte(); renderEditor(); renderSheet(); }
+}
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => setView(t.dataset.view)));
+
+// Liste des propriétaires d'un jeu : [{nom, qte}]
+function ownersOf(g){
+  if (Array.isArray(g.proprietaires) && g.proprietaires.length) return g.proprietaires.filter(o => o && o.nom);
+  return g.proprietaire ? [{ nom: g.proprietaire, qte: g.exemplaires || 1 }] : [];
+}
+const totalOf = g => ownersOf(g).reduce((n, o) => n + (o.qte || 1), 0) || 1;
+const ownersText = g => ownersOf(g).map(o => (o.qte || 1) > 1 ? `${o.nom} ×${o.qte}` : o.nom).join(" · ");
+
+function allTypes(){
+  const s = new Set(DEFAULT_TYPES);
+  games.forEach(g => (g.types || []).forEach(t => s.add(t)));
+  return [...s];
+}
+function usedTypes(){
+  const s = new Set();
+  games.forEach(g => (g.types || []).forEach(t => s.add(t)));
+  return [...s].sort((a,b) => a.localeCompare(b, "fr"));
+}
+function owners(){
+  const s = new Set(["Association PTG"]);
+  games.forEach(g => ownersOf(g).forEach(o => s.add(o.nom)));
+  return [...s].sort((a,b) => a.localeCompare(b, "fr"));
+}
+
+function refreshFilters(){
+  const fo = $("#fOwner"), cur = fo.value;
+  const used = [...new Set(games.flatMap(g => ownersOf(g).map(o => o.nom)))].sort((a,b) => a.localeCompare(b,"fr"));
+  fo.innerHTML = `<option value="">Propriétaire : tous</option>` + used.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join("");
+  fo.value = used.includes(cur) ? cur : "";
+  F.owner = fo.value;
+  $("#ownerList").innerHTML = owners().map(o => `<option value="${esc(o)}">`).join("");
+
+  const fp = $("#fPlayers");
+  if (fp.options.length < 2) {
+    let h = `<option value="">Joueurs : tous</option>`;
+    for (let i = 1; i <= 12; i++) h += `<option value="${i}">${i} joueur${i>1?"s":""}</option>`;
+    h += `<option value="13">13 et +</option>`;
+    fp.innerHTML = h;
+  }
+
+  const types = usedTypes();
+  [...F.types].forEach(t => { if (!types.includes(t)) F.types.delete(t); });
+  $("#typeChips").innerHTML = (F.types.size ? `<button class="chip reset" data-reset>Effacer</button>` : "") +
+    types.map(t => `<button class="chip${F.types.has(t) ? " on" : ""}" data-type="${esc(t)}">${esc(t)}</button>`).join("");
+}
+
+function filtered(){
+  const q = norm(F.q), n = F.players ? parseInt(F.players,10) : null;
+  let out = games.filter(g => {
+    if (F.statut === "in" && isOut(g)) return false;
+    if (F.statut === "out" && !isOut(g)) return false;
+    if (q && !norm([g.nom, ownersText(g), g.notes, (g.types||[]).join(" ")].join(" ")).includes(q)) return false;
+    if (F.owner && !ownersOf(g).some(o => o.nom === F.owner)) return false;
+    if (n) {
+      const mn = g.joueursMin || 1, mx = g.joueursMax || 99;
+      if (n < mn || n > mx) return false;
+    }
+    for (const t of F.types) if (!(g.types || []).includes(t)) return false;
     return true;
   });
-  document.getElementById('compte').textContent = res.length+(res.length>1?' jeux':' jeu');
-  if(!res.length){document.getElementById('liste').innerHTML=`<div class="vide">Aucun jeu ne correspond. Essayez un autre filtre.</div>`;return}
-  let html='';
-  const sansFiltre = !r && !filtreCat && !filtreJoueurs;
-  if(sansFiltre){
-    const deb = JEUX.filter(j=>j.debut);
-    html += `<section class="groupe debut"><h2 class="gtitre">Pour commencer</h2><p class="gdesc">Vous ne savez pas quoi prendre ? Ces jeux s'expliquent en deux minutes et marchent avec tout le monde.</p><div class="liste">${deb.map(carteJeu).join('')}</div></section>`;
+  if (F.sort === "recent") out.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  else if (F.sort === "duree") out.sort((a,b) => (a.duree||9999) - (b.duree||9999) || norm(a.nom).localeCompare(norm(b.nom)));
+  else out.sort((a,b) => norm(a.nom).localeCompare(norm(b.nom), "fr"));
+  return out;
+}
+
+function render(){
+  const list = filtered();
+  const coll = inGames(), total = coll.length, nOut = games.length - total;
+  const plural = n => `${n} jeu${n > 1 ? "x" : ""}`;
+  $("#count").textContent = games.length === 0 ? "Aucun jeu pour l'instant"
+    : (F.statut === "in" && list.length === total
+        ? `${plural(total)} dans la ludothèque` + (coll.some(g => totalOf(g) > 1) ? ` · ${coll.reduce((n, g) => n + totalOf(g), 0)} exemplaires` : "")
+        : F.statut === "out" ? `${plural(list.length)} sorti${list.length > 1 ? "s" : ""} de la collection`
+        : `${list.length} sur ${plural(F.statut === "all" ? games.length : total)}`)
+      + (F.statut === "in" && nOut ? ` · ${nOut} sorti${nOut > 1 ? "s" : ""}` : "");
+
+  $("#grid").innerHTML = list.map(g => {
+    const info = [fmtPlayers(g), fmtDuree(g.duree), g.age ? `${g.age}+ ans` : ""].filter(Boolean).join(" · ");
+    return `<button class="card${isOut(g) ? " out" : ""}" data-id="${esc(g.id)}">
+      <div class="thumb">${g.thumb ? imgTag(g.thumb, g.nom) : `<span class="ph">${letterOf(g.nom)}</span>`}${totalOf(g) > 1 ? `<span class="qte">×${totalOf(g)}</span>` : ""}${isOut(g) ? `<span class="out-tag">${esc(g.sortie.motif || "Sorti")}</span>` : ""}</div>
+      <div class="body">
+        <h3>${esc(g.nom)}</h3>
+        ${info ? `<div class="meta">${esc(info)}</div>` : ""}
+        ${ownersOf(g).length ? `<div class="owner">${esc(ownersText(g))}</div>` : ""}
+        ${(g.types||[]).length ? `<div class="tags">${g.types.slice(0,3).map(t => `<span class="tag">${esc(t)}</span>`).join("")}${g.types.length > 3 ? `<span class="tag">+${g.types.length-3}</span>` : ""}</div>` : ""}
+      </div>
+    </button>`;
+  }).join("");
+
+  const empty = $("#empty");
+  if (!list.length) {
+    empty.classList.remove("hidden");
+    empty.innerHTML = games.length === 0
+      ? `<b>La ludothèque est vide</b>Ajoute le premier jeu avec le bouton en bas à droite.`
+      : F.statut === "out" && !nOut ? `<b>Aucun jeu sorti</b>Les jeux vendus, donnés ou rendus apparaîtront ici.`
+      : `<b>Aucun jeu trouvé</b>Essaie d'enlever un filtre.`;
+  } else empty.classList.add("hidden");
+}
+
+/* ---------- Fiche détail ---------- */
+let currentId = null;
+async function openDetail(id){
+  const g = games.find(x => x.id === id); if (!g) return;
+  currentId = id;
+  $("#dTitle").textContent = g.nom;
+  const facts = [
+    [ownersOf(g).length > 1 ? "Propriétaires" : "Propriétaire", ownersOf(g).map(o => (o.qte || 1) > 1 ? `${o.nom} ×${o.qte}` : o.nom).join("\n")],
+    ["Exemplaires", totalOf(g) > 1 ? String(totalOf(g)) : ""],
+    ["Joueurs", fmtPlayers(g)],
+    ["Durée", fmtDuree(g.duree)],
+    ["Âge", g.age ? `${g.age} ans et +` : ""],
+    ["Difficulté", DIFF[g.difficulte] || ""]
+  ].filter(f => f[1]);
+  const bggLien = safeUrl(g.bggLien);
+
+  const fmtDate = d => { try { return new Date(d + "T12:00:00").toLocaleDateString("fr-FR"); } catch { return d; } };
+  const hist = (g.historique || []).slice().reverse();
+  $("#dOut").textContent = isOut(g) ? "Remettre dans la collection" : "Sortir de la collection";
+  $("#dBody").innerHTML = `
+    ${isOut(g) ? `<div class="out-box"><b>Sorti de la collection</b> le ${esc(fmtDate(g.sortie.date))} · ${esc(g.sortie.motif)}${g.sortie.note ? ` · ${esc(g.sortie.note)}` : ""}</div>` : ""}
+    ${g.thumb ? `<div class="photo-big"><img id="dPhoto" src="${esc(g.thumb)}" alt="${esc(g.nom)}" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>` : ""}
+    ${facts.length ? `<div class="facts">${facts.map(f => `<div class="fact"><small>${f[0]}</small><b>${esc(f[1])}</b></div>`).join("")}</div>` : ""}
+    ${(g.types||[]).length ? `<div class="tags">${g.types.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+    ${bggLien ? `<div class="sec"><div class="links"><a class="link" href="${esc(bggLien)}" target="_blank" rel="noopener">Fiche BGG</a></div></div>` : ""}
+    ${g.notes ? `<div class="sec"><h4>Notes</h4><div class="accent"></div><div class="rules">${esc(g.notes)}</div></div>` : ""}
+    ${hist.length ? `<div class="sec"><h4>Historique</h4><div class="accent"></div><div class="hist">${hist.map(h =>
+      `<div>${esc(fmtDate(h.date))} · ${esc(h.motif)} · ${h.qte > 1 ? h.qte + " ex. de " : "1 ex. de "}${esc(h.nom)}${h.note ? ` · ${esc(h.note)}` : ""}</div>`).join("")}</div></div>` : ""}
+  `;
+  $("#detailDlg").showModal();
+  $("#detailDlg .dlg-body").scrollTop = 0;
+
+  if (g.thumb) {
+    try {
+      const full = await getPhoto(id);
+      const el = $("#dPhoto");
+      if (full && el && currentId === id) el.src = full;
+    } catch {}
   }
-  CATS.forEach(c=>{
-    const g=res.filter(j=>j.cat===c.nom); if(!g.length) return;
-    html += `<section class="groupe"><h2 class="gtitre" style="color:${c.coul}">${esc(c.nom)}</h2><p class="gdesc">${esc(c.desc)}</p><div class="liste">${g.map(carteJeu).join('')}</div></section>`;
+}
+
+/* ---------- Sortie de collection ---------- */
+let outMotif = "Vendu";
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+function outHint(){
+  const g = games.find(x => x.id === currentId); if (!g) return;
+  const own = ownersOf(g), o = own[+$("#oOwner").value] || own[0];
+  const q = Math.min(num($("#oQte").value) || 1, o ? (o.qte || 1) : 1);
+  const left = totalOf(g) - q;
+  $("#oHint").textContent = left > 0
+    ? `Il restera ${left} exemplaire${left > 1 ? "s" : ""} dans la collection.`
+    : `Le jeu passera dans « Sortis de la collection ». Tu pourras l'y retrouver et le remettre plus tard.`;
+}
+function openOut(){
+  const g = games.find(x => x.id === currentId); if (!g) return;
+  const own = ownersOf(g);
+  $("#oTitle").textContent = "Sortir : " + g.nom;
+  $("#oOwner").innerHTML = own.map((o, i) => `<option value="${i}">${esc(o.nom)} (${o.qte || 1} ex.)</option>`).join("");
+  $("#oQte").value = 1;
+  $("#oWhich").classList.toggle("hidden", totalOf(g) <= 1);
+  $("#oDate").value = today();
+  $("#oNote").value = "";
+  outMotif = "Vendu";
+  document.querySelectorAll("#oMotif [data-m]").forEach(b => b.classList.toggle("on", b.dataset.m === outMotif));
+  outHint();
+  $("#outDlg").showModal();
+}
+$("#oMotif").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]"); if (!b) return;
+  outMotif = b.dataset.m;
+  document.querySelectorAll("#oMotif [data-m]").forEach(x => x.classList.toggle("on", x === b));
+});
+$("#oOwner").addEventListener("change", () => {
+  const g = games.find(x => x.id === currentId); const o = ownersOf(g)[+$("#oOwner").value];
+  $("#oQte").max = o ? (o.qte || 1) : 1; outHint();
+});
+$("#oQte").addEventListener("input", outHint);
+$("#outForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const g = games.find(x => x.id === currentId); if (!g) return;
+  const own = ownersOf(g).map(o => ({ nom: o.nom, qte: o.qte || 1 }));
+  const idx = totalOf(g) > 1 ? +$("#oOwner").value : 0;
+  const o = own[idx]; if (!o) return;
+  const q = Math.max(1, Math.min(num($("#oQte").value) || 1, o.qte));
+  const date = $("#oDate").value || today(), note = $("#oNote").value.trim();
+  const { id, ...data } = g;
+  data.historique = [...(g.historique || []), { date, motif: outMotif, nom: o.nom, qte: q, note }];
+  if (totalOf(g) - q <= 0) {
+    // Plus aucun exemplaire : le jeu sort de la collection (propriétaires gardés pour pouvoir le remettre)
+    data.sortie = { date, motif: outMotif, note };
+  } else {
+    o.qte -= q;
+    data.proprietaires = own.filter(x => x.qte > 0);
+    data.proprietaire = data.proprietaires.map(x => x.nom).join(", ");
+    data.exemplaires = data.proprietaires.reduce((n, x) => n + x.qte, 0);
+  }
+  data.updatedAt = Date.now();
+  try {
+    await store.put("jeux", id, data);
+    $("#outDlg").close();
+    toast(data.sortie ? "Jeu sorti de la collection" : `${q} exemplaire${q > 1 ? "s" : ""} sorti${q > 1 ? "s" : ""}`);
+    openDetail(id);
+  } catch (err) { toast("Erreur : " + err.message); }
+});
+$("#dOut").addEventListener("click", async () => {
+  const g = games.find(x => x.id === currentId); if (!g) return;
+  if (!isOut(g)) { openOut(); return; }
+  if (!confirm(`Remettre « ${g.nom} » dans la collection ?`)) return;
+  const { id, sortie, ...data } = g;
+  data.historique = [...(g.historique || []), { date: today(), motif: "Remis dans la collection", nom: ownersText(g) || "-", qte: totalOf(g), note: "" }];
+  data.updatedAt = Date.now();
+  try { await store.put("jeux", id, data); toast("Jeu remis dans la collection"); openDetail(id); }
+  catch (err) { toast("Erreur : " + err.message); }
+});
+
+/* ---------- Export Excel ---------- */
+let xlsxLoading = null;
+function loadXlsx(){
+  if (window.XLSX) return Promise.resolve();
+  if (!xlsxLoading) xlsxLoading = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload = res; sc.onerror = () => { xlsxLoading = null; rej(new Error("Impossible de charger l'outil Excel (connexion ?)")); };
+    document.head.appendChild(sc);
   });
-  document.getElementById('liste').innerHTML = html;
+  return xlsxLoading;
+}
+$("#btnXls").addEventListener("click", async () => {
+  const list = filtered();
+  if (!list.length) { toast("Aucun jeu à exporter avec ces filtres."); return; }
+  try {
+    await loadXlsx();
+    const fmtD = d => d ? d.split("-").reverse().join("/") : "";
+    const rows = list.map(g => ({
+      "Jeu": g.nom,
+      "Propriétaires": ownersText(g),
+      "Exemplaires": totalOf(g),
+      "Joueurs min": g.joueursMin || "",
+      "Joueurs max": g.joueursMax || "",
+      "Durée (min)": g.duree || "",
+      "Âge min": g.age || "",
+      "Difficulté": DIFF[g.difficulte] || "",
+      "Types": (g.types || []).join(", "),
+      "Notes": g.notes || "",
+      "Statut": isOut(g) ? `Sorti : ${g.sortie.motif}` : "Dans la collection",
+      "Date de sortie": isOut(g) ? fmtD(g.sortie.date) : "",
+      "Précision sortie": isOut(g) ? (g.sortie.note || "") : ""
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [32, 30, 11, 11, 11, 11, 9, 11, 30, 40, 22, 13, 30].map(w => ({ wch: w }));
+    ws["!autofilter"] = { ref: ws["!ref"] };
+    XLSX.utils.book_append_sheet(wb, ws, "Jeux");
+    const hist = list.flatMap(g => (g.historique || []).map(h => ({ "Date": fmtD(h.date), "Jeu": g.nom, "Mouvement": h.motif, "Propriétaire": h.nom, "Exemplaires": h.qte, "Précision": h.note || "" })));
+    if (hist.length) {
+      const wh = XLSX.utils.json_to_sheet(hist);
+      wh["!cols"] = [12, 32, 24, 24, 12, 30].map(w => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, wh, "Sorties");
+    }
+    XLSX.writeFile(wb, `ludotheque-ptg-${today()}.xlsx`);
+  } catch (err) { toast(err.message); }
+});
+
+/* ---------- Import BGG ---------- */
+const BGG_MAP = {
+  "Bluffing":"Bluff","Party Game":"Ambiance","Humor":"Ambiance","Deduction":"Déduction","Card Game":"Cartes",
+  "Dice":"Dés","Dice Rolling":"Dés","Word Game":"Mots","Murder/Mystery":"Enquête","Negotiation":"Négociation",
+  "Economic":"Gestion","Abstract Strategy":"Stratégie","Children's Game":"Enfants","Memory":"Mémoire",
+  "Real-time":"Rapidité","Speed Matching":"Rapidité","Trivia":"Quiz","Horror":"Horreur","Puzzle":"Réflexion",
+  "Cooperative Game":"Coopératif","Hidden Roles":"Rôles cachés","Traitor Game":"Rôles cachés",
+  "Team-Based Game":"Équipes","Deck, Bag, and Pool Building":"Deck-building","Tile Placement":"Placement",
+  "Worker Placement":"Placement","Push Your Luck":"Stop ou encore","Trick-taking":"Plis","Drawing":"Dessin",
+  "Communication Limits":"Communication","Card Drafting":"Draft","Open Drafting":"Draft","Closed Drafting":"Draft",
+  "Set Collection":"Collection","Auction/Bidding":"Enchères","Pattern Recognition":"Observation"
+};
+const BGG_RANKS = { familygames:"Familial", strategygames:"Stratégie", partygames:"Ambiance", childrensgames:"Enfants", abstracts:"Stratégie" };
+
+async function bggFetch(params){
+  if (!BGG_PROXY) throw new Error("Import BGG pas encore branché : renseigne BGG_PROXY en haut du fichier.");
+  const u = new URL(BGG_PROXY);
+  Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v));
+  let r;
+  try { r = await fetch(u); } catch { throw new Error("Impossible de joindre le proxy BGG."); }
+  if (r.status === 429 || r.status === 503) throw new Error("BGG est saturé, réessaie dans une minute.");
+  if (r.status === 401) throw new Error("Token BGG refusé (vérifie BGG_TOKEN sur Vercel).");
+  if (!r.ok) throw new Error("BGG a répondu " + r.status);
+  return r;
+}
+const xml = t => new DOMParser().parseFromString(t, "text/xml");
+
+function parseSource(s){
+  s = s.trim();
+  const m = s.match(/boardgamegeek\.com\/(?:boardgame|boardgameexpansion)\/(\d+)/i);
+  if (m) return { id: m[1] };
+  if (/^\d{1,7}$/.test(s)) return { id: s };
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      const seg = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
+      const q = seg.replace(/\.(html?|php|aspx?)$/i, "").replace(/^\d+[-_]/, "").replace(/[-_+]+/g, " ").replace(/\b\d{5,}\b/g, "").replace(/\s+/g, " ").trim();
+      if (q) return { q };
+    } catch {}
+  }
+  return { q: s };
 }
 
-function blocRegles(j){
-  if(j.liste) return '<div class="offi"><b>Règles officielles (Ducale)</b><ul class="rliste">'+j.liste.map(x=>`<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.nom)}</a> <span>${esc(x.info)}</span></li>`).join('')+'</ul></div>';
-  if(!j.regles) return '<p class="offi">Pas de règle officielle en ligne pour ce jeu : le livret est dans la boîte.</p>';
-  const lib = {"PDF":"Règles officielles (PDF)","PDF-en":"Règles officielles (PDF, en anglais)","site":"Règles sur le site de l'éditeur","faq":"FAQ officielle de l'éditeur","fr":"Règles complètes en français"}[j.reglesType]||"Règles officielles";
-  return `<div class="offi"><a class="btn" href="${esc(j.regles)}" target="_blank" rel="noopener">${lib}</a></div>`;
+async function bggSearch(q){
+  const doc = xml(await (await bggFetch({ q })).text());
+  const nq = norm(q), seen = new Set();
+  const items = [...doc.querySelectorAll("item")]
+    .filter(i => i.getAttribute("type") === "boardgame")
+    .map(i => ({ id: i.getAttribute("id"), name: i.querySelector("name")?.getAttribute("value") || "?", year: i.querySelector("yearpublished")?.getAttribute("value") || "" }))
+    .filter(i => !seen.has(i.id) && seen.add(i.id));
+  const score = i => { const n = norm(i.name); return n === nq ? 0 : n.startsWith(nq) ? 1 : n.includes(nq) ? 2 : 3; };
+  items.sort((a,b) => score(a) - score(b) || (+b.year || 0) - (+a.year || 0));
+  return items.slice(0, 12);
 }
 
-function vueJeu(j){
-  document.title = j.nom+" · Règles";
-  const ytLien = j.video ? 'https://www.youtube.com/watch?v='+j.video
-    : 'https://www.youtube.com/results?search_query='+encodeURIComponent(j.recherche||('règles '+j.nom));
-  app.innerHTML = `
-  <a class="retour" href="#">‹ Tous les jeux</a>
-  <div class="fiche">
-    ${photo(j,'couverture')}
-    <h1>${esc(j.nom)}</h1>
-    <div class="trait"></div>
-    <div class="meta"><span><b>${joueursTxt(j)}</b></span><span>${esc(j.duree)}</span>${diffTxt(j.diff)}${tagCat(j.cat)}</div>
-    <p style="margin-top:8px">${esc(j.pitch)}</p>
-    <div class="onglets" role="tablist">
-      <button class="onglet actif" role="tab" aria-selected="true" data-p="bref">En bref</button>
-      <button class="onglet" role="tab" aria-selected="false" data-p="full">Règles détaillées</button>
-      <button class="onglet" role="tab" aria-selected="false" data-p="video">Vidéo</button>
+async function bggThing(id){
+  const doc = xml(await (await bggFetch({ id })).text());
+  const it = doc.querySelector("item");
+  if (!it) throw new Error("Jeu introuvable sur BGG.");
+  const val = sel => it.querySelector(sel)?.getAttribute("value");
+  const n = sel => num(val(sel));
+  const names = [...it.querySelectorAll("name")];
+  const primary = names.find(x => x.getAttribute("type") === "primary")?.getAttribute("value") || "";
+  const frWords = /[àâçéèêëîïôûùüÿœ]|\b(le|la|les|des|du|de|pour|une|un|et|jeu|au|aux)\b/i;
+  const alts = [...new Set(names.filter(x => x.getAttribute("type") === "alternate").map(x => x.getAttribute("value")))]
+    .filter(a => a && a !== primary && !/[Ѐ-ӿ֐-ۿ฀-๿぀-ヿ一-鿿가-힯]/.test(a))
+    .sort((a,b) => (frWords.test(b) ? 1 : 0) - (frWords.test(a) ? 1 : 0))
+    .slice(0, 10);
+  const min = n("minplayers"), max = n("maxplayers");
+  const duree = n("playingtime") || n("maxplaytime") || n("minplaytime");
+  const weight = parseFloat(it.querySelector("statistics averageweight")?.getAttribute("value") || "0");
+  const diff = weight > 0 ? (weight < 1.6 ? 1 : weight < 2.2 ? 2 : 3) : null;
+
+  const types = new Set();
+  it.querySelectorAll('link[type="boardgamecategory"], link[type="boardgamemechanic"]').forEach(l => {
+    const t = BGG_MAP[l.getAttribute("value")]; if (t) types.add(t);
+  });
+  it.querySelectorAll("statistics rank").forEach(r => {
+    const t = BGG_RANKS[r.getAttribute("name")]; if (t && r.getAttribute("value") !== "Not Ranked") types.add(t);
+  });
+  if (max === 2) types.add("Duo");
+  if (weight >= 3) types.add("Expert");
+
+  return {
+    id, name: primary, alts, min, max, duree, age: n("minage"), diff, types: [...types],
+    image: it.querySelector("image")?.textContent.trim() || "",
+    thumbnail: it.querySelector("thumbnail")?.textContent.trim() || ""
+  };
+}
+
+async function bggPhoto(urls){
+  for (const u of urls.filter(Boolean)) {
+    try {
+      const r = await bggFetch({ img: u });
+      return await makePhotos(await r.blob());
+    } catch {}
+  }
+  return null;
+}
+
+/* ---------- Formulaire ---------- */
+let editId = null, pendingPhoto; // undefined = inchangée, null = supprimée, {full,thumb} = nouvelle
+let formTypes = new Set(), formDiff = null, formBgg = null, formHasPhoto = false;
+
+function renderTypePick(){
+  const types = [...new Set([...allTypes(), ...formTypes])];
+  $("#typePick").innerHTML = types.map(t => `<button type="button" class="chip${formTypes.has(t) ? " on" : ""}" data-ftype="${esc(t)}">${esc(t)}</button>`).join("");
+}
+function renderDiff(){
+  document.querySelectorAll("#diffPick [data-d]").forEach(b => b.classList.toggle("on", String(formDiff || "") === b.dataset.d));
+}
+function setPrev(src){
+  formHasPhoto = !!src;
+  $("#photoPrev").innerHTML = src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer">` : `<span>Pas de photo</span>`;
+  $("#photoRemove").classList.toggle("hidden", !src);
+}
+
+function openForm(id){
+  const g = id ? games.find(x => x.id === id) : null;
+  editId = g ? g.id : null;
+  pendingPhoto = undefined;
+  formTypes = new Set(g?.types || []);
+  formDiff = g?.difficulte || null;
+  formBgg = g?.bggId ? { id: g.bggId, lien: g.bggLien } : null;
+  $("#fTitle").textContent = g ? "Modifier le jeu" : "Ajouter un jeu";
+  $("#iNom").value = g?.nom || "";
+  renderOwnerRows(g ? ownersOf(g) : []);
+  $("#iMin").value = g?.joueursMin || "";
+  $("#iMax").value = g?.joueursMax || "";
+  $("#iDuree").value = g?.duree || "";
+  $("#iAge").value = g?.age || "";
+  $("#iNotes").value = g?.notes || "";
+  $("#iNewType").value = "";
+  $("#iSrc").value = "";
+  $("#iPaste").value = "";
+  $("#pasteMsg").innerHTML = "";
+  $("#srcResults").innerHTML = "";
+  $("#altNames").innerHTML = "";
+  $("#photoInput").value = "";
+  setPrev(g?.thumb || "");
+  renderTypePick();
+  renderDiff();
+  $("#formDlg").showModal();
+  $("#formDlg .dlg-body").scrollTop = 0;
+}
+
+function srcMsg(t){ $("#srcResults").innerHTML = t ? `<div class="msg">${esc(t)}</div>` : ""; }
+
+async function runFetch(){
+  const raw = $("#iSrc").value.trim();
+  if (!raw) { $("#iSrc").focus(); return; }
+  const src = parseSource(raw);
+  const btn = $("#btnFetch"); btn.disabled = true;
+  try {
+    if (src.id) { await importBgg(src.id); return; }
+    srcMsg(`Recherche de « ${src.q} » sur BGG…`);
+    const res = await bggSearch(src.q);
+    if (!res.length) { srcMsg(`Aucun jeu trouvé sur BGG pour « ${src.q} ». Essaie le nom anglais ou le lien BGG.`); return; }
+    if (res.length === 1) { await importBgg(res[0].id); return; }
+    $("#srcResults").innerHTML = `<div class="msg">Lequel ?</div>` + res.map(r =>
+      `<button type="button" data-bgg="${esc(r.id)}">${esc(r.name)} <small>${esc(r.year)}</small></button>`).join("");
+  } catch (err) { srcMsg(err.message); }
+  finally { btn.disabled = false; }
+}
+
+async function importBgg(id){
+  srcMsg("Récupération de la fiche BGG…");
+  const d = await bggThing(id);
+  $("#iNom").value = d.name;
+  if (d.min) $("#iMin").value = d.min;
+  if (d.max) $("#iMax").value = d.max;
+  if (d.duree) $("#iDuree").value = d.duree;
+  if (d.age) $("#iAge").value = d.age;
+  if (d.diff) { formDiff = d.diff; renderDiff(); }
+  d.types.forEach(t => formTypes.add(t));
+  renderTypePick();
+  formBgg = { id: d.id, lien: `https://boardgamegeek.com/boardgame/${d.id}` };
+  $("#altNames").innerHTML = d.alts.length
+    ? `<span class="lbl">Autres noms :</span>` + d.alts.map(a => `<button type="button" class="chip" data-alt="${esc(a)}">${esc(a)}</button>`).join("")
+    : "";
+  if (!formHasPhoto) {
+    srcMsg("Fiche récupérée, chargement de la photo…");
+    const ph = await bggPhoto([d.image, d.thumbnail]);
+    if (ph) { pendingPhoto = ph; setPrev(ph.thumb); srcMsg("Fiche remplie. Vérifie le nom et la difficulté."); }
+    else srcMsg("Fiche remplie, mais la photo n'a pas pu être récupérée.");
+  } else srcMsg("Fiche remplie (photo actuelle conservée). Vérifie le nom et la difficulté.");
+}
+
+/* ---------- Remplissage depuis un texte collé (sans BGG) ---------- */
+const PASTE_TYPES = [
+  [/coop[ée]rati/i, "Coopératif"], [/\bbluff/i, "Bluff"], [/ambiance|party/i, "Ambiance"],
+  [/famil/i, "Familial"], [/strat[ée]gi/i, "Stratégie"], [/d[ée]duction/i, "Déduction"],
+  [/r[ôo]les? cach[ée]s?|tra[îi]tre/i, "Rôles cachés"], [/enqu[êe]te/i, "Enquête"],
+  [/dessin/i, "Dessin"], [/deck.?building/i, "Deck-building"], [/\bdés\b/i, "Dés"],
+  [/cartes?\b/i, "Cartes"], [/rapidit[ée]|r[ée]flexe/i, "Rapidité"], [/\bmots?\b|lettres/i, "Mots"],
+  [/escape/i, "Escape game"], [/placement/i, "Placement"], [/gestion/i, "Gestion"],
+  [/n[ée]gociation/i, "Négociation"], [/expert/i, "Expert"], [/\bduo\b|2 joueurs/i, "Duo"],
+  [/\bdraft/i, "Draft"], [/\bcollection/i, "Collection"], [/stop ou encore/i, "Stop ou encore"],
+  [/\bplis\b/i, "Plis"], [/ench[èe]res/i, "Enchères"], [/m[ée]moire/i, "Mémoire"], [/communication/i, "Communication"],
+  [/\bquiz|culture g/i, "Quiz"], [/\bdextérit[ée]|adresse/i, "Adresse"], [/\benfant/i, "Enfants"]
+];
+function parsePaste(raw){
+  // 1. Nettoyage : espaces insécables, tirets longs, espaces multiples (par ligne)
+  let lines = raw.replace(/[   ]/g, " ").replace(/[‐-―]/g, "-")
+    .split(/\r?\n/).map(l => l.replace(/[ \t]+/g, " ").trim()).filter(Boolean);
+  // 2. Libellé seul sur sa ligne (tableaux de fiche) : on le recolle à la valeur de la ligne suivante
+  const LABEL = /^(nombre de joueurs|nb\.? (?:de )?joueurs|joueurs|players|dur[ée]e(?: moyenne)?(?: d'une partie| de (?:la )?partie)?|temps de (?:jeu|partie)|[âa]ge(?: minimum| conseill[ée]| recommand[ée])?|type(?:s)? de jeu|cat[ée]gories?|genres?|th[èe]mes?|m[ée]caniques?(?: de jeu)?)\s*:?$/i;
+  const joined = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (LABEL.test(lines[i]) && i + 1 < lines.length) { joined.push(lines[i].replace(/\s*:$/, "") + " : " + lines[i + 1]); i++; }
+    else joined.push(lines[i]);
+  }
+  const t = joined.join("\n");
+  // Texte "propre" pour les motifs sans libellé : on ignore les lignes de menu ("Jeux pour 2 joueurs", "moins de 30 minutes"…)
+  const c = joined.filter(l => !/\bjeux\b|moins de|plus de|promo|%/i.test(l)).join("\n");
+  const out = {};
+  let m;
+  const first = (...res) => { for (const re of res) { const r = (re.clean ? c : t).match(re); if (r) return r; } return null; };
+  const C_ = re => { re.clean = true; return re; };
+
+  // Joueurs (les motifs ne traversent jamais une ligne : " *" au lieu de "\s*")
+  if ((m = first(
+        /(?:nombre de joueurs|nb\.? (?:de )?joueurs|joueurs|players) *[:\-]? *(?:de )?(\d{1,2}) *(?:joueurs? *)?(?:à|a|-|\/) *(\d{1,2})/i,
+        C_(/(\d{1,2}) *(?:à|-) *(\d{1,2}) *(?:joueurs|players|pers)/i)))) { out.min = +m[1]; out.max = +m[2]; }
+  else if ((m = first(
+        /(?:à partir de|dès|minimum) *(\d{1,2}) *joueurs/i,
+        C_(/(\d{1,2}) *joueurs? *(?:minimum|min\b|et ?\+|\+)/i),
+        C_(/(\d{1,2}) *\+ *joueurs/i)))) out.min = +m[1];
+  else if ((m = first(
+        /(?:nombre de joueurs|joueurs|players) *: *(\d{1,2})\b/i,
+        C_(/\b(\d{1,2}) *joueurs\b/i)))) out.min = out.max = +m[1];
+  if (out.min && out.max && out.min > out.max) [out.min, out.max] = [out.max, out.min];
+
+  // Durée (libellé d'abord, puis "1h30", puis n'importe quel "xx min")
+  if ((m = first(/(?:dur[ée]e(?: moyenne)?(?: d'une partie| de (?:la )?partie)?|temps de (?:jeu|partie)|playing time) *[:\-]? *(?:environ|env\.?|~)? *(\d{1,3}) *(?:(?:à|-) *(\d{1,3}) *)?(min|mn|minutes|h\b|heures?)/i))) {
+    const v = +(m[2] || m[1]); out.duree = /^h/i.test(m[3]) ? v * 60 : v;
+  } else if ((m = c.match(/(\d{1,3}) *(mn|min|minutes|h|heures?)\b *(?:à|-) *(\d{1,3}) *(mn|min|minutes|h|heures?)\b/i))) {
+    const toMin = (v, u) => /^h/i.test(u) ? v * 60 : v;
+    out.duree = Math.max(toMin(+m[1], m[2]), toMin(+m[3], m[4]));
+  } else if ((m = c.match(/\b(\d) *h *(\d{2})\b/i))) out.duree = +m[1] * 60 + +m[2];
+  else if ((m = c.match(/(?:environ|env\.?|~) *(\d{1,3}) *(?:min|mn|minutes)\b/i))) out.duree = +m[1];
+  else if ((m = c.match(/(\d{1,3}) *(?:(?:à|-) *(\d{1,3}) *)?(min|mn|minutes)\b/i))) out.duree = +(m[2] || m[1]);
+  else if ((m = c.match(/^(?:environ )?(\d) *h$/im))) out.duree = +m[1] * 60;
+
+  // Âge
+  if ((m = first(
+        /[âa]ges?(?: minimum| conseill[ée]| recommand[ée])? *[:\-]? *(?:à partir de|dès)? *(\d{1,2}) *(?:ans|\+)/i,
+        /(?:à partir de|dès) *(\d{1,2}) *ans/i,
+        /(\d{1,2}) *ans *(?:et *)?\+/i,
+        /(\d{1,2}) *\+ *ans/i,
+        /(\d{1,2}) *ans minimum/i,
+        C_(/\b(\d{1,2}) *ans\b/i)))) out.age = +m[1];
+
+  // Types : seulement sur une ligne "Type / Catégorie / Genre / Thème / Mécanique" (évite les menus du site)
+  const TYPE_LBL = /^(types? de jeu|cat[ée]gories?|cat[ée]gorie\(s\)|genres?|th[èe]mes?|th[èe]me\(s\)|m[ée]caniques?(?: de jeu)?|m[ée]canismes?|m[ée]canisme\(s\))\b/i;
+  const blocks = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!TYPE_LBL.test(lines[i])) continue;
+    const vals = [lines[i]];
+    let j = i + 1;
+    if (j < lines.length) { vals.push(lines[j]); j++; }
+    while (j + 1 < lines.length && /^,$/.test(lines[j])) { vals.push(lines[j + 1]); j += 2; }
+    blocks.push(vals.join(" "));
+  }
+  const typeLines = blocks.join(" ");
+  out.types = typeLines ? PASTE_TYPES.filter(([re]) => re.test(typeLines)).map(([, n]) => n) : [];
+  const ref = lines.findIndex(l => /^r[ée]f[ée]rence\s*:/i.test(l));
+  if (ref > 0 && lines[ref - 1].length <= 80 && !/^\//.test(lines[ref - 1])) out.nom = lines[ref - 1];
+  else { const crumbs = lines.filter(l => /^\/\s*\S/.test(l)); if (crumbs.length) out.nom = crumbs[crumbs.length - 1].replace(/^\/\s*/, ""); }
+  return out;
+}
+
+function runPaste(){
+  const box = $("#pasteMsg");
+  const msg = (s, ok) => { box.innerHTML = `<div class="paste-msg ${ok ? "ok" : "ko"}">${esc(s)}</div>`; };
+  const txt = $("#iPaste").value;
+  if (!txt.trim()) { msg("Colle d'abord le texte de la fiche dans le cadre ci-dessus.", false); return; }
+  try {
+    const d = parsePaste(txt), found = [], filled = [];
+    const set = (sel, v) => { const el = $(sel); el.value = v; filled.push(el); };
+    if (d.nom && !$("#iNom").value.trim()) { set("#iNom", d.nom); found.push(d.nom); }
+    if (d.min) { set("#iMin", d.min); found.push(d.max ? `${d.min === d.max ? d.min : d.min + " à " + d.max} joueurs` : `${d.min} joueurs et +`); }
+    if (d.max) set("#iMax", d.max);
+    if (d.duree) { set("#iDuree", d.duree); found.push(`${d.duree} min`); }
+    if (d.age) { set("#iAge", d.age); found.push(`${d.age} ans et +`); }
+    if (d.types.length) { d.types.forEach(x => formTypes.add(x)); renderTypePick(); found.push(d.types.join(", ")); }
+    if (!found.length) {
+      msg("Rien trouvé dans ce texte (ni joueurs, ni durée, ni âge). Copie plutôt le bloc « Caractéristiques » ou « Fiche technique », ou tape simplement : 3-6 joueurs 15 min 8 ans", false);
+      return;
+    }
+    msg("Trouvé : " + found.join(" · ") + (d.nom ? ". Vérifie, puis choisis la difficulté." : ". Vérifie, puis complète le nom et la difficulté."), true);
+    filled.forEach(el => { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); });
+    if (filled[0]) filled[0].scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (err) {
+    msg("Erreur pendant la lecture du texte : " + err.message, false);
+  }
+}
+$("#btnPaste").addEventListener("click", runPaste);
+// Image collée (appui long sur la photo du site → Copier l'image → coller ici)
+$("#iPaste").addEventListener("paste", async e => {
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+  if (!item) { setTimeout(runPaste, 0); return; }
+  e.preventDefault();
+  try {
+    $("#photoPrev").innerHTML = "<span>Traitement…</span>";
+    pendingPhoto = await makePhotos(item.getAsFile());
+    setPrev(pendingPhoto.thumb);
+    $("#pasteMsg").innerHTML = `<div class="msg">Photo ajoutée.</div>`;
+  } catch (err) { toast(err.message); setPrev(""); }
+});
+if (!BGG_PROXY) { $("#bggLine").classList.add("hidden"); $("#srcResults").classList.add("hidden"); $("#altNames").classList.add("hidden"); }
+
+$("#btnFetch").addEventListener("click", runFetch);
+$("#iSrc").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); runFetch(); } });
+$("#srcResults").addEventListener("click", async e => {
+  const b = e.target.closest("[data-bgg]"); if (!b) return;
+  try { await importBgg(b.dataset.bgg); } catch (err) { srcMsg(err.message); }
+});
+$("#altNames").addEventListener("click", e => {
+  const b = e.target.closest("[data-alt]"); if (!b) return;
+  $("#iNom").value = b.dataset.alt;
+  toast("Nom remplacé");
+});
+
+function ownerLine(o = {}){
+  return `<div class="owner-line">
+    <input data-on list="ownerList" maxlength="80" placeholder="Ex : Association PTG, Roy…" value="${esc(o.nom || "")}">
+    <input data-oq type="number" inputmode="numeric" min="1" max="99" value="${o.qte || 1}" aria-label="Exemplaires">
+    <button type="button" class="mini-btn" data-odel aria-label="Retirer ce propriétaire">×</button>
+  </div>`;
+}
+function renderOwnerRows(list){
+  $("#ownerRows").innerHTML = (list.length ? list : [{}]).map(ownerLine).join("");
+}
+$("#addOwner").addEventListener("click", () => {
+  $("#ownerRows").insertAdjacentHTML("beforeend", ownerLine());
+  const ins = $("#ownerRows").querySelectorAll("[data-on]"); ins[ins.length - 1].focus();
+});
+$("#ownerRows").addEventListener("click", e => {
+  const b = e.target.closest("[data-odel]"); if (!b) return;
+  if ($("#ownerRows").children.length > 1) b.closest(".owner-line").remove();
+  else { b.closest(".owner-line").querySelector("[data-on]").value = ""; b.closest(".owner-line").querySelector("[data-oq]").value = 1; }
+});
+function readOwners(){
+  const map = new Map();
+  $("#ownerRows").querySelectorAll(".owner-line").forEach(l => {
+    const n = l.querySelector("[data-on]").value.trim(); if (!n) return;
+    const key = norm(n), q = num(l.querySelector("[data-oq]").value) || 1;
+    if (map.has(key)) map.get(key).qte += q; else map.set(key, { nom: n, qte: q });
+  });
+  return [...map.values()];
+}
+
+$("#photoInput").addEventListener("change", async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    $("#photoPrev").innerHTML = "<span>Traitement…</span>";
+    pendingPhoto = await makePhotos(file);
+    setPrev(pendingPhoto.thumb);
+  } catch (err) { toast(err.message); setPrev(""); }
+});
+$("#photoRemove").addEventListener("click", () => { pendingPhoto = null; $("#photoInput").value = ""; setPrev(""); });
+
+$("#diffPick").addEventListener("click", e => {
+  const b = e.target.closest("[data-d]"); if (!b) return;
+  formDiff = num(b.dataset.d); renderDiff();
+});
+$("#typePick").addEventListener("click", e => {
+  const b = e.target.closest("[data-ftype]"); if (!b) return;
+  const t = b.dataset.ftype;
+  formTypes.has(t) ? formTypes.delete(t) : formTypes.add(t);
+  b.classList.toggle("on");
+});
+function addCustomType(){
+  const v = $("#iNewType").value.trim(); if (!v) return;
+  const existing = allTypes().find(t => norm(t) === norm(v));
+  formTypes.add(existing || v);
+  $("#iNewType").value = "";
+  renderTypePick();
+}
+$("#addType").addEventListener("click", addCustomType);
+$("#iNewType").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addCustomType(); } });
+
+$("#gameForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const nom = $("#iNom").value.trim(), props = readOwners();
+  if (!nom) { toast("Il manque le nom du jeu."); $("#iNom").focus(); return; }
+  if (!props.length) { toast("Indique à qui appartient le jeu."); $("#ownerRows [data-on]").focus(); return; }
+  let mn = num($("#iMin").value), mx = num($("#iMax").value);
+  if (mn && mx && mn > mx) [mn, mx] = [mx, mn];
+
+  const old = editId ? games.find(x => x.id === editId) : null;
+  const id = editId || uid();
+  const data = {
+    nom, proprietaires: props,
+    proprietaire: props.map(o => o.nom).join(", "),
+    exemplaires: props.reduce((n, o) => n + o.qte, 0),
+    joueursMin: mn, joueursMax: mx,
+    duree: num($("#iDuree").value), age: num($("#iAge").value),
+    difficulte: formDiff || null,
+    types: [...formTypes],
+    notes: $("#iNotes").value.trim(),
+    bggId: formBgg?.id || null,
+    bggLien: formBgg?.lien || "",
+    thumb: pendingPhoto === undefined ? (old?.thumb || null) : (pendingPhoto ? pendingPhoto.thumb : null),
+    historique: old?.historique || [],
+    ...(old?.sortie ? { sortie: old.sortie } : {}),
+    createdAt: old?.createdAt || Date.now(),
+    updatedAt: Date.now()
+  };
+  const btn = $("#fSave"); btn.disabled = true; btn.textContent = "Enregistrement…";
+  try {
+    await saveGame(id, data, pendingPhoto === undefined ? undefined : (pendingPhoto ? pendingPhoto.full : null));
+    $("#formDlg").close();
+    toast(editId ? "Jeu modifié" : "Jeu ajouté");
+    if (editId && $("#detailDlg").open) openDetail(id);
+  } catch (err) {
+    toast("Erreur : " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Enregistrer";
+  }
+});
+
+/* ---------- Carte des jeux ---------- */
+let cartes = [], C = null, saveT = null;
+const PREF = LS + "carteCourante";
+
+function defaultCarte(){
+  return {
+    id: uid(), nom: "Soirée jeux",
+    titre: "La carte des jeux", sousTitre: "Choisissez, on vous explique les règles.",
+    startTitre: "Jamais joué ? Commencez par là", startLegende: "Quatre jeux qui se comprennent en deux minutes.",
+    starters: [], tri: "difficulte",
+    sections: [
+      { id: "s1", nom: "Bluff & trahison", sous: "Rôles cachés, mensonges et fausses pistes", couleur: "#3A2313" },
+      { id: "s2", nom: "Familial", sous: "Accessible, on comprend vite", couleur: "#2F6E62" },
+      { id: "s3", nom: "Ambiance", sous: "On parle, on dessine, on négocie", couleur: "#C0522A" },
+      { id: "s4", nom: "À deux", sous: "Conçus pour le duel, rien d'autre", couleur: "#5C3A21" },
+      { id: "s5", nom: "Classiques", sous: "Les cartes traditionnelles", couleur: "#C9A57E" },
+      { id: "s6", nom: "Expert", sous: "On réfléchit vraiment", couleur: "#1F140C" }
+    ],
+    jeux: {},
+    footQ: "Vous avez amené vos jeux ?", footT: "Posez-les sur la table, on les ajoute à la carte.",
+    signature: "Play Thau'Gether",
+    qrUrl: "", qrLegende: "Nos dates et nos réseaux", qrImg: null,
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+}
+
+function ensureCarte(){
+  if (C) return;
+  const pref = localStorage.getItem(PREF);
+  const found = cartes.find(c => c.id === pref) || cartes[0];
+  C = found ? { ...clone(found), _saved: true } : defaultCarte();
+}
+
+function onCartes(list){
+  cartes = list.sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+  if (!C) return;
+  if (saveT) return; // modification locale en attente : on ne l'écrase pas
+  const fresh = cartes.find(c => c.id === C.id);
+  if (fresh) {
+    if (fresh.updatedAt !== C.updatedAt) { C = { ...clone(fresh), _saved: true }; if (view === "carte") { renderEditor(); renderSheet(); } }
+  } else if (cartes.length) {
+    // carte affichée supprimée ailleurs, ou carte par défaut jamais enregistrée alors que d'autres existent
+    const pref = localStorage.getItem(PREF);
+    C = { ...clone(cartes.find(c => c.id === pref) || cartes[0]), _saved: true };
+    if (view === "carte") { renderEditor(); renderSheet(); }
+  }
+  if (view === "carte") renderCarteSelect();
+}
+
+function scheduleSave(){
+  C.updatedAt = Date.now();
+  clearTimeout(saveT);
+  saveT = setTimeout(async () => {
+    saveT = null;
+    const { id, _saved, ...data } = C;
+    try { await store.put("cartes", id, data); C._saved = true; localStorage.setItem(PREF, id); }
+    catch (err) { toast("Erreur : " + err.message); }
+  }, 600);
+}
+function flushSave(){ if (saveT) { clearTimeout(saveT); saveT = null; const { id, _saved, ...data } = C; return store.put("cartes", id, data).then(() => { C._saved = true; }); } return Promise.resolve(); }
+function changed(){ scheduleSave(); queueSheet(); }
+
+const openPanels = new Set(["jeux"]);
+let pickFilter = "";
+
+function renderCarteSelect(){
+  const sel = $("#cSel"); if (!sel) return;
+  const list = cartes.some(c => c.id === C.id) ? cartes : [...cartes, C];
+  sel.innerHTML = list.map(c => `<option value="${esc(c.id)}"${c.id === C.id ? " selected" : ""}>${esc(c.id === C.id ? C.nom : c.nom) || "Sans nom"}</option>`).join("");
+}
+
+function renderEditor(){
+  const ed = $("#editor");
+  ed.querySelectorAll("details[data-p]").forEach(d => d.open ? openPanels.add(d.dataset.p) : openPanels.delete(d.dataset.p));
+  const op = p => openPanels.has(p) ? " open" : "";
+  const field = (k, label, ph = "") => `<div class="field"><label>${label}</label><input data-k="${k}" value="${esc(C[k] || "")}" placeholder="${esc(ph)}"></div>`;
+
+  ed.innerHTML = `
+  <div class="panel">
+    <div class="carte-top">
+      <select id="cSel" aria-label="Carte"></select>
+      <button class="btn sm" data-act="new">Nouvelle</button>
+      <button class="btn sm" data-act="dup">Dupliquer</button>
+      <button class="btn sm ghost-danger" data-act="delcarte">Supprimer</button>
     </div>
-    <div class="panneau actif" id="p-bref">
-      <h3>Pour démarrer vite</h3>
-      <ol class="bref">${j.bref.map(l=>`<li>${esc(l)}</li>`).join('')}</ol>
-      <p class="note">Pour tous les cas particuliers : onglet Règles détaillées.</p>
-    </div>
-    <div class="panneau" id="p-full">
-      ${blocRegles(j)}
-      ${j.full}
-      <p class="note">Règles résumées par Play Thau'Gether. En cas de doute, le livret de la boîte fait foi.</p>
-    </div>
-    <div class="panneau" id="p-video">
-      ${j.video ? `
-      <div class="video-box" id="vbox"><button class="btn" id="play">Lancer la vidéo</button></div>
-      <div class="actions"><a class="btn second" href="${esc(ytLien)}" target="_blank" rel="noopener">Ouvrir dans YouTube</a></div>
-      <p class="note">La vidéo ne se charge pas ? Ouvrez-la dans YouTube. Pensez au son : un écouteur, c'est plus confortable dans le bruit.</p>`
-      : `<p>Pas de vidéo unique pour ce jeu : les règles changent selon le jeu de cartes choisi.</p>
-      <div class="actions"><a class="btn" href="${esc(ytLien)}" target="_blank" rel="noopener">Chercher une vidéo sur YouTube</a></div>`}
-    </div>
+    <div class="field" style="margin:10px 0 0"><label>Nom de la carte (pour t'y retrouver)</label><input data-k="nom" value="${esc(C.nom)}"></div>
   </div>
-  <footer><a href="#">Retour à la liste des jeux</a></footer>`;
-  document.querySelector('.onglets').addEventListener('click',e=>{
-    const b=e.target.closest('.onglet'); if(!b) return;
-    document.querySelectorAll('.onglet').forEach(o=>{o.classList.toggle('actif',o===b);o.setAttribute('aria-selected',o===b);});
-    document.querySelectorAll('.panneau').forEach(p=>p.classList.toggle('actif',p.id==='p-'+b.dataset.p));
-  });
-  const play=document.getElementById('play');
-  if(play) play.addEventListener('click',()=>{
-    document.getElementById('vbox').innerHTML =
-      `<iframe src="https://www.youtube-nocookie.com/embed/${j.video}?autoplay=1&rel=0&playsinline=1" title="${esc(j.nom)} - règles en vidéo" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-  });
-  window.scrollTo(0,0);
+
+  <details class="panel" data-p="jeux"${op("jeux")}>
+    <summary>Jeux sur la carte <span class="cnt" id="pickCount"></span></summary>
+    <input id="pickFilter" type="search" placeholder="Filtrer la liste…" value="${esc(pickFilter)}">
+    <div class="pick-list" id="pickList"></div>
+    <p class="hint">Choisis la section de chaque jeu. L'étoile le met dans l'encadré « ${esc(C.startTitre || "Jamais joué ?")} ». Touche le nom d'un jeu pour modifier sa fiche (difficulté…).</p>
+  </details>
+
+  <details class="panel" data-p="sections"${op("sections")}>
+    <summary>Sections</summary>
+    <div id="secList">${C.sections.map((s, i) => `
+      <div class="sec-row" data-sid="${esc(s.id)}" style="--c:${esc(s.couleur)}">
+        <div class="row">
+          <input data-sk="nom" value="${esc(s.nom)}" placeholder="Nom de la section">
+          <button class="mini-btn" data-smove="-1" ${i === 0 ? "disabled" : ""} aria-label="Monter">↑</button>
+          <button class="mini-btn" data-smove="1" ${i === C.sections.length - 1 ? "disabled" : ""} aria-label="Descendre">↓</button>
+          <button class="mini-btn" data-sdel aria-label="Supprimer la section">×</button>
+        </div>
+        <input data-sk="sous" value="${esc(s.sous)}" placeholder="Sous-titre">
+        <div class="swatches">${PALETTE.map(([n, c]) => `<button class="sw${c === s.couleur ? " on" : ""}" style="background:${c}" data-scol="${c}" title="${n}" aria-label="${n}"></button>`).join("")}</div>
+      </div>`).join("")}
+    </div>
+    <button class="btn sm" data-act="addsec">Ajouter une section</button>
+  </details>
+
+  <details class="panel" data-p="textes"${op("textes")}>
+    <summary>Textes</summary>
+    ${field("titre", "Titre")}
+    ${field("sousTitre", "Sous-titre")}
+    ${field("startTitre", "Titre de l'encadré")}
+    ${field("startLegende", "Légende de l'encadré")}
+    <div class="field"><label>Ordre des jeux dans les sections</label>
+      <select data-k="tri">
+        <option value="difficulte"${C.tri !== "alpha" ? " selected" : ""}>Du plus facile au plus costaud</option>
+        <option value="alpha"${C.tri === "alpha" ? " selected" : ""}>Alphabétique</option>
+      </select>
+    </div>
+    ${field("footQ", "Bas de page — question")}
+    ${field("footT", "Bas de page — texte")}
+    ${field("signature", "Signature")}
+  </details>
+
+  <details class="panel" data-p="qr"${op("qr")}>
+    <summary>QR code</summary>
+    ${field("qrUrl", "Lien du QR code", "https://…")}
+    ${field("qrLegende", "Légende sous le QR")}
+    <div class="row" style="align-items:center">
+      <button class="btn sm" data-act="qrimg">${C.qrImg ? "Changer l'image du QR" : "Utiliser ma propre image de QR"}</button>
+      ${C.qrImg ? `<button class="btn sm ghost-danger" data-act="qrdel">Revenir au QR généré</button>` : ""}
+    </div>
+    <p class="hint">Ta propre image (avec logo par exemple) remplace le QR généré à partir du lien.</p>
+  </details>`;
+
+  renderCarteSelect();
+  renderPickList();
 }
 
-function router(){
-  if(!document.querySelector('.fiche')) scrollListe = window.scrollY;
-  const id = decodeURIComponent(location.hash.slice(1));
-  const j = JEUX.find(x=>x.id===id);
-  if(j) vueJeu(j); else vueListe();
+function renderPickList(){
+  const box = $("#pickList"); if (!box) return;
+  const nf = norm(pickFilter);
+  const list = inGames().sort((a,b) => (C.jeux[b.id] ? 1 : 0) - (C.jeux[a.id] ? 1 : 0) || norm(a.nom).localeCompare(norm(b.nom), "fr"));
+  const opts = C.sections.map(s => `<option value="${esc(s.id)}">${esc(s.nom)}</option>`).join("");
+  box.innerHTML = list.length ? list.map(g => {
+    const on = !!C.jeux[g.id] && C.sections.some(s => s.id === C.jeux[g.id]);
+    const st = C.starters.includes(g.id);
+    const info = [shortPlayers(g) && shortPlayers(g) + " j.", g.duree ? g.duree + " min" : ""].filter(Boolean).join(" · ");
+    return `<div class="pick${on ? " on" : ""}" data-gid="${esc(g.id)}" data-n="${esc(norm(g.nom))}"${nf && !norm(g.nom).includes(nf) ? ' style="display:none"' : ""}>
+      <div class="pk-thumb">${g.thumb ? imgTag(g.thumb, g.nom, "") : letterOf(g.nom)}</div>
+      <button class="pk-main" data-editg><b>${esc(g.nom)}</b><small>${esc(info)} ${g.difficulte ? miniDots(g.difficulte) : `<span class="warn">difficulté ?</span>`}</small></button>
+      <select data-gsec aria-label="Section"><option value="">Pas sur la carte</option>${opts}</select>
+      <button class="star${st ? " on" : ""}" data-star ${on ? "" : "disabled"} aria-label="Jamais joué ? Commencez par là"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" stroke-linejoin="round"/></svg></button>
+    </div>`;
+  }).join("") : `<div class="hint">Ajoute d'abord des jeux dans l'onglet « Les jeux ».</div>`;
+  box.querySelectorAll(".pick").forEach(row => { row.querySelector("select").value = C.jeux[row.dataset.gid] || ""; });
+  updatePickCount();
 }
-window.addEventListener('hashchange',router);
-router();
+function updatePickCount(){
+  const el = $("#pickCount"); if (!el) return;
+  const ids = new Set(inGames().map(g => g.id)), secIds = new Set(C.sections.map(s => s.id));
+  el.textContent = Object.entries(C.jeux).filter(([g, s]) => ids.has(g) && secIds.has(s)).length;
+}
+
+/* Événements éditeur */
+const ed = $("#editor");
+ed.addEventListener("input", e => {
+  const t = e.target;
+  if (t.id === "pickFilter") {
+    pickFilter = t.value; const nf = norm(pickFilter);
+    ed.querySelectorAll(".pick").forEach(r => r.style.display = !nf || r.dataset.n.includes(nf) ? "" : "none");
+    return;
+  }
+  if (t.dataset.k) { C[t.dataset.k] = t.value; if (t.dataset.k === "nom") renderCarteSelect(); changed(); return; }
+  if (t.dataset.sk) {
+    const s = C.sections.find(x => x.id === t.closest("[data-sid]").dataset.sid);
+    if (s) { s[t.dataset.sk] = t.value; changed(); }
+  }
+});
+ed.addEventListener("change", async e => {
+  const t = e.target;
+  if (t.id === "cSel") {
+    await flushSave();
+    const c = cartes.find(x => x.id === t.value);
+    if (c) { C = { ...clone(c), _saved: true }; localStorage.setItem(PREF, C.id); renderEditor(); renderSheet(); }
+    return;
+  }
+  if (t.dataset.k === "tri") { C.tri = t.value; changed(); return; }
+  if (t.hasAttribute("data-gsec")) {
+    const row = t.closest(".pick"), gid = row.dataset.gid;
+    if (t.value) C.jeux[gid] = t.value;
+    else { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); row.querySelector(".star").classList.remove("on"); }
+    row.classList.toggle("on", !!t.value);
+    row.querySelector(".star").disabled = !t.value;
+    updatePickCount(); changed();
+  }
+});
+ed.addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const secRow = b.closest("[data-sid]");
+  if (b.hasAttribute("data-star")) {
+    const gid = b.closest(".pick").dataset.gid;
+    if (C.starters.includes(gid)) C.starters = C.starters.filter(x => x !== gid);
+    else C.starters.push(gid);
+    b.classList.toggle("on"); changed(); return;
+  }
+  if (b.hasAttribute("data-editg")) { openForm(b.closest(".pick").dataset.gid); return; }
+  if (b.dataset.scol && secRow) {
+    const s = C.sections.find(x => x.id === secRow.dataset.sid); s.couleur = b.dataset.scol;
+    secRow.style.setProperty("--c", s.couleur);
+    secRow.querySelectorAll(".sw").forEach(x => x.classList.toggle("on", x === b));
+    changed(); return;
+  }
+  if (b.dataset.smove && secRow) {
+    const i = C.sections.findIndex(x => x.id === secRow.dataset.sid), j = i + parseInt(b.dataset.smove, 10);
+    if (j < 0 || j >= C.sections.length) return;
+    [C.sections[i], C.sections[j]] = [C.sections[j], C.sections[i]];
+    renderEditor(); changed(); return;
+  }
+  if (b.hasAttribute("data-sdel") && secRow) {
+    const s = C.sections.find(x => x.id === secRow.dataset.sid);
+    const n = Object.values(C.jeux).filter(v => v === s.id).length;
+    if (!confirm(`Supprimer la section « ${s.nom} »${n ? ` et retirer ses ${n} jeu(x) de la carte` : ""} ?`)) return;
+    C.sections = C.sections.filter(x => x.id !== s.id);
+    Object.keys(C.jeux).forEach(g => { if (C.jeux[g] === s.id) { delete C.jeux[g]; C.starters = C.starters.filter(x => x !== g); } });
+    renderEditor(); changed(); return;
+  }
+  switch (b.dataset.act) {
+    case "addsec":
+      openPanels.add("sections");
+      C.sections.push({ id: uid(), nom: "Nouvelle section", sous: "", couleur: "#5C3A21" });
+      renderEditor(); changed(); break;
+    case "new": {
+      await flushSave();
+      C = defaultCarte(); C.nom = "Nouvelle carte";
+      renderEditor(); renderSheet(); scheduleSave(); break;
+    }
+    case "dup": {
+      await flushSave();
+      const { _saved, ...rest } = C;
+      C = { ...clone(rest), id: uid(), nom: (C.nom || "Carte") + " (copie)", createdAt: Date.now() };
+      renderEditor(); renderSheet(); scheduleSave(); toast("Carte dupliquée"); break;
+    }
+    case "delcarte": {
+      if (!confirm(`Supprimer la carte « ${C.nom} » ?`)) return;
+      clearTimeout(saveT); saveT = null;
+      const id = C.id;
+      try { if (cartes.some(c => c.id === id)) await store.del("cartes", id); } catch (err) { toast("Erreur : " + err.message); return; }
+      const next = cartes.find(c => c.id !== id);
+      C = next ? { ...clone(next), _saved: true } : defaultCarte();
+      renderEditor(); renderSheet(); toast("Carte supprimée"); break;
+    }
+    case "qrimg": $("#qrFile").click(); break;
+    case "qrdel": C.qrImg = null; renderEditor(); changed(); break;
+  }
+});
+$("#qrFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const img = await loadImg(f);
+    const r = Math.min(1, 600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+    const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+    C.qrImg = c.toDataURL("image/png");
+    renderEditor(); changed();
+  } catch (err) { toast(err.message); }
+});
+
+/* Rendu de la feuille */
+const qrCache = new Map();
+function qrData(text){
+  if (!text || !window.QRCode) return null;
+  if (qrCache.has(text)) return qrCache.get(text);
+  try {
+    const div = document.createElement("div");
+    new QRCode(div, { text, width: 512, height: 512, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    const cv = div.querySelector("canvas");
+    const url = cv ? cv.toDataURL("image/png") : div.querySelector("img")?.src;
+    if (url) qrCache.set(text, url);
+    return url || null;
+  } catch { return null; }
+}
+const dots = d => `<span class="d">${d ? [1,2,3].map(i => `<i class="dot${i <= d ? " f" : ""}"></i>`).join("") : ""}</span>`;
+
+function sheetHTML(c){
+  const byId = new Map(inGames().map(g => [g.id, g]));
+  const sorter = c.tri === "alpha"
+    ? (a,b) => norm(a.nom).localeCompare(norm(b.nom), "fr")
+    : (a,b) => (a.difficulte || 9) - (b.difficulte || 9) || (a.duree || 999) - (b.duree || 999) || norm(a.nom).localeCompare(norm(b.nom), "fr");
+  const secs = c.sections.map(s => ({ ...s, items: Object.entries(c.jeux).filter(([g, sid]) => sid === s.id && byId.has(g)).map(([g]) => byId.get(g)).sort(sorter) })).filter(s => s.items.length);
+  const starters = c.starters.map(id => byId.get(id)).filter(g => g && c.jeux[g.id] && c.sections.some(s => s.id === c.jeux[g.id]));
+  const qr = c.qrImg || qrData(c.qrUrl);
+
+  return `
+    <h1 class="sh-title">${esc(c.titre)}</h1>
+    <div class="sh-bar"></div>
+    ${c.sousTitre ? `<div class="sh-tag">${esc(c.sousTitre)}</div>` : ""}
+    ${starters.length ? `<div class="sh-start">
+      <h2>${esc(c.startTitre)}</h2>
+      <div class="g">${starters.map(g => esc(g.nom)).join(`<span class="sep">·</span>`)}</div>
+      ${c.startLegende ? `<div class="c">${esc(c.startLegende)}</div>` : ""}
+    </div>` : ""}
+    <div class="sh-leg"><b>Difficulté :</b>
+      <span>${[1,2,3].map(i => `<i class="dot${i <= 1 ? " f" : ""}"></i>`).join("")} facile</span>
+      <span>${[1,2,3].map(i => `<i class="dot${i <= 2 ? " f" : ""}"></i>`).join("")} moyen</span>
+      <span>${[1,2,3].map(() => `<i class="dot f"></i>`).join("")} costaud</span>
+    </div>
+    <div class="sh-grid">
+      ${secs.length ? secs.map(s => `<section class="s" style="--c:${esc(s.couleur)}">
+        <h3>${esc(s.nom)}</h3>
+        ${s.sous ? `<div class="ss">${esc(s.sous)}</div>` : ""}
+        ${s.items.map(g => {
+          const info = [shortPlayers(g), g.duree ? `${g.duree} min` : ""].filter(Boolean).join(" · ") || "variable";
+          return `<div class="r"><span class="n">${esc(g.nom)}</span><span class="l"></span><span class="i">${esc(info)}</span>${dots(g.difficulte)}</div>`;
+        }).join("")}
+      </section>`).join("") : `<div class="none">Choisis les jeux de la carte dans la liste à gauche.</div>`}
+    </div>
+    <div class="sh-foot">
+      <div>
+        ${c.footQ ? `<div class="q">${esc(c.footQ)}</div>` : ""}
+        ${c.footT ? `<div class="t">${esc(c.footT)}</div>` : ""}
+        ${c.signature ? `<div class="sig">${esc(c.signature)}</div>` : ""}
+      </div>
+      ${qr ? `<div class="qr"><img src="${esc(qr)}" alt="QR code">${c.qrLegende ? `<div class="cap">${esc(c.qrLegende)}</div>` : ""}</div>` : ""}
+    </div>`;
+}
+
+function fitSheet(sh){
+  let k = 1;
+  sh.style.setProperty("--k", k);
+  while (sh.scrollHeight > sh.clientHeight + 1 && k > 0.5) { k = +(k - 0.03).toFixed(2); sh.style.setProperty("--k", k); }
+}
+function scalePreview(){
+  const wrap = $("#sheetWrap"), sh = $("#sheet");
+  if (!wrap.clientWidth) return;
+  const s = Math.min(1, wrap.clientWidth / sh.offsetWidth);
+  sh.style.transform = `scale(${s})`;
+  wrap.style.height = (sh.offsetHeight * s) + "px";
+}
+function renderSheet(){
+  if (!C) return;
+  const sh = $("#sheet");
+  sh.innerHTML = sheetHTML(C);
+  fitSheet(sh);
+  scalePreview();
+}
+let sheetQueued = false;
+function queueSheet(){ if (sheetQueued) return; sheetQueued = true; requestAnimationFrame(() => { sheetQueued = false; if (view === "carte") renderSheet(); }); }
+new ResizeObserver(() => { if (view === "carte") scalePreview(); }).observe($("#sheetWrap"));
+if (document.fonts) document.fonts.ready.then(() => { if (view === "carte") renderSheet(); });
+
+$("#btnPrint").addEventListener("click", async () => {
+  if (document.fonts) await document.fonts.ready;
+  renderSheet();
+  const pa = $("#printArea");
+  const cl = $("#sheet").cloneNode(true);
+  cl.removeAttribute("id"); cl.style.transform = "none";
+  pa.innerHTML = ""; pa.appendChild(cl);
+  const t = document.title;
+  document.title = "Carte des jeux - " + (C.nom || "PTG");
+  window.print();
+  setTimeout(() => { document.title = t; }, 500);
+});
+
+/* ---------- Export / import ---------- */
+// Essaie de récupérer une image web pour la garder dans l'appli (possible seulement si le site l'autorise)
+async function remotePhoto(url){
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(url, { mode: "cors", referrerPolicy: "no-referrer", signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const b = await r.blob();
+    if (!b.type.startsWith("image/")) return null;
+    return await makePhotos(b);
+  } catch { return null; }
+}
+$("#btnExport").addEventListener("click", async () => {
+  if (!games.length && !cartes.length) { toast("Rien à exporter."); return; }
+  toast("Préparation de la sauvegarde…");
+  await flushSave();
+  const out = [];
+  for (const g of games) {
+    let photo = null;
+    if (g.thumb) { try { photo = await getPhoto(g.id); } catch {} }
+    out.push({ ...g, photo });
+  }
+  const blob = new Blob([JSON.stringify({ app: "ludotheque-ptg", version: 2, date: new Date().toISOString(), jeux: out, cartes })], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `ludotheque-ptg-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+$("#btnImport").addEventListener("click", () => $("#importFile").click());
+$("#importFile").addEventListener("change", async e => {
+  const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+  try {
+    const json = JSON.parse(await file.text());
+    const list = Array.isArray(json) ? json : json.jeux || [];
+    const cl = Array.isArray(json.cartes) ? json.cartes : [];
+    if (!list.length && !cl.length) throw new Error("Fichier non reconnu");
+    if (!confirm(`Importer ${list.length} jeu(x)${cl.length ? ` et ${cl.length} carte(s)` : ""} ? Les éléments déjà présents avec le même identifiant seront remplacés.`)) return;
+    let ok = 0;
+    for (const g of list) {
+      if (!g || !g.nom) continue;
+      const { id, photo, photoUrl, ...data } = g;
+      let ph = photo || undefined;
+      if (!ph && photoUrl && /^https?:/i.test(photoUrl)) {
+        toast(`Photos : ${ok + 1} / ${list.length}…`);
+        const p = await remotePhoto(photoUrl);
+        if (p) { data.thumb = p.thumb; ph = p.full; } else data.thumb = photoUrl;
+      }
+      await saveGame(id || uid(), data, ph);
+      ok++;
+    }
+    for (const c of cl) { if (!c || !c.id) continue; const { id, _saved, ...data } = c; await store.put("cartes", id, data); }
+    toast(`${ok} jeu(x)${cl.length ? ` et ${cl.length} carte(s)` : ""} importé(s)`);
+  } catch (err) { toast("Import impossible : " + err.message); }
+});
+
+/* ---------- Événements ---------- */
+$("#q").addEventListener("input", e => { F.q = e.target.value; render(); });
+$("#fPlayers").addEventListener("change", e => { F.players = e.target.value; render(); });
+$("#fOwner").addEventListener("change", e => { F.owner = e.target.value; render(); });
+$("#fSort").addEventListener("change", e => { F.sort = e.target.value; render(); });
+$("#fStatut").addEventListener("change", e => { F.statut = e.target.value; render(); });
+$("#typeChips").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.hasAttribute("data-reset")) F.types.clear();
+  else { const t = b.dataset.type; F.types.has(t) ? F.types.delete(t) : F.types.add(t); }
+  refreshFilters(); render();
+});
+$("#grid").addEventListener("click", e => { const c = e.target.closest(".card"); if (c) openDetail(c.dataset.id); });
+$("#btnAdd").addEventListener("click", () => openForm(null));
+$("#dEdit").addEventListener("click", () => openForm(currentId));
+$("#dDelete").addEventListener("click", async () => {
+  const g = games.find(x => x.id === currentId); if (!g) return;
+  if (!confirm(`Supprimer « ${g.nom} » de la ludothèque ?`)) return;
+  try { await removeGame(g.id); $("#detailDlg").close(); toast("Jeu supprimé"); }
+  catch (err) { toast("Erreur : " + err.message); }
+});
+$("#btnLogout").addEventListener("click", () => store.logout());
+document.querySelectorAll("dialog").forEach(d => {
+  d.addEventListener("click", e => {
+    if (e.target.closest("[data-close]")) d.close();
+    else if (e.target === d) d.close();
+  });
+});
+
+/* ---------- Démarrage ---------- */
+if (USE_FIREBASE) {
+  initFirebase().catch(err => {
+    $("#loginView").classList.remove("hidden");
+    $("#lErr").textContent = "Impossible de charger Firebase : " + err.message;
+  });
+} else {
+  $("#demoBar").classList.remove("hidden");
+  $("#btnLogout").classList.add("hidden");
+  showApp();
+  startData();
+}
 </script>
 </body>
 </html>
