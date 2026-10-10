@@ -2061,6 +2061,33 @@ $("#importFile").addEventListener("change", async e => {
     const list = Array.isArray(json) ? json : json.jeux || [];
     const cl = Array.isArray(json.cartes) ? json.cartes : [];
     if (!list.length && !cl.length) throw new Error("Fichier non reconnu");
+    // Fichier d'ajout : on complète la collection sans rien écraser (propriétaires ajoutés aux jeux existants)
+    if (json.mode === "ajout") {
+      if (!confirm(`Ajouter ${list.length} jeu(x) à la collection ? Les jeux déjà présents gardent leurs infos et photos, seuls les propriétaires manquants sont ajoutés.`)) return;
+      let added = 0, merged = 0;
+      for (const g of list) {
+        if (!g || !g.nom) continue;
+        const { id, photo, photoUrl, ...data } = g;
+        const ex = games.find(x => x.id === id) || games.find(x => norm(x.nom) === norm(g.nom));
+        if (!ex) { await saveGame(id || uid(), data, undefined); added++; continue; }
+        const own = ownersOf(ex).map(o => ({ nom: o.nom, qte: o.qte || 1 }));
+        ownersOf(g).forEach(o => {
+          const cur = own.find(x => norm(x.nom) === norm(o.nom));
+          if (cur) cur.qte = Math.max(cur.qte, o.qte || 1); else own.push({ nom: o.nom, qte: o.qte || 1 });
+        });
+        const { id: exId, ...upd } = ex;
+        upd.proprietaires = own;
+        upd.proprietaire = own.map(o => o.nom).join(", ");
+        upd.exemplaires = own.reduce((n, o) => n + o.qte, 0);
+        ["joueursMin", "joueursMax", "duree", "age", "difficulte"].forEach(k => { if (upd[k] == null && data[k] != null) upd[k] = data[k]; });
+        if (!(upd.types || []).length && (data.types || []).length) upd.types = data.types;
+        if (!upd.notes && data.notes) upd.notes = data.notes;
+        upd.updatedAt = Date.now();
+        await store.put("jeux", exId, upd); merged++;
+      }
+      toast(`${added} jeu(x) ajouté(s), ${merged} complété(s)`);
+      return;
+    }
     if (!confirm(`Importer ${list.length} jeu(x)${cl.length ? ` et ${cl.length} carte(s)` : ""} ? Les éléments déjà présents avec le même identifiant seront remplacés.`)) return;
     let ok = 0;
     for (const g of list) {
