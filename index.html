@@ -50,6 +50,13 @@ h1{font-family:'Bebas Neue',sans-serif;font-weight:400;color:var(--terra);font-s
 input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-shadow:0 0 0 3px rgba(47,110,98,.15)}
 .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--brown);opacity:.6}
 .filters select{padding:11px 10px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;max-width:100%}
+.players-box{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card)}
+.players-box.on{border-color:var(--teal);background:#E3F0EC}
+.pl-lbl{font-size:14px;white-space:nowrap}
+.pl-btn,.pl-clear{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:18px;font-weight:600;padding:0;line-height:1}
+.pl-clear{border:none;background:transparent;color:var(--terra)}
+#fPlayersN{width:46px;text-align:center;padding:6px 2px;border-radius:9px;border:1px solid var(--line);background:#fff;outline:none;font-weight:600;-moz-appearance:textfield}
+#fPlayersN::-webkit-outer-spin-button,#fPlayersN::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 @media (min-width:700px){.chips{flex-wrap:wrap;overflow:visible}}
@@ -76,6 +83,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .out-tag{position:absolute;left:8px;top:8px;background:var(--dark);color:var(--light);font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
 .out-box{background:#F3E4DA;border-left:4px solid var(--terra);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:14px}
 .out-box b{color:var(--terra)}
+.exp-list{display:flex;flex-direction:column;gap:8px}
+.exp-btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff}
+.exp-btn b{font-weight:600;color:var(--teal)}
+.exp-btn span{font-size:13px;opacity:.8}
+.exp-btn:disabled{opacity:.5}
 .hist{font-size:13px;display:flex;flex-direction:column;gap:4px}
 .hist div{padding:6px 10px;background:var(--beige);border-radius:8px}
 .owner-line input{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
@@ -309,7 +321,14 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
           <input id="q" type="search" placeholder="Rechercher un jeu…" autocomplete="off">
         </label>
         <div class="row filters">
-          <select id="fPlayers" aria-label="Nombre de joueurs"><option value="">Joueurs : tous</option></select>
+          <div class="players-box" id="fPlayers" title="Afficher les jeux jouables à ce nombre de joueurs">
+            <span class="pl-lbl">On est</span>
+            <button type="button" class="pl-btn" data-pl="-1" aria-label="Un joueur de moins">−</button>
+            <input id="fPlayersN" type="number" inputmode="numeric" min="1" max="30" placeholder="?" aria-label="Nombre de joueurs">
+            <button type="button" class="pl-btn" data-pl="1" aria-label="Un joueur de plus">+</button>
+            <span class="pl-lbl">joueurs</span>
+            <button type="button" class="pl-clear hidden" id="fPlayersClear" aria-label="Tous les nombres de joueurs">×</button>
+          </div>
           <select id="fOwner" aria-label="Propriétaire"><option value="">Propriétaire : tous</option></select>
           <select id="fSort" aria-label="Tri">
             <option value="nom">Tri : A → Z</option>
@@ -321,8 +340,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
             <option value="out">Sortis de la collection</option>
             <option value="all">Tous les jeux</option>
           </select>
-          <button class="btn" id="btnXls" type="button">Exporter en Excel</button>
-          <button class="btn" id="btnImg" type="button">Exporter en image</button>
+          <button class="btn" id="btnExp" type="button">Exporter la liste</button>
         </div>
       </div>
       <div class="chips" id="typeChips"></div>
@@ -372,6 +390,22 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
     <button class="btn danger" id="dDelete">Supprimer</button>
     <button class="btn" id="dOut">Sortir de la collection</button>
     <button class="btn primary" id="dEdit">Modifier</button>
+  </div>
+</dialog>
+
+<!-- Export de la liste -->
+<dialog id="expDlg">
+  <div class="dlg-head">
+    <h2>Exporter la liste</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <p class="hint" id="expInfo" style="margin:0 0 12px"></p>
+    <div class="exp-list">
+      <button class="exp-btn" id="btnDoc" type="button"><b>Word</b><span>Liste en texte, facile à lire, imprimer ou modifier</span></button>
+      <button class="exp-btn" id="btnImg" type="button"><b>Image</b><span>Pour envoyer sur WhatsApp ou les réseaux</span></button>
+      <button class="exp-btn" id="btnXls" type="button"><b>Excel</b><span>Tableau complet, avec l'historique des sorties</span></button>
+    </div>
   </div>
 </dialog>
 
@@ -746,13 +780,6 @@ function refreshFilters(){
   F.owner = fo.value;
   $("#ownerList").innerHTML = owners().map(o => `<option value="${esc(o)}">`).join("");
 
-  const fp = $("#fPlayers");
-  if (fp.options.length < 2) {
-    let h = `<option value="">Joueurs : tous</option>`;
-    for (let i = 1; i <= 12; i++) h += `<option value="${i}">${i} joueur${i>1?"s":""}</option>`;
-    h += `<option value="13">13 et +</option>`;
-    fp.innerHTML = h;
-  }
 
   const types = usedTypes();
   [...F.types].forEach(t => { if (!types.includes(t)) F.types.delete(t); });
@@ -967,7 +994,7 @@ async function buildListImage(list){
   const filt = [];
   if (F.owner) filt.push(F.owner);
   F.types.forEach(t => filt.push(t));
-  if (F.players) filt.push(`à ${F.players === "13" ? "13+" : F.players} joueur${F.players === "1" ? "" : "s"}`);
+  if (F.players) filt.push(`jouable à ${F.players} joueur${F.players === "1" ? "" : "s"}`);
   if (F.q) filt.push(`« ${F.q} »`);
   const nbEx = list.reduce((n, g) => n + totalOf(g), 0);
   const title = F.statut === "out" ? "Jeux sortis" : "La ludothèque";
@@ -1045,7 +1072,7 @@ async function buildListImage(list){
 $("#btnImg").addEventListener("click", async () => {
   const list = filtered();
   if (!list.length) { toast("Aucun jeu à exporter avec ces filtres."); return; }
-  const btn = $("#btnImg"); btn.disabled = true; btn.textContent = "Création…";
+  const btn = $("#btnImg"); btn.disabled = true;
   try {
     const blob = await buildListImage(list);
     const name = `jeux-ptg-${today()}.png`;
@@ -1061,7 +1088,71 @@ $("#btnImg").addEventListener("click", async () => {
       toast("Image enregistrée");
     }
   } catch (err) { toast("Erreur : " + err.message); }
-  finally { btn.disabled = false; btn.textContent = "Exporter en image"; }
+  finally { btn.disabled = false; }
+});
+
+/* ---------- Bouton Exporter ---------- */
+$("#btnExp").addEventListener("click", () => {
+  const list = filtered();
+  if (!list.length) { toast("Aucun jeu à exporter avec ces filtres."); return; }
+  $("#expInfo").textContent = `${list.length} jeu${list.length > 1 ? "x" : ""} : la liste exportée correspond à ce qui est affiché (filtres compris).`;
+  $("#expDlg").showModal();
+});
+
+/* ---------- Export Word ---------- */
+let docxLoading = null;
+function loadDocx(){
+  if (window.docx) return Promise.resolve();
+  if (!docxLoading) docxLoading = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js";
+    sc.onload = res; sc.onerror = () => { docxLoading = null; rej(new Error("Impossible de charger l'outil Word (connexion ?)")); };
+    document.head.appendChild(sc);
+  });
+  return docxLoading;
+}
+$("#btnDoc").addEventListener("click", async () => {
+  const list = filtered();
+  if (!list.length) { toast("Aucun jeu à exporter avec ces filtres."); return; }
+  const btn = $("#btnDoc"); btn.disabled = true;
+  try {
+    await loadDocx();
+    const { Document, Packer, Paragraph, TextRun, BorderStyle } = window.docx;
+    const BROWN = "5C3A21", TERRA = "C0522A", TEAL = "2F6E62", GREY = "8A7766";
+    const filt = [];
+    if (F.owner) filt.push(F.owner);
+    F.types.forEach(t => filt.push(t));
+    if (F.players) filt.push(`jouable à ${F.players} joueur${F.players === "1" ? "" : "s"}`);
+    if (F.q) filt.push(`« ${F.q} »`);
+    const nbEx = list.reduce((n, g) => n + totalOf(g), 0);
+    const kids = [
+      new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: F.statut === "out" ? "JEUX SORTIS" : "LA LUDOTHÈQUE", bold: true, size: 44, color: TERRA, font: "Calibri" })] }),
+      new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: `Play Thau'Gether · ${list.length} jeu${list.length > 1 ? "x" : ""}` + (nbEx > list.length ? ` · ${nbEx} exemplaires` : "") + ` · à jour le ${new Date().toLocaleDateString("fr-FR")}`, size: 20, color: BROWN })] })
+    ];
+    if (filt.length) kids.push(new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Sélection : " + filt.join(" · "), size: 20, color: TEAL, bold: true })] }));
+    kids.push(new Paragraph({ spacing: { after: 200 }, border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "C9A57E", space: 4 } }, children: [] }));
+    list.forEach(g => {
+      const info = [fmtPlayers(g), fmtDuree(g.duree), g.age ? `${g.age} ans et +` : "", DIFF[g.difficulte] ? `difficulté : ${DIFF[g.difficulte].toLowerCase()}` : ""].filter(Boolean).join(" · ");
+      kids.push(new Paragraph({ keepNext: true, spacing: { before: 120, after: 20 }, children: [
+        new TextRun({ text: g.nom, bold: true, size: 24, color: isOut(g) ? GREY : "3A2313" }),
+        ...(totalOf(g) > 1 ? [new TextRun({ text: `  ×${totalOf(g)}`, bold: true, size: 20, color: TERRA })] : [])
+      ] }));
+      if (info) kids.push(new Paragraph({ keepNext: true, spacing: { after: 20 }, children: [new TextRun({ text: info, size: 20, color: BROWN })] }));
+      const own = ownersText(g);
+      if (own) kids.push(new Paragraph({ keepNext: !!(g.notes || isOut(g)), spacing: { after: 20 }, children: [new TextRun({ text: (ownersOf(g).length > 1 ? "Propriétaires : " : "Propriétaire : ") + own, size: 20, color: TEAL })] }));
+      if (isOut(g)) kids.push(new Paragraph({ keepNext: !!g.notes, spacing: { after: 20 }, children: [new TextRun({ text: `Sorti : ${g.sortie.motif}` + (g.sortie.note ? ` (${g.sortie.note})` : ""), size: 20, color: TERRA })] }));
+      if (g.notes) kids.push(new Paragraph({ spacing: { after: 20 }, children: [new TextRun({ text: g.notes, italics: true, size: 20, color: GREY })] }));
+    });
+    const doc = new Document({
+      creator: "Play Thau'Gether", title: "Ludothèque PTG",
+      styles: { default: { document: { run: { font: "Calibri" } } } },
+      sections: [{ properties: { page: { margin: { top: 1000, bottom: 1000, left: 1100, right: 1100 } } }, children: kids }]
+    });
+    const blob = await Packer.toBlob(doc);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `ludotheque-ptg-${today()}.docx`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  } catch (err) { toast(err.message); }
+  finally { btn.disabled = false; }
 });
 
 /* ---------- Export Excel ---------- */
@@ -1544,6 +1635,8 @@ const DEFAULT_SECTIONS = [
   { id: "s2", kind: "familial",  nom: "Familial",         sous: "Accessible, on comprend vite",              couleur: "#2F6E62" },
   { id: "s3", kind: "ambiance",  nom: "Ambiance",         sous: "On parle, on dessine, on négocie",          couleur: "#C0522A" },
   { id: "s4", kind: "duo",       nom: "À deux",           sous: "Conçus pour le duel, rien d'autre",         couleur: "#5C3A21" },
+  { id: "s9", kind: "coop",      nom: "Coopératif",       sous: "Tous ensemble contre le jeu",               couleur: "#2F6E62" },
+  { id: "s8", kind: "strategie", nom: "Stratégie",        sous: "Pour ceux qui aiment réfléchir un peu",     couleur: "#5C3A21" },
   { id: "s5", kind: "classique", nom: "Classiques",       sous: "Les cartes traditionnelles",                couleur: "#C9A57E" },
   { id: "s6", kind: "expert",    nom: "Expert",           sous: "On réfléchit vraiment",                     couleur: "#1F140C" },
   { id: "s7", kind: "enfants",   nom: "Enfants",          sous: "Pour les plus jeunes",                      couleur: "#2F6E62" }
@@ -1558,13 +1651,25 @@ function classify(g){
   if (has("Rôles cachés")) return "bluff";
   if (has("Ambiance", "Party game", "Dessin", "Mots", "Quiz", "Rapidité")) return "ambiance";
   if (has("Bluff")) return "bluff";
+  if (has("Coopératif")) return "coop";
+  if (!has("Familial") && (has("Stratégie", "Gestion", "Deck-building", "Draft")
+      || (g.age || 0) >= 12
+      || (has("Dés") && (g.difficulte || 0) >= 2)
+      || ((g.duree || 0) >= 60 && (g.difficulte || 0) >= 2))) return "strategie";
   return "familial";
 }
 // Ajoute les sections manquantes (anciennes cartes) et un "kind" à chaque section
 function normalizeCarte(c){
   const byName = { "bluff & trahison": "bluff", "familial": "familial", "ambiance": "ambiance", "à deux": "duo", "classiques": "classique", "expert": "expert", "enfants": "enfants" };
   c.sections = (c.sections || []).map(sec => ({ ...sec, kind: sec.kind || DEFAULT_SECTIONS.find(d => d.id === sec.id)?.kind || byName[norm(sec.nom).replace("a deux", "à deux")] || null })).filter(sec => sec.kind);
-  DEFAULT_SECTIONS.forEach(d => { if (!c.sections.some(x => x.kind === d.kind)) c.sections.push({ ...d, id: c.sections.some(x => x.id === d.id) ? uid() : d.id }); });
+  DEFAULT_SECTIONS.forEach((d, i) => {
+    if (c.sections.some(x => x.kind === d.kind)) return;
+    const sec = { ...d, id: c.sections.some(x => x.id === d.id) ? uid() : d.id };
+    // insère la section après celle qui la précède dans l'ordre par défaut
+    let at = -1;
+    for (let k = i - 1; k >= 0 && at < 0; k--) at = c.sections.findIndex(x => x.kind === DEFAULT_SECTIONS[k].kind);
+    c.sections.splice(at + 1, 0, sec);
+  });
   c.jeux = c.jeux || {}; c.starters = c.starters || [];
   const d = defaultCarte();
   ["titre","sousTitre","startTitre","startLegende","tri","footQ","footT","signature","qrLegende"].forEach(k => { if (c[k] == null) c[k] = d[k]; });
@@ -1977,7 +2082,21 @@ $("#importFile").addEventListener("change", async e => {
 
 /* ---------- Événements ---------- */
 $("#q").addEventListener("input", e => { F.q = e.target.value; render(); });
-$("#fPlayers").addEventListener("change", e => { F.players = e.target.value; render(); });
+function setPlayers(v){
+  const n = parseInt(v, 10);
+  F.players = Number.isFinite(n) && n >= 1 ? String(Math.min(n, 30)) : "";
+  const inp = $("#fPlayersN");
+  if (document.activeElement !== inp || !F.players) inp.value = F.players;
+  $("#fPlayersClear").classList.toggle("hidden", !F.players);
+  $("#fPlayers").classList.toggle("on", !!F.players);
+  render();
+}
+$("#fPlayersN").addEventListener("input", e => setPlayers(e.target.value));
+$("#fPlayers").addEventListener("click", e => {
+  const b = e.target.closest("[data-pl]");
+  if (b) { const cur = parseInt(F.players, 10); setPlayers(Number.isFinite(cur) ? Math.max(1, cur + parseInt(b.dataset.pl, 10)) : 2); return; }
+  if (e.target.closest("#fPlayersClear")) setPlayers("");
+});
 $("#fOwner").addEventListener("change", e => { F.owner = e.target.value; render(); });
 $("#fSort").addEventListener("change", e => { F.sort = e.target.value; render(); });
 $("#fStatut").addEventListener("change", e => { F.statut = e.target.value; render(); });
