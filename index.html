@@ -99,6 +99,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .out-tag{position:absolute;left:8px;top:8px;background:var(--dark);color:var(--light);font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
 .out-box{background:#F3E4DA;border-left:4px solid var(--terra);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:14px}
 .out-box b{color:var(--terra)}
+.q-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:8px}
+.q-row .q-name{flex:1;min-width:0;font-weight:600}
+.q-row .q-name small{display:block;font-weight:400;opacity:.7;font-size:12px}
+.q-step{display:flex;align-items:center;gap:6px}
+.q-step button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--beige);font-size:18px;font-weight:600;padding:0}
+.q-step b{min-width:26px;text-align:center;font-size:18px}
+.pk-qbtn{flex:0 0 auto;height:34px;padding:0 10px;border-radius:9px;border:1px solid var(--teal);background:#E3F0EC;color:var(--teal);font-weight:600;font-size:13px}
+.add-carte .n{font-size:15px;font-weight:700}
+.r-group{margin-bottom:14px}
+.r-group h4{font-family:'Bebas Neue',sans-serif;font-weight:400;color:var(--terra);font-size:22px;margin:0 0 6px;letter-spacing:.4px}
+.r-group h4 small{font-family:Poppins;font-size:12px;color:var(--brown);opacity:.7;letter-spacing:0;margin-left:6px}
+.r-line{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid var(--line);margin-bottom:6px;cursor:pointer}
+.r-line input{width:22px;height:22px;accent-color:var(--teal);flex:0 0 auto}
+.r-line span{flex:1}
+.r-line.done span{text-decoration:line-through;opacity:.55}
+.r-line em{font-style:normal;font-weight:600;color:var(--terra)}
 .exp-list{display:flex;flex-direction:column;gap:8px}
 .exp-btn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:#fff}
 .exp-btn b{font-weight:600;color:var(--teal)}
@@ -410,6 +426,8 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
       <div class="preview">
         <div class="preview-bar">
           <span class="lbl">Aperçu A4</span>
+          <button class="btn" id="btnRecapSee" type="button">Voir le récap</button>
+          <button class="btn" id="btnValider" type="button">Valider la carte</button>
           <button class="btn primary" id="btnPrint">Imprimer / PDF</button>
         </div>
         <div class="sheet-wrap" id="sheetWrap"><div class="sheet" id="sheet"></div></div>
@@ -441,6 +459,43 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
     <button class="btn danger" id="dDelete">Supprimer</button>
     <button class="btn" id="dOut">Sortir de la collection</button>
     <button class="btn primary" id="dEdit">Modifier</button>
+  </div>
+</dialog>
+
+<!-- Nombre d'exemplaires pris pour la carte -->
+<dialog id="qtyDlg">
+  <form id="qtyForm" method="dialog" novalidate>
+    <div class="dlg-head">
+      <h2 id="qTitle">Combien d'exemplaires ?</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <p class="hint" style="margin:0 0 12px">Combien d'exemplaires tu prends pour cette soirée, et à qui ils appartiennent.</p>
+      <div id="qRows"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger" id="qRemove">Retirer de la carte</button>
+      <button type="button" class="btn" data-close>Annuler</button>
+      <button type="submit" class="btn primary">Valider</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Récap organisateurs -->
+<dialog id="recapDlg">
+  <div class="dlg-head">
+    <h2>Récap organisateurs</h2>
+    <button type="button" class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <p class="hint" id="rInfo" style="margin:0 0 4px"></p>
+    <p class="hint" style="margin:0 0 12px">Coche chaque jeu quand il est rendu à son propriétaire.</p>
+    <div id="rBody"></div>
+  </div>
+  <div class="dlg-foot">
+    <button type="button" class="btn" id="rCopy">Copier le texte</button>
+    <button type="button" class="btn" id="rTxt">Télécharger (.txt)</button>
+    <button type="button" class="btn primary" data-close>Fermer</button>
   </div>
 </dialog>
 
@@ -896,7 +951,7 @@ function render(){
   $("#grid").innerHTML = list.map(g => {
     const info = [fmtPlayers(g), fmtDuree(g.duree), g.age ? `${g.age}+ ans` : ""].filter(Boolean).join(" · ");
     return `<button class="card${isOut(g) ? " out" : ""}" data-id="${esc(g.id)}">
-      <div class="thumb">${g.thumb ? imgTag(g.thumb, g.nom) : `<span class="ph">${letterOf(g.nom)}</span>`}${totalOf(g) > 1 ? `<span class="qte">×${totalOf(g)}</span>` : ""}${isOut(g) ? `<span class="out-tag">${esc(g.sortie.motif || "Sorti")}</span>` : `<span class="add-carte${C && C.jeux[g.id] ? " on" : ""}" data-add role="button" aria-label="${C && C.jeux[g.id] ? "Retirer de la carte des jeux" : "Ajouter à la carte des jeux"}">${C && C.jeux[g.id] ? `<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>` : `<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`}</span>`}</div>
+      <div class="thumb">${g.thumb ? imgTag(g.thumb, g.nom) : `<span class="ph">${letterOf(g.nom)}</span>`}${totalOf(g) > 1 ? `<span class="qte">×${totalOf(g)}</span>` : ""}${isOut(g) ? `<span class="out-tag">${esc(g.sortie.motif || "Sorti")}</span>` : `<span class="add-carte${C && C.jeux[g.id] ? " on" : ""}" data-add role="button" aria-label="${C && C.jeux[g.id] ? "Retirer de la carte des jeux" : "Ajouter à la carte des jeux"}">${C && C.jeux[g.id] ? (totalOf(g) > 1 ? `<span class="n">×${nbPris(C, g)}</span>` : `<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>`) : `<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`}</span>`}</div>
       <div class="body">
         <h3>${esc(g.nom)}</h3>
         ${info ? `<div class="meta">${esc(info)}</div>` : ""}
@@ -1755,6 +1810,13 @@ function normalizeCarte(c){
   ["titre","sousTitre","startTitre","startLegende","tri","footQ","footT","signature","qrLegende"].forEach(k => { if (c[k] == null) c[k] = d[k]; });
   return c;
 }
+// Exemplaires pris pour la carte : [{nom, qte}] (ancien format "true" = 1 exemplaire du 1er propriétaire)
+function prisOf(c, g){
+  const v = c.jeux[g.id]; if (!v) return [];
+  if (v && Array.isArray(v.ex)) return v.ex.filter(o => o && o.qte > 0);
+  const o = ownersOf(g)[0]; return [{ nom: o ? o.nom : "?", qte: 1 }];
+}
+const nbPris = (c, g) => prisOf(c, g).reduce((n, o) => n + o.qte, 0);
 const sectionOf = (c, g) => c.sections.find(x => x.kind === classify(g)) || c.sections.find(x => x.kind === "familial");
 const useCarte = x => normalizeCarte({ ...clone(x), _saved: true });
 
@@ -1889,6 +1951,7 @@ function renderEditor(){
 
   renderCarteSelect();
   renderPickList();
+  updateRecapBtn();
 }
 
 function renderPickList(){
@@ -1903,6 +1966,7 @@ function renderPickList(){
       <div class="pk-thumb">${g.thumb ? imgTag(g.thumb, g.nom, "") : letterOf(g.nom)}</div>
       <label class="pk-main"><b>${esc(g.nom)}</b><small>${esc(info)} ${g.difficulte ? miniDots(g.difficulte) : ""} <span class="pk-sec">${esc(sectionOf(C, g).nom)}</span></small>
         <input type="checkbox" class="pk-check" data-gon ${on ? "checked" : ""} aria-label="Mettre sur la carte"></label>
+      ${on && totalOf(g) > 1 ? `<button class="pk-qbtn" data-qty title="Changer le nombre d'exemplaires">×${nbPris(C, g)}</button>` : ""}
       <button class="star${st ? " on" : ""}" data-star aria-label="Jamais joué ? Commencez par là"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" stroke-linejoin="round"/></svg></button>
     </div>`;
   }).join("") : `<div class="hint">Ajoute d'abord des jeux dans l'onglet « Les jeux ».</div>`;
@@ -1939,8 +2003,9 @@ ed.addEventListener("change", async e => {
   }
   if (t.dataset.k === "tri") { C.tri = t.value; changed(); return; }
   if (t.hasAttribute("data-gon")) {
-    const row = t.closest(".pick"), gid = row.dataset.gid;
-    if (t.checked) C.jeux[gid] = true;
+    const row = t.closest(".pick"), gid = row.dataset.gid, g = games.find(x => x.id === gid);
+    if (t.checked && g && totalOf(g) > 1) { t.checked = false; openQty(gid); return; }
+    if (t.checked) C.jeux[gid] = { ex: [{ nom: (ownersOf(g)[0] || {}).nom || "?", qte: 1 }] };
     else { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); row.querySelector(".star").classList.remove("on"); }
     row.classList.toggle("on", t.checked);
     updatePickCount(); changed();
@@ -1950,14 +2015,19 @@ ed.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   const secRow = b.closest("[data-sid]");
   if (b.hasAttribute("data-star")) {
-    const row = b.closest(".pick"), gid = row.dataset.gid;
+    const row = b.closest(".pick"), gid = row.dataset.gid, g = games.find(x => x.id === gid);
     if (C.starters.includes(gid)) C.starters = C.starters.filter(x => x !== gid);
     else {
       C.starters.push(gid);
-      if (!C.jeux[gid]) { C.jeux[gid] = true; row.classList.add("on"); row.querySelector("[data-gon]").checked = true; updatePickCount(); }
+      if (!C.jeux[gid]) {
+        if (g && totalOf(g) > 1) { b.classList.add("on"); changed(); openQty(gid); return; }
+        C.jeux[gid] = { ex: [{ nom: (ownersOf(g)[0] || {}).nom || "?", qte: 1 }] };
+        row.classList.add("on"); row.querySelector("[data-gon]").checked = true; updatePickCount();
+      }
     }
     b.classList.toggle("on"); changed(); return;
   }
+  if (b.hasAttribute("data-qty")) { openQty(b.closest(".pick").dataset.gid); return; }
   if (b.dataset.scol && secRow) {
     const s = C.sections.find(x => x.id === secRow.dataset.sid); s.couleur = b.dataset.scol;
     secRow.style.setProperty("--c", s.couleur);
@@ -2006,6 +2076,112 @@ $("#qrFile").addEventListener("change", async e => {
     renderEditor(); changed();
   } catch (err) { toast(err.message); }
 });
+
+/* Modale : nombre d'exemplaires pris */
+let qtyGid = null, qtyVals = [];
+function openQty(gid){
+  ensureCarte();
+  const g = games.find(x => x.id === gid); if (!g) return;
+  qtyGid = gid;
+  const pris = prisOf(C, g), own = ownersOf(g);
+  const onCard = !!C.jeux[gid];
+  qtyVals = own.map(o => ({ nom: o.nom, max: o.qte || 1, qte: onCard ? ((pris.find(p => norm(p.nom) === norm(o.nom)) || {}).qte || 0) : 0 }));
+  if (!onCard && qtyVals.length) qtyVals[0].qte = 1;
+  $("#qTitle").textContent = g.nom;
+  $("#qRemove").classList.toggle("hidden", !onCard);
+  renderQty();
+  $("#qtyDlg").showModal();
+}
+function renderQty(){
+  $("#qRows").innerHTML = qtyVals.map((o, i) => `<div class="q-row">
+    <div class="q-name">${esc(o.nom)}<small>${o.max} exemplaire${o.max > 1 ? "s" : ""}</small></div>
+    <div class="q-step"><button type="button" data-qi="${i}" data-qd="-1" aria-label="Un de moins">−</button><b>${o.qte}</b><button type="button" data-qi="${i}" data-qd="1" aria-label="Un de plus">+</button></div>
+  </div>`).join("");
+}
+$("#qRows").addEventListener("click", e => {
+  const b = e.target.closest("[data-qi]"); if (!b) return;
+  const o = qtyVals[+b.dataset.qi];
+  o.qte = Math.max(0, Math.min(o.max, o.qte + parseInt(b.dataset.qd, 10)));
+  renderQty();
+});
+function afterCarteChange(){ changed(); render(); if (view === "carte") renderPickList(); }
+$("#qtyForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const g = games.find(x => x.id === qtyGid); if (!g) return;
+  const ex = qtyVals.filter(o => o.qte > 0).map(o => ({ nom: o.nom, qte: o.qte }));
+  if (ex.length) { C.jeux[qtyGid] = { ex }; toast(`${g.nom} : ${ex.reduce((n, o) => n + o.qte, 0)} exemplaire(s) sur la carte`); }
+  else { delete C.jeux[qtyGid]; C.starters = C.starters.filter(x => x !== qtyGid); toast(`Retiré de la carte « ${C.nom} »`); }
+  $("#qtyDlg").close(); afterCarteChange();
+});
+$("#qRemove").addEventListener("click", () => {
+  delete C.jeux[qtyGid]; C.starters = C.starters.filter(x => x !== qtyGid);
+  $("#qtyDlg").close(); toast(`Retiré de la carte « ${C.nom} »`); afterCarteChange();
+});
+
+/* Récap organisateurs : qui apporte quoi */
+function buildRecap(c){
+  const byOwner = new Map();
+  inGames().filter(g => c.jeux[g.id]).forEach(g => prisOf(c, g).forEach(p => {
+    if (!byOwner.has(p.nom)) byOwner.set(p.nom, []);
+    byOwner.get(p.nom).push({ id: g.id, nom: g.nom, qte: p.qte });
+  }));
+  return [...byOwner.entries()].sort((a, b) => a[0].localeCompare(b[0], "fr"))
+    .map(([nom, jeux]) => ({ nom, jeux: jeux.sort((a, b) => norm(a.nom).localeCompare(norm(b.nom), "fr")) }));
+}
+const fmtDT = iso => { try { return new Date(iso).toLocaleDateString("fr-FR") + " à " + new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } };
+function recapText(c){
+  const r = c.recap; if (!r) return "";
+  const nbJ = new Set(r.groupes.flatMap(gr => gr.jeux.map(j => j.id))).size;
+  const nbE = r.groupes.reduce((n, gr) => n + gr.jeux.reduce((m, j) => m + j.qte, 0), 0);
+  let t = `CARTE DES JEUX : ${c.nom}\nValidée le ${fmtDT(r.date)}\n${nbJ} jeux · ${nbE} exemplaires\n`;
+  r.groupes.forEach(gr => {
+    t += `\n${gr.nom.toUpperCase()} (${gr.jeux.reduce((m, j) => m + j.qte, 0)})\n`;
+    gr.jeux.forEach(j => { t += `- ${j.nom}${j.qte > 1 ? " ×" + j.qte : ""}${(c.recapRendu || {})[gr.nom + "|" + j.id] ? "  (rendu)" : ""}\n`; });
+  });
+  return t;
+}
+function openRecap(){
+  const r = C.recap; if (!r) return;
+  const nbJ = new Set(r.groupes.flatMap(gr => gr.jeux.map(j => j.id))).size;
+  const nbE = r.groupes.reduce((n, gr) => n + gr.jeux.reduce((m, j) => m + j.qte, 0), 0);
+  $("#rInfo").textContent = `${C.nom} · validée le ${fmtDT(r.date)} · ${nbJ} jeux · ${nbE} exemplaires`;
+  const rendu = C.recapRendu || {};
+  $("#rBody").innerHTML = r.groupes.length ? r.groupes.map(gr => `<div class="r-group">
+    <h4>${esc(gr.nom)}<small>${gr.jeux.reduce((m, j) => m + j.qte, 0)} à rendre</small></h4>
+    ${gr.jeux.map(j => { const k = gr.nom + "|" + j.id; return `<label class="r-line${rendu[k] ? " done" : ""}"><input type="checkbox" data-rk="${esc(k)}" ${rendu[k] ? "checked" : ""}><span>${esc(j.nom)}</span>${j.qte > 1 ? `<em>×${j.qte}</em>` : ""}</label>`; }).join("")}
+  </div>`).join("") : `<p class="hint">Aucun jeu sur la carte.</p>`;
+  $("#recapDlg").showModal();
+}
+function downloadRecap(){
+  const blob = new Blob(["\ufeff" + recapText(C)], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+  a.download = `recap-${norm(C.nom).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "carte"}-${today()}.txt`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+$("#rBody").addEventListener("change", e => {
+  const cb = e.target.closest("[data-rk]"); if (!cb) return;
+  C.recapRendu = { ...(C.recapRendu || {}), [cb.dataset.rk]: cb.checked };
+  cb.closest(".r-line").classList.toggle("done", cb.checked);
+  scheduleSave();
+});
+$("#rCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(recapText(C)); toast("Récap copié, colle-le sur WhatsApp"); }
+  catch { toast("Copie impossible sur cet appareil, utilise le téléchargement"); }
+});
+$("#rTxt").addEventListener("click", downloadRecap);
+$("#btnValider").addEventListener("click", () => {
+  ensureCarte();
+  const groupes = buildRecap(C);
+  if (!groupes.length) { toast("Ajoute d'abord des jeux sur la carte."); return; }
+  C.recap = { date: new Date().toISOString(), groupes };
+  C.recapRendu = {};
+  scheduleSave();
+  updateRecapBtn();
+  downloadRecap();
+  openRecap();
+});
+$("#btnRecapSee").addEventListener("click", openRecap);
+function updateRecapBtn(){ const b = $("#btnRecapSee"); if (b) b.classList.toggle("hidden", !(C && C.recap)); }
 
 /* Rendu de la feuille */
 const qrCache = new Map();
@@ -2233,8 +2409,9 @@ $("#grid").addEventListener("click", e => {
   e.stopPropagation();
   ensureCarte();
   const gid = c.dataset.id, g = games.find(x => x.id === gid);
+  if (totalOf(g) > 1) { openQty(gid); return; }
   if (C.jeux[gid]) { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); toast(`Retiré de la carte « ${C.nom} »`); }
-  else { C.jeux[gid] = true; toast(`Ajouté à « ${C.nom} » (${sectionOf(C, g).nom})`); }
+  else { C.jeux[gid] = { ex: [{ nom: (ownersOf(g)[0] || {}).nom || "?", qte: 1 }] }; toast(`Ajouté à « ${C.nom} » (${sectionOf(C, g).nom})`); }
   changed();
   render();
 });
