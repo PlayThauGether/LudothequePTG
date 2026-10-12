@@ -110,6 +110,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .owner-line .mini-btn{width:40px;height:40px}
 .owners-list{display:flex;flex-direction:column;gap:2px}
 .thumb{position:relative}
+.add-carte{position:absolute;right:8px;bottom:8px;width:40px;height:40px;border-radius:12px;background:rgba(251,246,239,.95);border:1px solid var(--line);color:var(--teal);display:grid;place-items:center;font-size:26px;font-weight:600;line-height:1;box-shadow:0 2px 8px rgba(58,35,19,.18);cursor:pointer}
+.add-carte svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.add-carte.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.add-carte:active{transform:scale(.92)}
+.tab .tcnt{font-size:11px;background:var(--teal);color:#fff;border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.tab.on .tcnt{background:var(--light);color:var(--terra)}
 .qte{position:absolute;top:8px;right:8px;background:var(--terra);color:var(--light);font-weight:600;font-size:12px;padding:2px 8px;border-radius:999px}
 .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
 .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--beige);border:1px solid var(--line)}
@@ -327,7 +333,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
     </div>
     <div class="tabs" role="tablist">
       <button class="tab on" data-view="jeux">Les jeux</button>
-      <button class="tab" data-view="carte">Carte des jeux</button>
+      <button class="tab" data-view="carte">Carte des jeux<span class="tcnt hidden" id="tabCnt"></span></button>
     </div>
   </header>
 
@@ -890,7 +896,7 @@ function render(){
   $("#grid").innerHTML = list.map(g => {
     const info = [fmtPlayers(g), fmtDuree(g.duree), g.age ? `${g.age}+ ans` : ""].filter(Boolean).join(" · ");
     return `<button class="card${isOut(g) ? " out" : ""}" data-id="${esc(g.id)}">
-      <div class="thumb">${g.thumb ? imgTag(g.thumb, g.nom) : `<span class="ph">${letterOf(g.nom)}</span>`}${totalOf(g) > 1 ? `<span class="qte">×${totalOf(g)}</span>` : ""}${isOut(g) ? `<span class="out-tag">${esc(g.sortie.motif || "Sorti")}</span>` : ""}</div>
+      <div class="thumb">${g.thumb ? imgTag(g.thumb, g.nom) : `<span class="ph">${letterOf(g.nom)}</span>`}${totalOf(g) > 1 ? `<span class="qte">×${totalOf(g)}</span>` : ""}${isOut(g) ? `<span class="out-tag">${esc(g.sortie.motif || "Sorti")}</span>` : `<span class="add-carte${C && C.jeux[g.id] ? " on" : ""}" data-add role="button" aria-label="${C && C.jeux[g.id] ? "Retirer de la carte des jeux" : "Ajouter à la carte des jeux"}">${C && C.jeux[g.id] ? `<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>` : `<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>`}</span>`}</div>
       <div class="body">
         <h3>${esc(g.nom)}</h3>
         ${info ? `<div class="meta">${esc(info)}</div>` : ""}
@@ -900,6 +906,7 @@ function render(){
     </button>`;
   }).join("");
 
+  updateTabCount();
   const empty = $("#empty");
   if (!list.length) {
     empty.classList.remove("hidden");
@@ -1775,7 +1782,7 @@ function ensureCarte(){
 
 function onCartes(list){
   cartes = list.sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
-  if (!C) return;
+  if (!C) { if (cartes.length) { ensureCarte(); if (view === "jeux") render(); } return; }
   if (saveT) return; // modification locale en attente : on ne l'écrase pas
   const fresh = cartes.find(c => c.id === C.id);
   if (fresh) {
@@ -1787,6 +1794,7 @@ function onCartes(list){
     if (view === "carte") { renderEditor(); renderSheet(); }
   }
   if (view === "carte") renderCarteSelect();
+  else render();
 }
 
 function scheduleSave(){
@@ -2218,7 +2226,24 @@ $("#typeChips").addEventListener("click", e => {
   else { const t = b.dataset.type; F.types.has(t) ? F.types.delete(t) : F.types.add(t); }
   refreshFilters(); render();
 });
-$("#grid").addEventListener("click", e => { const c = e.target.closest(".card"); if (c) openDetail(c.dataset.id); });
+$("#grid").addEventListener("click", e => {
+  const add = e.target.closest("[data-add]");
+  const c = e.target.closest(".card"); if (!c) return;
+  if (!add) { openDetail(c.dataset.id); return; }
+  e.stopPropagation();
+  ensureCarte();
+  const gid = c.dataset.id, g = games.find(x => x.id === gid);
+  if (C.jeux[gid]) { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); toast(`Retiré de la carte « ${C.nom} »`); }
+  else { C.jeux[gid] = true; toast(`Ajouté à « ${C.nom} » (${sectionOf(C, g).nom})`); }
+  changed();
+  render();
+});
+function updateTabCount(){
+  const el = $("#tabCnt"); if (!el) return;
+  const ids = new Set(inGames().map(g => g.id));
+  const n = C ? Object.keys(C.jeux).filter(k => C.jeux[k] && ids.has(k)).length : 0;
+  el.textContent = n; el.classList.toggle("hidden", !n);
+}
 $("#btnAdd").addEventListener("click", () => openForm(null));
 $("#dEdit").addEventListener("click", () => openForm(currentId));
 $("#dDelete").addEventListener("click", async () => {
