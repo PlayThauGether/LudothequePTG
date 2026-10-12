@@ -428,6 +428,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
           <span class="lbl">Aperçu A4</span>
           <button class="btn" id="btnRecapSee" type="button">Voir le récap</button>
           <button class="btn" id="btnValider" type="button">Valider la carte</button>
+          <button class="btn" id="btnCartePng" type="button">Image (PNG)</button>
           <button class="btn primary" id="btnPrint">Imprimer / PDF</button>
         </div>
         <div class="sheet-wrap" id="sheetWrap"><div class="sheet" id="sheet"></div></div>
@@ -2266,6 +2267,49 @@ let sheetQueued = false;
 function queueSheet(){ if (sheetQueued) return; sheetQueued = true; requestAnimationFrame(() => { sheetQueued = false; if (view === "carte") renderSheet(); }); }
 new ResizeObserver(() => { if (view === "carte") scalePreview(); }).observe($("#sheetWrap"));
 if (document.fonts) document.fonts.ready.then(() => { if (view === "carte") renderSheet(); });
+
+/* Carte des jeux en image PNG */
+let h2cLoading = null;
+function loadH2C(){
+  if (window.html2canvas) return Promise.resolve();
+  if (!h2cLoading) h2cLoading = new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    sc.onload = res; sc.onerror = () => { h2cLoading = null; rej(new Error("Impossible de charger l'outil image (connexion ?)")); };
+    document.head.appendChild(sc);
+  });
+  return h2cLoading;
+}
+$("#btnCartePng").addEventListener("click", async () => {
+  const btn = $("#btnCartePng"); btn.disabled = true; const lbl = btn.textContent; btn.textContent = "Création…";
+  let holder;
+  try {
+    await loadH2C();
+    if (document.fonts) await document.fonts.ready;
+    renderSheet();
+    // copie de la feuille à taille réelle, hors écran (sans le zoom de l'aperçu)
+    holder = document.createElement("div");
+    holder.style.cssText = "position:fixed;left:-10000px;top:0;";
+    const cl = $("#sheet").cloneNode(true);
+    cl.removeAttribute("id"); cl.style.transform = "none";
+    holder.appendChild(cl); document.body.appendChild(holder);
+    const canvas = await html2canvas(cl, { scale: 2.5, backgroundColor: "#ffffff", useCORS: true, logging: false });
+    const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+    const name = `carte-des-jeux-${norm(C.nom).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "ptg"}-${today()}.png`;
+    const file = new File([blob], name, { type: "image/png" });
+    let shared = false;
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: C.titre || "Carte des jeux" }); shared = true; }
+      catch (err) { if (err && err.name === "AbortError") shared = true; }
+    }
+    if (!shared) {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+      toast("Image enregistrée");
+    }
+  } catch (err) { toast("Erreur : " + err.message); }
+  finally { if (holder) holder.remove(); btn.disabled = false; btn.textContent = lbl; }
+});
 
 $("#btnPrint").addEventListener("click", async () => {
   if (document.fonts) await document.fonts.ready;
