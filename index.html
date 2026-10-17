@@ -296,7 +296,18 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
 .loading{text-align:center;padding:40px;opacity:.7}
 
 /* Impression */
-@media screen{#printArea{display:none}}
+/* Pancartes de table : A4 portrait plié en deux, la moitié haute à l'envers */
+.tent{width:297mm;height:209.5mm;background:#fff;position:relative;overflow:hidden;page-break-after:always;break-after:page;font-family:Poppins,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;--c:#5C3A21}
+.tent:last-child{page-break-after:auto;break-after:auto}
+/* tout le contenu reste à 10 mm du bord (zone imprimable) ; bordures et SVG s'impriment même sans "graphiques d'arrière-plan" */
+.tent .frame{position:absolute;inset:10mm;border-left:8mm solid var(--c)}
+.tent svg.badge-t{position:absolute;right:8mm;top:6mm;width:21mm;height:10.4mm}
+.tent .inner{position:absolute;left:16mm;right:12mm;top:0;bottom:16mm;display:flex;flex-direction:column;justify-content:center}
+.tent .lbl{font-size:5.6mm;color:#9a8878;letter-spacing:.8mm;text-transform:uppercase;margin-bottom:3mm}
+.tent h2{font-family:'Bebas Neue',sans-serif;font-weight:400;color:var(--c);margin:0;line-height:1;padding-top:.16em;letter-spacing:.4mm;white-space:nowrap}
+.tent .bar{width:22mm;height:0;border-top:2.2mm solid #2F6E62;border-radius:1.2mm;margin:6mm 0 6mm}
+.tent .sous{font-size:8.5mm;color:#5C3A21;line-height:1.3}
+.tent .sig{position:absolute;left:16mm;bottom:6mm;font-family:'Bebas Neue',sans-serif;color:#C0522A;font-size:9mm;letter-spacing:.3mm}
 @media print{
   @page{size:A4;margin:0}
   html,body{background:#fff!important;min-height:0!important;display:block!important}
@@ -429,6 +440,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
           <button class="btn" id="btnRecapSee" type="button">Voir le récap</button>
           <button class="btn" id="btnValider" type="button">Valider la carte</button>
           <button class="btn" id="btnCartePng" type="button">Image (PNG)</button>
+          <button class="btn" id="btnTents" type="button">Pancartes de table</button>
           <button class="btn primary" id="btnPrint">Imprimer / PDF</button>
         </div>
         <div class="sheet-wrap" id="sheetWrap"><div class="sheet" id="sheet"></div></div>
@@ -1765,17 +1777,18 @@ let cartes = [], C = null, saveT = null;
 const PREF = LS + "carteCourante";
 
 const DEFAULT_SECTIONS = [
-  { id: "s1", kind: "bluff",     nom: "Bluff & trahison", sous: "Rôles cachés, mensonges et fausses pistes", couleur: "#3A2313" },
-  { id: "s2", kind: "familial",  nom: "Familial",         sous: "Accessible, on comprend vite",              couleur: "#2F6E62" },
-  { id: "s3", kind: "ambiance",  nom: "Ambiance",         sous: "On parle, on dessine, on négocie",          couleur: "#C0522A" },
-  { id: "s4", kind: "duo",       nom: "À deux",           sous: "Conçus pour le duel, rien d'autre",         couleur: "#5C3A21" },
-  { id: "s10", kind: "enquete",  nom: "Enquête",          sous: "Indices, déductions et mystères à résoudre", couleur: "#5C3A21" },
-  { id: "s9", kind: "coop",      nom: "Coopératif",       sous: "Tous ensemble contre le jeu",               couleur: "#2F6E62" },
-  { id: "s8", kind: "strategie", nom: "Stratégie",        sous: "Pour ceux qui aiment réfléchir un peu",     couleur: "#5C3A21" },
-  { id: "s5", kind: "classique", nom: "Classiques",       sous: "Les cartes traditionnelles",                couleur: "#C9A57E" },
-  { id: "s6", kind: "expert",    nom: "Expert",           sous: "On réfléchit vraiment",                     couleur: "#1F140C" },
-  { id: "s7", kind: "enfants",   nom: "Enfants",          sous: "Pour les plus jeunes",                      couleur: "#2F6E62" }
+  { id: "s1", kind: "bluff",     nom: "Bluff & trahison", sous: "Mentez, trahissez, gardez une tête d'ange", couleur: "#3A2313" },
+  { id: "s2", kind: "familial",  nom: "Familial",         sous: "Simple à lancer, dur à lâcher",              couleur: "#2F6E62" },
+  { id: "s3", kind: "ambiance",  nom: "Ambiance",         sous: "Ça rit, ça crie, ça met le feu à la table",          couleur: "#C0522A" },
+  { id: "s4", kind: "duo",       nom: "À deux",           sous: "Un contre un, que le meilleur gagne",         couleur: "#5C3A21" },
+  { id: "s10", kind: "enquete",  nom: "Enquête",          sous: "Sortez la loupe, chaque détail compte", couleur: "#5C3A21" },
+  { id: "s9", kind: "coop",      nom: "Coopératif",       sous: "On gagne ensemble ou on coule ensemble",               couleur: "#2F6E62" },
+  { id: "s8", kind: "strategie", nom: "Stratégie",        sous: "Pour ceux qui ont toujours un coup d'avance",     couleur: "#5C3A21" },
+  { id: "s5", kind: "classique", nom: "Classiques",       sous: "Les indémodables qui ne prennent pas une ride",                couleur: "#C9A57E" },
+  { id: "s6", kind: "expert",    nom: "Expert",           sous: "Gros jeux et cerveaux en surchauffe",                     couleur: "#1F140C" },
+  { id: "s7", kind: "enfants",   nom: "Enfants",          sous: "Petits joueurs, grands moments",                      couleur: "#2F6E62" }
 ];
+const OLD_SOUS = ["Rôles cachés, mensonges et fausses pistes", "Accessible, on comprend vite", "On parle, on dessine, on négocie", "Conçus pour le duel, rien d'autre", "Indices, déductions et mystères à résoudre", "Tous ensemble contre le jeu", "Pour ceux qui aiment réfléchir un peu", "Les cartes traditionnelles", "On réfléchit vraiment", "Pour les plus jeunes"];
 // Range automatiquement un jeu dans une section selon ses types, sa difficulté et son nombre de joueurs
 function classify(g){
   const T = new Set(g.types || []), has = (...k) => k.some(x => T.has(x));
@@ -1806,6 +1819,8 @@ function normalizeCarte(c){
     for (let k = i - 1; k >= 0 && at < 0; k--) at = c.sections.findIndex(x => x.kind === DEFAULT_SECTIONS[k].kind);
     c.sections.splice(at + 1, 0, sec);
   });
+  // anciennes phrases par défaut remplacées par les nouvelles
+  c.sections.forEach(sec => { const d = DEFAULT_SECTIONS.find(x => x.kind === sec.kind); if (d && OLD_SOUS.includes(sec.sous)) sec.sous = d.sous; });
   c.jeux = c.jeux || {}; c.starters = c.starters || [];
   const d = defaultCarte();
   ["titre","sousTitre","startTitre","startLegende","tri","footQ","footT","signature","qrLegende"].forEach(k => { if (c[k] == null) c[k] = d[k]; });
@@ -2268,6 +2283,50 @@ function queueSheet(){ if (sheetQueued) return; sheetQueued = true; requestAnima
 new ResizeObserver(() => { if (view === "carte") scalePreview(); }).observe($("#sheetWrap"));
 if (document.fonts) document.fonts.ready.then(() => { if (view === "carte") renderSheet(); });
 
+/* Pancartes de table : une par section de la carte */
+function tentPage(sec, size){
+  return `<div class="tent" style="--c:${esc(sec.couleur)}"><div class="frame">
+    <svg class="badge-t" viewBox="0 0 170 84"><rect width="170" height="84" rx="20" fill="#C0522A"/><text x="85" y="58" text-anchor="middle" font-family="Poppins, sans-serif" font-weight="600" font-size="46" letter-spacing="3" fill="#FAE5D8">PTG</text></svg>
+    <div class="inner">
+      <div class="lbl">Jeux de société</div>
+      <h2 style="font-size:${size}px">${esc(sec.nom)}</h2>
+      <div class="bar"></div>
+      ${sec.sous ? `<div class="sous">${esc(sec.sous)}</div>` : ""}
+    </div>
+    <div class="sig">Play Thau'Gether</div>
+  </div></div>`;
+}
+function tentSize(text){
+  // titre le plus grand possible sur ~235 mm de large, 70 mm de haut max
+  const MM = 96 / 25.4, cv = document.createElement("canvas").getContext("2d");
+  cv.font = "400 100px 'Bebas Neue', sans-serif";
+  const w = cv.measureText(String(text).toUpperCase()).width || 1;
+  return Math.round(Math.min(70 * MM, 100 * (235 * MM) / w));
+}
+function tentsHTML(c, all){
+  const byId = new Map(inGames().map(g => [g.id, g]));
+  const used = new Set(Object.keys(c.jeux).filter(k => c.jeux[k] && byId.has(k)).map(k => sectionOf(c, byId.get(k)).kind));
+  const secs = c.sections.filter(sec => all || used.has(sec.kind));
+  return secs.map(sec => tentPage(sec, tentSize(sec.nom))).join("");
+}
+$("#btnTents").addEventListener("click", async () => {
+  ensureCarte();
+  if (document.fonts) { try { await document.fonts.load("400 40px 'Bebas Neue'"); await document.fonts.ready; } catch {} }
+  const hasGames = Object.keys(C.jeux).some(k => C.jeux[k]);
+  const all = !hasGames || confirm("Imprimer seulement les pancartes des catégories présentes sur la carte ?\n\nOK : seulement celles de la carte\nAnnuler : toutes les catégories") === false;
+  $("#printArea").innerHTML = tentsHTML(C, all);
+  const t = document.title;
+  document.title = "Pancartes - " + (C.nom || "PTG");
+  // format paysage uniquement pour les pancartes
+  const ps = document.createElement("style");
+  ps.textContent = "@media print{@page{size:A4 landscape;margin:0}}";
+  document.head.appendChild(ps);
+  const done = () => { ps.remove(); document.title = t; };
+  window.addEventListener("afterprint", done, { once: true });
+  window.print();
+  setTimeout(() => { if (!matchMedia("print").matches) { window.removeEventListener("afterprint", done); done(); } }, 1500);
+});
+
 /* Carte des jeux en image PNG */
 let h2cLoading = null;
 function loadH2C(){
@@ -2475,9 +2534,15 @@ $("#dDelete").addEventListener("click", async () => {
 });
 $("#btnLogout").addEventListener("click", () => store.logout());
 document.querySelectorAll("dialog").forEach(d => {
+  // fermeture par clic à côté seulement si le clic a COMMENCÉ à côté
+  // (sinon une sélection de texte qui déborde de la fenêtre la fermait)
+  let downOutside = false;
+  const outside = e => { const r = d.getBoundingClientRect(); return e.target === d && (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom); };
+  d.addEventListener("pointerdown", e => { downOutside = outside(e); });
   d.addEventListener("click", e => {
     if (e.target.closest("[data-close]")) d.close();
-    else if (e.target === d) d.close();
+    else if (downOutside && outside(e)) d.close();
+    downOutside = false;
   });
 });
 
