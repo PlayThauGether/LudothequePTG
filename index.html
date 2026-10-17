@@ -125,6 +125,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .owner-line input{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
 .owner-line .mini-btn{width:40px;height:40px}
 .owners-list{display:flex;flex-direction:column;gap:2px}
+/* Extensions */
+.tag.ext{background:#E3F0EC;border-color:#B9D6CD;color:var(--teal);font-weight:600}
+.ext-note{font-size:12px;color:var(--terra);font-weight:600}
+.ext-box{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;background:var(--beige)}
+.ext-r1{display:grid;grid-template-columns:1fr 40px;gap:8px;align-items:center}
+.ext-r2{display:grid;grid-template-columns:minmax(0,1fr) 92px 100px;gap:8px;margin-top:8px}
+.ext-r2 label{font-size:11px;opacity:.75;display:block;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:480px){.ext-r2{grid-template-columns:1fr 1fr}.ext-r2 > div:first-child{grid-column:1/-1}}
+.ext-box input{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
+.ext-box .mini-btn{width:40px;height:40px}
+.ext-list{display:flex;flex-direction:column;gap:6px}
+.ext-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--beige)}
+.ext-item > div{flex:1;min-width:0}
+.ext-item b{display:block;font-weight:600}
+.ext-item small{display:block;font-size:12px;opacity:.8}
+.ext-item.out{opacity:.6}
+.q-sub{font-weight:600;font-size:13px;margin:14px 0 6px}
+#qExt .r-line small{font-size:12px;opacity:.7}
 .thumb{position:relative}
 .add-carte{position:absolute;right:8px;bottom:8px;width:40px;height:40px;border-radius:12px;background:rgba(251,246,239,.95);border:1px solid var(--line);color:var(--teal);display:grid;place-items:center;font-size:26px;font-weight:600;line-height:1;box-shadow:0 2px 8px rgba(58,35,19,.18);cursor:pointer}
 .add-carte svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
@@ -272,6 +290,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
 .s{min-width:0}
 .r{display:flex;align-items:baseline;align-items:last baseline;padding:.36em 0}
 .r .n{font-weight:600;font-size:1.06em;line-height:1.15;max-width:66%;overflow-wrap:break-word}
+.r .n .x{font-weight:400;font-size:.78em;opacity:.75;white-space:nowrap}
 .r .l{flex:1;min-width:.8em;border-bottom:.14em dotted #C9A57E;margin:0 .45em;transform:translateY(-.2em)}
 .r .i{font-size:.7em;white-space:nowrap}
 .r .d{flex:0 0 3.6em;display:flex;justify-content:flex-end;gap:.32em;align-self:flex-end;margin-bottom:.22em}
@@ -485,6 +504,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
     <div class="dlg-body">
       <p class="hint" style="margin:0 0 12px">Combien d'exemplaires tu prends pour cette soirée, et à qui ils appartiennent.</p>
       <div id="qRows"></div>
+      <div id="qExt"></div>
     </div>
     <div class="dlg-foot">
       <button type="button" class="btn danger" id="qRemove">Retirer de la carte</button>
@@ -636,7 +656,14 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
       </div>
 
       <div class="field">
-        <label for="iNotes">Notes (état, pièces manquantes, extensions…)</label>
+        <label>Extensions</label>
+        <div id="extRows"></div>
+        <div><button type="button" class="btn sm" id="addExt">+ Ajouter une extension</button></div>
+        <p class="hint" style="margin:6px 0 0">« Joueurs max » : seulement si l'extension permet de jouer à plus.</p>
+      </div>
+
+      <div class="field">
+        <label for="iNotes">Notes (état, pièces manquantes…)</label>
         <textarea id="iNotes" style="min-height:70px"></textarea>
       </div>
     </div>
@@ -886,6 +913,28 @@ function ownersOf(g){
   return g.proprietaire ? [{ nom: g.proprietaire, qte: g.exemplaires || 1 }] : [];
 }
 const totalOf = g => ownersOf(g).reduce((n, o) => n + (o.qte || 1), 0) || 1;
+// Extensions d'un jeu : [{id, nom, proprietaires: [{nom, qte}], joueursMax, sortie?}]
+const extsOf = g => (g && Array.isArray(g.extensions) ? g.extensions : []).filter(x => x && x.nom);
+const activeExts = g => extsOf(g).filter(x => !x.sortie);
+const extOwners = x => (x.proprietaires || []).filter(o => o && o.nom);
+const extOwnersText = x => extOwners(x).map(o => (o.qte || 1) > 1 ? `${o.nom} ×${o.qte}` : o.nom).join(" · ");
+const extTotal = x => extOwners(x).reduce((n, o) => n + (o.qte || 1), 0) || 1;
+const fixExts = list => (Array.isArray(list) ? list : []).filter(x => x && x.nom).map(x => ({ ...x, id: x.id || uid(), proprietaires: extOwners(x).map(o => ({ nom: o.nom, qte: o.qte || 1 })) }));
+// Jouable à n joueurs ? directement, ou grâce à une extension (via)
+function playersFit(g, n){
+  const mn = g.joueursMin || 1, mx = g.joueursMax || 99;
+  if (n < mn) return { ok: false };
+  if (n <= mx) return { ok: true };
+  const via = activeExts(g).find(x => x.joueursMax && n <= x.joueursMax);
+  return via ? { ok: true, via } : { ok: false };
+}
+const extOwnedBy = (g, nom) => activeExts(g).filter(x => extOwners(x).some(o => o.nom === nom));
+// Pour la carte : faut-il demander exemplaires / extensions ?
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+const extLabel = x => /extension/i.test(x.nom) ? x.nom : "extension " + x.nom;
+const extsText = g => activeExts(g).map(x => x.nom + (extOwnersText(x) ? ` (${extOwnersText(x)})` : "")).join(", ");
+const needsQty = g => totalOf(g) > 1 || activeExts(g).length > 0;
+const extPris = (c, g) => { const v = c.jeux[g.id]; const ids = v && Array.isArray(v.ext) ? v.ext : []; return activeExts(g).filter(x => ids.includes(x.id)); };
 const ownersText = g => ownersOf(g).map(o => (o.qte || 1) > 1 ? `${o.nom} ×${o.qte}` : o.nom).join(" · ");
 
 function allTypes(){
@@ -900,13 +949,13 @@ function usedTypes(){
 }
 function owners(){
   const s = new Set(["Association PTG"]);
-  games.forEach(g => ownersOf(g).forEach(o => s.add(o.nom)));
+  games.forEach(g => { ownersOf(g).forEach(o => s.add(o.nom)); extsOf(g).forEach(x => extOwners(x).forEach(o => s.add(o.nom))); });
   return [...s].sort((a,b) => a.localeCompare(b, "fr"));
 }
 
 function refreshFilters(){
   const fo = $("#fOwner"), cur = fo.value;
-  const used = [...new Set(games.flatMap(g => ownersOf(g).map(o => o.nom)))].sort((a,b) => a.localeCompare(b,"fr"));
+  const used = [...new Set(games.flatMap(g => [...ownersOf(g).map(o => o.nom), ...activeExts(g).flatMap(x => extOwners(x).map(o => o.nom))]))].sort((a,b) => a.localeCompare(b,"fr"));
   fo.innerHTML = `<option value="">Propriétaire : tous</option>` + used.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join("");
   fo.value = used.includes(cur) ? cur : "";
   F.owner = fo.value;
@@ -938,12 +987,9 @@ function filtered(){
       if (!g.duree) return false;
       if (F.duree === "61" ? g.duree <= 60 : g.duree > +F.duree) return false;
     }
-    if (q && !norm([g.nom, ownersText(g), g.notes, (g.types||[]).join(" ")].join(" ")).includes(q)) return false;
-    if (F.owner && !ownersOf(g).some(o => o.nom === F.owner)) return false;
-    if (n) {
-      const mn = g.joueursMin || 1, mx = g.joueursMax || 99;
-      if (n < mn || n > mx) return false;
-    }
+    if (q && !norm([g.nom, ownersText(g), g.notes, (g.types||[]).join(" "), ...activeExts(g).map(x => x.nom + " " + extOwnersText(x))].join(" ")).includes(q)) return false;
+    if (F.owner && !ownersOf(g).some(o => o.nom === F.owner) && !extOwnedBy(g, F.owner).length) return false;
+    if (n && !playersFit(g, n).ok) return false;
     for (const t of F.types) if (!(g.types || []).includes(t)) return false;
     return true;
   });
@@ -953,6 +999,17 @@ function filtered(){
   return out;
 }
 
+// Mentions sous le jeu : jouable grâce à une extension, extension d'un autre propriétaire filtré
+function extNotes(g){
+  const out = [];
+  const n = F.players ? parseInt(F.players, 10) : null;
+  if (n) { const f = playersFit(g, n); if (f.via) out.push(`À ${n} avec ${f.via.nom}`); }
+  if (F.owner && !ownersOf(g).some(o => o.nom === F.owner)) {
+    const xs = extOwnedBy(g, F.owner);
+    if (xs.length) out.push(`${F.owner} : ${xs.map(extLabel).join(", ")}`);
+  }
+  return out.map(t => `<div class="ext-note">${esc(t)}</div>`).join("");
+}
 function render(){
   const list = filtered();
   const coll = inGames(), total = coll.length, nOut = games.length - total;
@@ -972,7 +1029,8 @@ function render(){
         <h3>${esc(g.nom)}</h3>
         ${info ? `<div class="meta">${esc(info)}</div>` : ""}
         ${ownersOf(g).length ? `<div class="owner">${esc(ownersText(g))}</div>` : ""}
-        ${(g.types||[]).length ? `<div class="tags">${g.types.slice(0,3).map(t => `<span class="tag">${esc(t)}</span>`).join("")}${g.types.length > 3 ? `<span class="tag">+${g.types.length-3}</span>` : ""}</div>` : ""}
+        ${extNotes(g)}
+        ${(g.types||[]).length || activeExts(g).length ? `<div class="tags">${activeExts(g).length ? `<span class="tag ext">+${activeExts(g).length} ext.</span>` : ""}${(g.types||[]).slice(0,3).map(t => `<span class="tag">${esc(t)}</span>`).join("")}${(g.types||[]).length > 3 ? `<span class="tag">+${g.types.length-3}</span>` : ""}</div>` : ""}
       </div>
     </button>`;
   }).join("");
@@ -1012,10 +1070,13 @@ async function openDetail(id){
     ${g.thumb ? `<div class="photo-big"><img id="dPhoto" src="${esc(g.thumb)}" alt="${esc(g.nom)}" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>` : ""}
     ${facts.length ? `<div class="facts">${facts.map(f => `<div class="fact"><small>${f[0]}</small><b>${esc(f[1])}</b></div>`).join("")}</div>` : ""}
     ${(g.types||[]).length ? `<div class="tags">${g.types.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+    ${extsOf(g).length ? `<div class="sec"><h4>Extensions</h4><div class="accent"></div><div class="ext-list">${extsOf(g).map(x => x.sortie
+      ? `<div class="ext-item out"><div><b>${esc(x.nom)}</b><small>Sortie le ${esc(fmtDate(x.sortie.date))} · ${esc(x.sortie.motif)}${x.sortie.note ? ` · ${esc(x.sortie.note)}` : ""}</small></div><button type="button" class="btn sm" data-xin="${esc(x.id)}">Remettre</button></div>`
+      : `<div class="ext-item"><div><b>${esc(x.nom)}</b><small>${esc([extOwnersText(x), x.joueursMax ? `jusqu'à ${x.joueursMax} joueurs` : ""].filter(Boolean).join(" · "))}</small></div><button type="button" class="btn sm" data-xout="${esc(x.id)}">Sortir</button></div>`).join("")}</div></div>` : ""}
     ${bggLien ? `<div class="sec"><div class="links"><a class="link" href="${esc(bggLien)}" target="_blank" rel="noopener">Fiche BGG</a></div></div>` : ""}
     ${g.notes ? `<div class="sec"><h4>Notes</h4><div class="accent"></div><div class="rules">${esc(g.notes)}</div></div>` : ""}
     ${hist.length ? `<div class="sec"><h4>Historique</h4><div class="accent"></div><div class="hist">${hist.map(h =>
-      `<div>${esc(fmtDate(h.date))} · ${esc(h.motif)} · ${h.qte > 1 ? h.qte + " ex. de " : "1 ex. de "}${esc(h.nom)}${h.note ? ` · ${esc(h.note)}` : ""}</div>`).join("")}</div></div>` : ""}
+      `<div>${esc(fmtDate(h.date))} · ${h.ext ? `${esc(cap(extLabel({ nom: h.ext })))} · ` : ""}${esc(h.motif)} · ${h.qte > 1 ? h.qte + " ex. de " : "1 ex. de "}${esc(h.nom)}${h.note ? ` · ${esc(h.note)}` : ""}</div>`).join("")}</div></div>` : ""}
   `;
   $("#detailDlg").showModal();
   $("#detailDlg .dlg-body").scrollTop = 0;
@@ -1030,24 +1091,31 @@ async function openDetail(id){
 }
 
 /* ---------- Sortie de collection ---------- */
-let outMotif = "Vendu";
+let outMotif = "Vendu", outExt = null; // outExt : id de l'extension à sortir (null = le jeu)
+function outSrc(g){
+  const x = outExt ? extsOf(g).find(e => e.id === outExt) : null;
+  return x ? { x, own: extOwners(x), total: extTotal(x) } : { x: null, own: ownersOf(g), total: totalOf(g) };
+}
 const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 function outHint(){
   const g = games.find(x => x.id === currentId); if (!g) return;
-  const own = ownersOf(g), o = own[+$("#oOwner").value] || own[0];
+  const { x, own, total } = outSrc(g), o = own[+$("#oOwner").value] || own[0];
   const q = Math.min(num($("#oQte").value) || 1, o ? (o.qte || 1) : 1);
-  const left = totalOf(g) - q;
-  $("#oHint").textContent = left > 0
+  const left = total - q;
+  $("#oHint").textContent = x
+    ? (left > 0 ? `Il restera ${left} exemplaire${left > 1 ? "s" : ""} de l'extension.` : `L'extension restera visible dans la fiche du jeu, marquée comme sortie. Tu pourras la remettre plus tard.`)
+    : left > 0
     ? `Il restera ${left} exemplaire${left > 1 ? "s" : ""} dans la collection.`
     : `Le jeu passera dans « Sortis de la collection ». Tu pourras l'y retrouver et le remettre plus tard.`;
 }
-function openOut(){
+function openOut(extId = null){
   const g = games.find(x => x.id === currentId); if (!g) return;
-  const own = ownersOf(g);
-  $("#oTitle").textContent = "Sortir : " + g.nom;
+  outExt = extId;
+  const { x, own, total } = outSrc(g);
+  $("#oTitle").textContent = "Sortir : " + (x ? x.nom : g.nom);
   $("#oOwner").innerHTML = own.map((o, i) => `<option value="${i}">${esc(o.nom)} (${o.qte || 1} ex.)</option>`).join("");
   $("#oQte").value = 1;
-  $("#oWhich").classList.toggle("hidden", totalOf(g) <= 1);
+  $("#oWhich").classList.toggle("hidden", total <= 1);
   $("#oDate").value = today();
   $("#oNote").value = "";
   outMotif = "Vendu";
@@ -1061,19 +1129,38 @@ $("#oMotif").addEventListener("click", e => {
   document.querySelectorAll("#oMotif [data-m]").forEach(x => x.classList.toggle("on", x === b));
 });
 $("#oOwner").addEventListener("change", () => {
-  const g = games.find(x => x.id === currentId); const o = ownersOf(g)[+$("#oOwner").value];
+  const g = games.find(x => x.id === currentId); const o = outSrc(g).own[+$("#oOwner").value];
   $("#oQte").max = o ? (o.qte || 1) : 1; outHint();
 });
 $("#oQte").addEventListener("input", outHint);
 $("#outForm").addEventListener("submit", async e => {
   e.preventDefault();
   const g = games.find(x => x.id === currentId); if (!g) return;
-  const own = ownersOf(g).map(o => ({ nom: o.nom, qte: o.qte || 1 }));
-  const idx = totalOf(g) > 1 ? +$("#oOwner").value : 0;
+  const src = outSrc(g);
+  const own = src.own.map(o => ({ nom: o.nom, qte: o.qte || 1 }));
+  const idx = src.total > 1 ? +$("#oOwner").value : 0;
   const o = own[idx]; if (!o) return;
   const q = Math.max(1, Math.min(num($("#oQte").value) || 1, o.qte));
   const date = $("#oDate").value || today(), note = $("#oNote").value.trim();
   const { id, ...data } = g;
+  if (src.x) {
+    // Sortie d'une extension : le jeu de base ne bouge pas
+    data.historique = [...(g.historique || []), { date, motif: outMotif, nom: o.nom, qte: q, note, ext: src.x.nom }];
+    data.extensions = extsOf(g).map(e => {
+      if (e.id !== src.x.id) return e;
+      if (src.total - q <= 0) return { ...e, sortie: { date, motif: outMotif, note } };
+      o.qte -= q;
+      return { ...e, proprietaires: own.filter(y => y.qte > 0) };
+    });
+    data.updatedAt = Date.now();
+    try {
+      await store.put("jeux", id, data);
+      $("#outDlg").close();
+      toast(src.total - q <= 0 ? "Extension sortie de la collection" : `${q} exemplaire${q > 1 ? "s" : ""} de l'extension sorti${q > 1 ? "s" : ""}`);
+      openDetail(id);
+    } catch (err) { toast("Erreur : " + err.message); }
+    return;
+  }
   data.historique = [...(g.historique || []), { date, motif: outMotif, nom: o.nom, qte: q, note }];
   if (totalOf(g) - q <= 0) {
     // Plus aucun exemplaire : le jeu sort de la collection (propriétaires gardés pour pouvoir le remettre)
@@ -1094,12 +1181,27 @@ $("#outForm").addEventListener("submit", async e => {
 });
 $("#dOut").addEventListener("click", async () => {
   const g = games.find(x => x.id === currentId); if (!g) return;
-  if (!isOut(g)) { openOut(); return; }
+  if (!isOut(g)) { openOut(null); return; }
   if (!confirm(`Remettre « ${g.nom} » dans la collection ?`)) return;
   const { id, sortie, ...data } = g;
   data.historique = [...(g.historique || []), { date: today(), motif: "Remis dans la collection", nom: ownersText(g) || "-", qte: totalOf(g), note: "" }];
   data.updatedAt = Date.now();
   try { await store.put("jeux", id, data); toast("Jeu remis dans la collection"); openDetail(id); }
+  catch (err) { toast("Erreur : " + err.message); }
+});
+
+// Boutons Sortir / Remettre d'une extension dans la fiche
+$("#dBody").addEventListener("click", async e => {
+  const b = e.target.closest("[data-xout],[data-xin]"); if (!b) return;
+  const g = games.find(x => x.id === currentId); if (!g) return;
+  if (b.dataset.xout) { openOut(b.dataset.xout); return; }
+  const x = extsOf(g).find(y => y.id === b.dataset.xin); if (!x) return;
+  if (!confirm(`Remettre l'extension « ${x.nom} » dans la collection ?`)) return;
+  const { id, ...data } = g;
+  data.extensions = extsOf(g).map(y => { if (y.id !== x.id) return y; const { sortie, ...rest } = y; return rest; });
+  data.historique = [...(g.historique || []), { date: today(), motif: "Remis dans la collection", nom: extOwnersText(x) || "-", qte: extTotal(x), note: "", ext: x.nom }];
+  data.updatedAt = Date.now();
+  try { await store.put("jeux", id, data); toast("Extension remise dans la collection"); openDetail(id); }
   catch (err) { toast("Erreur : " + err.message); }
 });
 
@@ -1133,9 +1235,10 @@ async function buildListImage(list){
     m.font = FN; const name = wrapText(m, g.nom, COLW - 2 * IP, 2);
     const info = [shortPlayers(g) ? shortPlayers(g) + " joueurs" : "", g.duree ? fmtDuree(g.duree) : "", g.age ? g.age + "+ ans" : ""].filter(Boolean).join(" · ");
     m.font = FO; const own = ownersText(g) ? wrapText(m, ownersText(g), COLW - 2 * IP, 1)[0] : "";
+    m.font = FI; const xs = activeExts(g).map(x => x.nom).join(", "), ext = xs ? wrapText(m, "+ " + xs, COLW - 2 * IP, 1)[0] : "";
     const out = isOut(g) ? "Sorti : " + (g.sortie.motif || "") : "";
-    const h = IP + name.length * 34 + 4 + 28 + (own ? 26 : 0) + (out ? 26 : 0) + IP - 6;
-    return { g, name, info, own, out, h };
+    const h = IP + name.length * 34 + 4 + 28 + (own ? 26 : 0) + (ext ? 26 : 0) + (out ? 26 : 0) + IP - 6;
+    return { g, name, info, own, ext, out, h };
   });
   // En-tête
   const filt = [];
@@ -1190,6 +1293,7 @@ async function buildListImage(list){
       }
       ty += 28;
       if (it.own) { ctx.font = FO; ctx.fillStyle = "#2F6E62"; ctx.fillText(it.own, x + IP, ty); ty += 26; }
+      if (it.ext) { ctx.font = FI; ctx.fillStyle = "#5C3A21"; ctx.fillText(it.ext, x + IP, ty); ty += 26; }
       if (it.out) { ctx.font = FO; ctx.fillStyle = "#C0522A"; ctx.fillText(it.out, x + IP, ty); }
     });
     y += rowH[ri] + 16;
@@ -1287,8 +1391,9 @@ $("#btnDoc").addEventListener("click", async () => {
         ...(totalOf(g) > 1 ? [new TextRun({ text: `  ×${totalOf(g)}`, bold: true, size: 20, color: TERRA })] : [])
       ] }));
       if (info) kids.push(new Paragraph({ keepNext: true, spacing: { after: 20 }, children: [new TextRun({ text: info, size: 20, color: BROWN })] }));
-      const own = ownersText(g);
-      if (own) kids.push(new Paragraph({ keepNext: !!(g.notes || isOut(g)), spacing: { after: 20 }, children: [new TextRun({ text: (ownersOf(g).length > 1 ? "Propriétaires : " : "Propriétaire : ") + own, size: 20, color: TEAL })] }));
+      const own = ownersText(g), xs = extsText(g);
+      if (own) kids.push(new Paragraph({ keepNext: !!(g.notes || isOut(g) || xs), spacing: { after: 20 }, children: [new TextRun({ text: (ownersOf(g).length > 1 ? "Propriétaires : " : "Propriétaire : ") + own, size: 20, color: TEAL })] }));
+      if (xs) kids.push(new Paragraph({ keepNext: !!(g.notes || isOut(g)), spacing: { after: 20 }, children: [new TextRun({ text: "Extensions : " + xs, size: 20, color: BROWN })] }));
       if (isOut(g)) kids.push(new Paragraph({ keepNext: !!g.notes, spacing: { after: 20 }, children: [new TextRun({ text: `Sorti : ${g.sortie.motif}` + (g.sortie.note ? ` (${g.sortie.note})` : ""), size: 20, color: TERRA })] }));
       if (g.notes) kids.push(new Paragraph({ spacing: { after: 20 }, children: [new TextRun({ text: g.notes, italics: true, size: 20, color: GREY })] }));
     });
@@ -1326,6 +1431,7 @@ $("#btnXls").addEventListener("click", async () => {
       "Jeu": g.nom,
       "Propriétaires": ownersText(g),
       "Exemplaires": totalOf(g),
+      "Extensions": extsText(g),
       "Joueurs min": g.joueursMin || "",
       "Joueurs max": g.joueursMax || "",
       "Durée (min)": g.duree || "",
@@ -1339,10 +1445,10 @@ $("#btnXls").addEventListener("click", async () => {
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [32, 30, 11, 11, 11, 11, 9, 11, 30, 40, 22, 13, 30].map(w => ({ wch: w }));
+    ws["!cols"] = [32, 30, 11, 36, 11, 11, 11, 9, 11, 30, 40, 22, 13, 30].map(w => ({ wch: w }));
     ws["!autofilter"] = { ref: ws["!ref"] };
     XLSX.utils.book_append_sheet(wb, ws, "Jeux");
-    const hist = list.flatMap(g => (g.historique || []).map(h => ({ "Date": fmtD(h.date), "Jeu": g.nom, "Mouvement": h.motif, "Propriétaire": h.nom, "Exemplaires": h.qte, "Précision": h.note || "" })));
+    const hist = list.flatMap(g => (g.historique || []).map(h => ({ "Date": fmtD(h.date), "Jeu": g.nom + (h.ext ? ` (extension ${h.ext})` : ""), "Mouvement": h.motif, "Propriétaire": h.nom, "Exemplaires": h.qte, "Précision": h.note || "" })));
     if (hist.length) {
       const wh = XLSX.utils.json_to_sheet(hist);
       wh["!cols"] = [12, 32, 24, 24, 12, 30].map(w => ({ wch: w }));
@@ -1479,6 +1585,7 @@ function openForm(id){
   $("#fTitle").textContent = g ? "Modifier le jeu" : "Ajouter un jeu";
   $("#iNom").value = g?.nom || "";
   renderOwnerRows(g ? ownersOf(g) : []);
+  renderExtRows(g);
   $("#iMin").value = g?.joueursMin || "";
   $("#iMax").value = g?.joueursMax || "";
   $("#iDuree").value = g?.duree || "";
@@ -1743,6 +1850,50 @@ function readOwners(){
   return [...map.values()];
 }
 
+function extLine(x = {}, o = {}){
+  return `<div class="ext-box" data-xid="${esc(x.id || "")}">
+    <div class="ext-r1">
+      <input data-xn maxlength="120" placeholder="Nom de l'extension" value="${esc(x.nom || "")}">
+      <button type="button" class="mini-btn" data-xdel aria-label="Retirer cette extension">×</button>
+    </div>
+    <div class="ext-r2">
+      <div><label>À qui</label><input data-xo list="ownerList" maxlength="80" value="${esc(o.nom || "")}"></div>
+      <div><label>Exemplaires</label><input data-xq type="number" inputmode="numeric" min="1" max="99" value="${o.qte || 1}"></div>
+      <div><label>Joueurs max</label><input data-xm type="number" inputmode="numeric" min="1" max="99" value="${x.joueursMax || ""}"></div>
+    </div>
+  </div>`;
+}
+// une ligne par propriétaire (une extension à 2 propriétaires = 2 lignes du même nom)
+function renderExtRows(g){
+  $("#extRows").innerHTML = activeExts(g).flatMap(x => (extOwners(x).length ? extOwners(x) : [{}]).map(o => extLine(x, o))).join("");
+}
+$("#addExt").addEventListener("click", () => {
+  const first = readOwners()[0];
+  $("#extRows").insertAdjacentHTML("beforeend", extLine({}, { nom: first ? first.nom : "", qte: 1 }));
+  const ins = $("#extRows").querySelectorAll("[data-xn]"); ins[ins.length - 1].focus();
+});
+$("#extRows").addEventListener("click", e => {
+  const b = e.target.closest("[data-xdel]"); if (b) b.closest(".ext-box").remove();
+});
+function readExts(old){
+  const base = readOwners()[0], map = new Map();
+  $("#extRows").querySelectorAll(".ext-box").forEach(l => {
+    const nom = l.querySelector("[data-xn]").value.trim(); if (!nom) return;
+    const key = norm(nom), on = l.querySelector("[data-xo]").value.trim() || (base ? base.nom : "");
+    const q = num(l.querySelector("[data-xq]").value) || 1, mx = num(l.querySelector("[data-xm]").value);
+    if (!map.has(key)) {
+      const prev = extsOf(old).find(x => x.id && x.id === l.dataset.xid) || {};
+      const { sortie, ...keep } = prev;
+      map.set(key, { ...keep, id: prev.id || uid(), nom, proprietaires: [], joueursMax: mx || null });
+    }
+    const x = map.get(key);
+    if (mx && !x.joueursMax) x.joueursMax = mx;
+    if (on) { const cur = x.proprietaires.find(o => norm(o.nom) === norm(on)); if (cur) cur.qte += q; else x.proprietaires.push({ nom: on, qte: q }); }
+  });
+  // les extensions sorties de la collection sont gardées telles quelles
+  return [...map.values(), ...extsOf(old).filter(x => x.sortie)];
+}
+
 $("#photoInput").addEventListener("change", async e => {
   const file = e.target.files[0]; if (!file) return;
   try {
@@ -1791,6 +1942,7 @@ $("#gameForm").addEventListener("submit", async e => {
     duree: num($("#iDuree").value), age: num($("#iAge").value),
     difficulte: formDiff || null,
     types: [...formTypes],
+    extensions: readExts(old),
     notes: $("#iNotes").value.trim(),
     bggId: formBgg?.id || null,
     bggLien: formBgg?.lien || "",
@@ -2023,7 +2175,7 @@ function renderPickList(){
       <div class="pk-thumb">${g.thumb ? imgTag(g.thumb, g.nom, "") : letterOf(g.nom)}</div>
       <label class="pk-main"><b>${esc(g.nom)}</b><small>${esc(info)} ${g.difficulte ? miniDots(g.difficulte) : ""} <span class="pk-sec">${esc(sectionOf(C, g).nom)}</span></small>
         <input type="checkbox" class="pk-check" data-gon ${on ? "checked" : ""} aria-label="Mettre sur la carte"></label>
-      ${on && totalOf(g) > 1 ? `<button class="pk-qbtn" data-qty title="Changer le nombre d'exemplaires">×${nbPris(C, g)}</button>` : ""}
+      ${on && needsQty(g) ? `<button class="pk-qbtn" data-qty title="Exemplaires et extensions">${esc([totalOf(g) > 1 ? `×${nbPris(C, g)}` : "", extPris(C, g).length ? `+${extPris(C, g).length} ext.` : (totalOf(g) > 1 ? "" : "Ext.")].filter(Boolean).join(" "))}</button>` : ""}
       <button class="star${st ? " on" : ""}" data-star aria-label="Jamais joué ? Commencez par là"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" stroke-linejoin="round"/></svg></button>
     </div>`;
   }).join("") : `<div class="hint">Ajoute d'abord des jeux dans l'onglet « Les jeux ».</div>`;
@@ -2061,7 +2213,7 @@ ed.addEventListener("change", async e => {
   if (t.dataset.k === "tri") { C.tri = t.value; changed(); return; }
   if (t.hasAttribute("data-gon")) {
     const row = t.closest(".pick"), gid = row.dataset.gid, g = games.find(x => x.id === gid);
-    if (t.checked && g && totalOf(g) > 1) { t.checked = false; openQty(gid); return; }
+    if (t.checked && g && needsQty(g)) { t.checked = false; openQty(gid); return; }
     if (t.checked) C.jeux[gid] = { ex: [{ nom: (ownersOf(g)[0] || {}).nom || "?", qte: 1 }] };
     else { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); row.querySelector(".star").classList.remove("on"); }
     row.classList.toggle("on", t.checked);
@@ -2077,7 +2229,7 @@ ed.addEventListener("click", async e => {
     else {
       C.starters.push(gid);
       if (!C.jeux[gid]) {
-        if (g && totalOf(g) > 1) { b.classList.add("on"); changed(); openQty(gid); return; }
+        if (g && needsQty(g)) { b.classList.add("on"); changed(); openQty(gid); return; }
         C.jeux[gid] = { ex: [{ nom: (ownersOf(g)[0] || {}).nom || "?", qte: 1 }] };
         row.classList.add("on"); row.querySelector("[data-gon]").checked = true; updatePickCount();
       }
@@ -2135,7 +2287,7 @@ $("#qrFile").addEventListener("change", async e => {
 });
 
 /* Modale : nombre d'exemplaires pris */
-let qtyGid = null, qtyVals = [];
+let qtyGid = null, qtyVals = [], qtyExt = new Set();
 function openQty(gid){
   ensureCarte();
   const g = games.find(x => x.id === gid); if (!g) return;
@@ -2144,12 +2296,16 @@ function openQty(gid){
   const onCard = !!C.jeux[gid];
   qtyVals = own.map(o => ({ nom: o.nom, max: o.qte || 1, qte: onCard ? ((pris.find(p => norm(p.nom) === norm(o.nom)) || {}).qte || 0) : 0 }));
   if (!onCard && qtyVals.length) qtyVals[0].qte = 1;
+  qtyExt = new Set(onCard ? extPris(C, g).map(x => x.id) : []);
   $("#qTitle").textContent = g.nom;
   $("#qRemove").classList.toggle("hidden", !onCard);
   renderQty();
   $("#qtyDlg").showModal();
 }
 function renderQty(){
+  const g = games.find(x => x.id === qtyGid), xs = activeExts(g);
+  $("#qExt").innerHTML = xs.length ? `<div class="q-sub">Extensions emmenées</div>` + xs.map(x =>
+    `<label class="r-line"><input type="checkbox" data-qx="${esc(x.id)}" ${qtyExt.has(x.id) ? "checked" : ""}><span>${esc(x.nom)}</span><small>${esc(extOwnersText(x))}</small></label>`).join("") : "";
   $("#qRows").innerHTML = qtyVals.map((o, i) => `<div class="q-row">
     <div class="q-name">${esc(o.nom)}<small>${o.max} exemplaire${o.max > 1 ? "s" : ""}</small></div>
     <div class="q-step"><button type="button" data-qi="${i}" data-qd="-1" aria-label="Un de moins">−</button><b>${o.qte}</b><button type="button" data-qi="${i}" data-qd="1" aria-label="Un de plus">+</button></div>
@@ -2161,12 +2317,17 @@ $("#qRows").addEventListener("click", e => {
   o.qte = Math.max(0, Math.min(o.max, o.qte + parseInt(b.dataset.qd, 10)));
   renderQty();
 });
+$("#qExt").addEventListener("change", e => {
+  const cb = e.target.closest("[data-qx]"); if (!cb) return;
+  cb.checked ? qtyExt.add(cb.dataset.qx) : qtyExt.delete(cb.dataset.qx);
+});
 function afterCarteChange(){ changed(); render(); if (view === "carte") renderPickList(); }
 $("#qtyForm").addEventListener("submit", e => {
   e.preventDefault();
   const g = games.find(x => x.id === qtyGid); if (!g) return;
   const ex = qtyVals.filter(o => o.qte > 0).map(o => ({ nom: o.nom, qte: o.qte }));
-  if (ex.length) { C.jeux[qtyGid] = { ex }; toast(`${g.nom} : ${ex.reduce((n, o) => n + o.qte, 0)} exemplaire(s) sur la carte`); }
+  const ext = activeExts(g).filter(x => qtyExt.has(x.id)).map(x => x.id);
+  if (ex.length) { C.jeux[qtyGid] = ext.length ? { ex, ext } : { ex }; toast(`${g.nom} : ${ex.reduce((n, o) => n + o.qte, 0)} exemplaire(s)${ext.length ? ` + ${ext.length} extension${ext.length > 1 ? "s" : ""}` : ""} sur la carte`); }
   else { delete C.jeux[qtyGid]; C.starters = C.starters.filter(x => x !== qtyGid); toast(`Retiré de la carte « ${C.nom} »`); }
   $("#qtyDlg").close(); afterCarteChange();
 });
@@ -2178,19 +2339,26 @@ $("#qRemove").addEventListener("click", () => {
 /* Récap organisateurs : qui apporte quoi */
 function buildRecap(c){
   const byOwner = new Map();
-  inGames().filter(g => c.jeux[g.id]).forEach(g => prisOf(c, g).forEach(p => {
-    if (!byOwner.has(p.nom)) byOwner.set(p.nom, []);
-    byOwner.get(p.nom).push({ id: g.id, nom: g.nom, qte: p.qte });
-  }));
+  const push = (nom, item) => { if (!byOwner.has(nom)) byOwner.set(nom, []); byOwner.get(nom).push(item); };
+  inGames().filter(g => c.jeux[g.id]).forEach(g => {
+    prisOf(c, g).forEach(p => push(p.nom, { id: g.id, nom: g.nom, qte: p.qte, tri: norm(g.nom) }));
+    // une extension emmenée revient à son (premier) propriétaire
+    extPris(c, g).forEach(x => push((extOwners(x)[0] || prisOf(c, g)[0] || { nom: "?" }).nom,
+      { id: g.id + "~" + x.id, nom: `${g.nom} + ${extLabel(x)}`, qte: 1, ext: true, tri: norm(g.nom) + "~" + norm(x.nom) }));
+  });
   return [...byOwner.entries()].sort((a, b) => a[0].localeCompare(b[0], "fr"))
-    .map(([nom, jeux]) => ({ nom, jeux: jeux.sort((a, b) => norm(a.nom).localeCompare(norm(b.nom), "fr")) }));
+    .map(([nom, jeux]) => ({ nom, jeux: jeux.sort((a, b) => (a.tri || norm(a.nom)).localeCompare(b.tri || norm(b.nom), "fr")) }));
 }
 const fmtDT = iso => { try { return new Date(iso).toLocaleDateString("fr-FR") + " à " + new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } };
+function recapCounts(r){
+  const items = r.groupes.flatMap(gr => gr.jeux);
+  const nbJ = new Set(items.filter(j => !j.ext).map(j => j.id)).size;
+  const nbE = items.filter(j => !j.ext).reduce((m, j) => m + j.qte, 0), nbX = items.filter(j => j.ext).length;
+  return `${nbJ} jeux · ${nbE} exemplaires` + (nbX ? ` · ${nbX} extension${nbX > 1 ? "s" : ""}` : "");
+}
 function recapText(c){
   const r = c.recap; if (!r) return "";
-  const nbJ = new Set(r.groupes.flatMap(gr => gr.jeux.map(j => j.id))).size;
-  const nbE = r.groupes.reduce((n, gr) => n + gr.jeux.reduce((m, j) => m + j.qte, 0), 0);
-  let t = `CARTE DES JEUX : ${c.nom}\nValidée le ${fmtDT(r.date)}\n${nbJ} jeux · ${nbE} exemplaires\n`;
+  let t = `CARTE DES JEUX : ${c.nom}\nValidée le ${fmtDT(r.date)}\n${recapCounts(r)}\n`;
   r.groupes.forEach(gr => {
     t += `\n${gr.nom.toUpperCase()} (${gr.jeux.reduce((m, j) => m + j.qte, 0)})\n`;
     gr.jeux.forEach(j => { t += `- ${j.nom}${j.qte > 1 ? " ×" + j.qte : ""}${(c.recapRendu || {})[gr.nom + "|" + j.id] ? "  (rendu)" : ""}\n`; });
@@ -2199,9 +2367,7 @@ function recapText(c){
 }
 function openRecap(){
   const r = C.recap; if (!r) return;
-  const nbJ = new Set(r.groupes.flatMap(gr => gr.jeux.map(j => j.id))).size;
-  const nbE = r.groupes.reduce((n, gr) => n + gr.jeux.reduce((m, j) => m + j.qte, 0), 0);
-  $("#rInfo").textContent = `${C.nom} · validée le ${fmtDT(r.date)} · ${nbJ} jeux · ${nbE} exemplaires`;
+  $("#rInfo").textContent = `${C.nom} · validée le ${fmtDT(r.date)} · ${recapCounts(r)}`;
   const rendu = C.recapRendu || {};
   $("#rBody").innerHTML = r.groupes.length ? r.groupes.map(gr => `<div class="r-group">
     <h4>${esc(gr.nom)}<small>${gr.jeux.reduce((m, j) => m + j.qte, 0)} à rendre</small></h4>
@@ -2286,7 +2452,8 @@ function sheetHTML(c){
         ${s.sous ? `<div class="ss">${esc(s.sous)}</div>` : ""}
         ${s.items.map(g => {
           const info = [shortPlayers(g), g.duree ? `${g.duree} min` : ""].filter(Boolean).join(" · ") || "variable";
-          return `<div class="r"><span class="n">${esc(g.nom)}</span><span class="l"></span><span class="i">${esc(info)}</span>${dots(g.difficulte)}</div>`;
+          const nx = extPris(c, g).length, xt = nx ? `<span class="x"> + ${nx > 1 ? nx + " extensions" : "extension"}</span>` : "";
+          return `<div class="r"><span class="n">${esc(g.nom)}${xt}</span><span class="l"></span><span class="i">${esc(info)}</span>${dots(g.difficulte)}</div>`;
         }).join("")}
       </section>`).join("") : `<div class="none">Choisis les jeux de la carte dans la liste à gauche.</div>`}
     </div>
@@ -2470,6 +2637,7 @@ $("#importFile").addEventListener("change", async e => {
         if (!g || !g.nom) continue;
         const { id, photo, photoUrl, ...data } = g;
         const ex = games.find(x => x.id === id) || games.find(x => norm(x.nom) === norm(g.nom));
+        if (data.extensions) data.extensions = fixExts(data.extensions);
         if (!ex) { await saveGame(id || uid(), data, undefined); added++; continue; }
         const own = ownersOf(ex).map(o => ({ nom: o.nom, qte: o.qte || 1 }));
         ownersOf(g).forEach(o => {
@@ -2483,6 +2651,14 @@ $("#importFile").addEventListener("change", async e => {
         ["joueursMin", "joueursMax", "duree", "age", "difficulte"].forEach(k => { if (upd[k] == null && data[k] != null) upd[k] = data[k]; });
         if (!(upd.types || []).length && (data.types || []).length) upd.types = data.types;
         if (!upd.notes && data.notes) upd.notes = data.notes;
+        const xs = fixExts(extsOf(ex));
+        fixExts(data.extensions).forEach(nx => {
+          const cur = xs.find(x => norm(x.nom) === norm(nx.nom));
+          if (!cur) { xs.push(nx); return; }
+          nx.proprietaires.forEach(o => { const co = cur.proprietaires.find(y => norm(y.nom) === norm(o.nom)); if (co) co.qte = Math.max(co.qte, o.qte); else cur.proprietaires.push(o); });
+          if (!cur.joueursMax && nx.joueursMax) cur.joueursMax = nx.joueursMax;
+        });
+        if (xs.length) upd.extensions = xs;
         upd.updatedAt = Date.now();
         await store.put("jeux", exId, upd); merged++;
       }
@@ -2494,6 +2670,7 @@ $("#importFile").addEventListener("change", async e => {
     for (const g of list) {
       if (!g || !g.nom) continue;
       const { id, photo, photoUrl, ...data } = g;
+      if (data.extensions) data.extensions = fixExts(data.extensions);
       let ph = photo || undefined;
       if (!ph && photoUrl && /^https?:/i.test(photoUrl)) {
         toast(`Photos : ${ok + 1} / ${list.length}…`);
@@ -2553,7 +2730,7 @@ $("#grid").addEventListener("click", e => {
   e.stopPropagation();
   ensureCarte();
   const gid = c.dataset.id, g = games.find(x => x.id === gid);
-  if (totalOf(g) > 1) { openQty(gid); return; }
+  if (needsQty(g)) { openQty(gid); return; }
   if (C.jeux[gid]) { delete C.jeux[gid]; C.starters = C.starters.filter(x => x !== gid); toast(`Retiré de la carte « ${C.nom} »`); }
   else { C.jeux[gid] = { ex: [{ nom: (ownersOf(g)[0] || {}).nom || "?", qte: 1 }] }; toast(`Ajouté à « ${C.nom} » (${sectionOf(C, g).nom})`); }
   changed();
