@@ -130,14 +130,27 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .ext-note{font-size:12px;color:var(--terra);font-weight:600}
 .ext-box{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px;background:var(--beige)}
 .ext-r1{display:grid;grid-template-columns:1fr 40px;gap:8px;align-items:center}
-.ext-r2{display:grid;grid-template-columns:minmax(0,1fr) 92px 100px;gap:8px;margin-top:8px}
-.ext-r2 label{font-size:11px;opacity:.75;display:block;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:480px){.ext-r2{grid-template-columns:1fr 1fr}.ext-r2 > div:first-child{grid-column:1/-1}}
+.ext-r2{display:grid;grid-template-columns:120px;gap:8px;margin-top:8px}
+.ext-photo{display:flex;gap:10px;align-items:center;margin-top:8px}
+.ext-photo .xprev{width:64px;height:64px;border-radius:10px;background:#fff;overflow:hidden;display:grid;place-items:center;flex:0 0 auto;border:1px dashed var(--gold)}
+.ext-photo .xprev img{width:100%;height:100%;object-fit:cover}
+.ext-photo .xprev span{font-size:10px;opacity:.7;text-align:center;padding:2px}
+.ext-photo .btns{display:flex;gap:6px;flex-wrap:wrap}
+.xo-head,.xo-line{display:grid;grid-template-columns:minmax(0,1fr) 92px 40px;gap:8px;align-items:center}
+.xo-head{margin-top:8px}
+.xo-head label,.ext-r2 label,.ext-notes label{font-size:11px;opacity:.75;display:block;margin:0 0 2px;white-space:nowrap}
+.xo-line{margin-bottom:6px}
+.ext-notes{margin-top:8px}
+.ext-notes textarea{width:100%;min-height:60px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;resize:vertical;font:inherit}
+.ext-item .xthumb{width:56px;height:56px;border-radius:10px;overflow:hidden;flex:0 0 auto;padding:0;border:1px solid var(--line);background:#fff;cursor:zoom-in}
+.ext-item .xthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ext-item .xnotes{font-size:13px;margin-top:4px;white-space:pre-wrap;opacity:.9}
+#pImg{display:block;max-width:100%;max-height:70vh;margin:0 auto;border-radius:12px}
 .ext-box input{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;width:100%}
 .ext-box .mini-btn{width:40px;height:40px}
 .ext-list{display:flex;flex-direction:column;gap:6px}
-.ext-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--beige)}
-.ext-item > div{flex:1;min-width:0}
+.ext-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:10px;background:var(--beige)}
+.ext-item > div{flex:1;min-width:0;align-self:center}
 .ext-item b{display:block;font-weight:600}
 .ext-item small{display:block;font-size:12px;opacity:.8}
 .ext-item.out{opacity:.6}
@@ -426,6 +439,11 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
             <option value="60">1 h max</option>
             <option value="61">Plus d'1 h</option>
           </select>
+          <select id="fExt" aria-label="Extensions">
+            <option value="">Extensions : peu importe</option>
+            <option value="avec">Avec extension</option>
+            <option value="sans">Sans extension</option>
+          </select>
           <select id="fSort" aria-label="Tri">
             <option value="nom">Tri : A → Z</option>
             <option value="recent">Tri : ajoutés récemment</option>
@@ -492,6 +510,15 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
     <button class="btn" id="dOut">Sortir de la collection</button>
     <button class="btn primary" id="dEdit">Modifier</button>
   </div>
+</dialog>
+
+<!-- Photo d'une extension -->
+<dialog id="photoDlg">
+  <div class="dlg-head">
+    <h2 id="pTitle"></h2>
+    <button class="icon-btn" data-close aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dlg-body"><img id="pImg" alt=""></div>
 </dialog>
 
 <!-- Nombre d'exemplaires pris pour la carte -->
@@ -659,7 +686,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
         <label>Extensions</label>
         <div id="extRows"></div>
         <div><button type="button" class="btn sm" id="addExt">+ Ajouter une extension</button></div>
-        <p class="hint" style="margin:6px 0 0">« Joueurs max » : seulement si l'extension permet de jouer à plus.</p>
+        <p class="hint" style="margin:6px 0 0">« Joueurs max » : seulement si l'extension permet de jouer à plus. Pense à enregistrer le jeu pour garder les photos.</p>
       </div>
 
       <div class="field">
@@ -861,21 +888,24 @@ async function saveGame(id, data, photo){
   await store.put("jeux", id, data);
 }
 async function removeGame(id){
+  const g = games.find(x => x.id === id);
   await store.del("jeux", id);
   await store.del("photos", id).catch(() => {});
+  for (const x of extsOf(g)) if (x.thumb) await store.del("photos", id + "~" + x.id).catch(() => {});
 }
 async function getPhoto(id){ const p = await store.get("photos", id); return p ? p.data : null; }
 
 /* ---------- État ---------- */
 let games = [];
 let view = "jeux";
-const F = { q: "", players: "", owner: "", cat: "", diff: "", age: "", duree: "", sort: "nom", statut: "in", types: new Set() };
+const F = { q: "", players: "", owner: "", cat: "", diff: "", age: "", duree: "", ext: "", sort: "nom", statut: "in", types: new Set() };
 const DUREE_LBL = { "15": "15 min max", "30": "30 min max", "45": "45 min max", "60": "1 h max", "61": "plus d'1 h" };
 const extraFilt = () => [
   F.cat ? (DEFAULT_SECTIONS.find(x => x.kind === F.cat) || {}).nom : "",
   F.diff ? (DIFF[+F.diff] || "").toLowerCase() : "",
   F.age ? `jouable à ${F.age} ans` : "",
-  F.duree ? DUREE_LBL[F.duree] : ""
+  F.duree ? DUREE_LBL[F.duree] : "",
+  F.ext === "avec" ? "avec extension" : F.ext === "sans" ? "sans extension" : ""
 ].filter(Boolean);
 const isOut = g => !!g.sortie;
 const inGames = () => games.filter(g => !isOut(g));
@@ -981,6 +1011,7 @@ function filtered(){
     if (F.statut === "in" && isOut(g)) return false;
     if (F.statut === "out" && !isOut(g)) return false;
     if (F.cat && classify(g) !== F.cat) return false;
+    if (F.ext && (F.ext === "avec") !== activeExts(g).length > 0) return false;
     if (F.diff && g.difficulte !== +F.diff) return false;
     if (F.age && g.age && g.age > +F.age) return false;
     if (F.duree) {
@@ -1072,7 +1103,7 @@ async function openDetail(id){
     ${(g.types||[]).length ? `<div class="tags">${g.types.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
     ${extsOf(g).length ? `<div class="sec"><h4>Extensions</h4><div class="accent"></div><div class="ext-list">${extsOf(g).map(x => x.sortie
       ? `<div class="ext-item out"><div><b>${esc(x.nom)}</b><small>Sortie le ${esc(fmtDate(x.sortie.date))} · ${esc(x.sortie.motif)}${x.sortie.note ? ` · ${esc(x.sortie.note)}` : ""}</small></div><button type="button" class="btn sm" data-xin="${esc(x.id)}">Remettre</button></div>`
-      : `<div class="ext-item"><div><b>${esc(x.nom)}</b><small>${esc([extOwnersText(x), x.joueursMax ? `jusqu'à ${x.joueursMax} joueurs` : ""].filter(Boolean).join(" · "))}</small></div><button type="button" class="btn sm" data-xout="${esc(x.id)}">Sortir</button></div>`).join("")}</div></div>` : ""}
+      : `<div class="ext-item">${x.thumb ? `<button type="button" class="xthumb" data-xph="${esc(x.id)}" aria-label="Voir la photo"><img src="${esc(x.thumb)}" alt=""></button>` : ""}<div><b>${esc(x.nom)}</b><small>${esc([extOwnersText(x), x.joueursMax ? `jusqu'à ${x.joueursMax} joueurs` : ""].filter(Boolean).join(" · "))}</small>${x.notes ? `<div class="xnotes">${esc(x.notes)}</div>` : ""}</div><button type="button" class="btn sm" data-xout="${esc(x.id)}">Sortir</button></div>`).join("")}</div></div>` : ""}
     ${bggLien ? `<div class="sec"><div class="links"><a class="link" href="${esc(bggLien)}" target="_blank" rel="noopener">Fiche BGG</a></div></div>` : ""}
     ${g.notes ? `<div class="sec"><h4>Notes</h4><div class="accent"></div><div class="rules">${esc(g.notes)}</div></div>` : ""}
     ${hist.length ? `<div class="sec"><h4>Historique</h4><div class="accent"></div><div class="hist">${hist.map(h =>
@@ -1192,8 +1223,15 @@ $("#dOut").addEventListener("click", async () => {
 
 // Boutons Sortir / Remettre d'une extension dans la fiche
 $("#dBody").addEventListener("click", async e => {
-  const b = e.target.closest("[data-xout],[data-xin]"); if (!b) return;
+  const b = e.target.closest("[data-xout],[data-xin],[data-xph]"); if (!b) return;
   const g = games.find(x => x.id === currentId); if (!g) return;
+  if (b.dataset.xph) {
+    const x = extsOf(g).find(y => y.id === b.dataset.xph); if (!x) return;
+    $("#pTitle").textContent = x.nom; $("#pImg").src = x.thumb;
+    $("#photoDlg").showModal();
+    try { const full = await getPhoto(extPhotoId(g.id, x.id)); if (full && $("#photoDlg").open) $("#pImg").src = full; } catch {}
+    return;
+  }
   if (b.dataset.xout) { openOut(b.dataset.xout); return; }
   const x = extsOf(g).find(y => y.id === b.dataset.xin); if (!x) return;
   if (!confirm(`Remettre l'extension « ${x.nom} » dans la collection ?`)) return;
@@ -1850,48 +1888,102 @@ function readOwners(){
   return [...map.values()];
 }
 
-function extLine(x = {}, o = {}){
-  return `<div class="ext-box" data-xid="${esc(x.id || "")}">
+// Photos d'extensions en attente : xid -> {full, thumb} (nouvelle) ou null (supprimée)
+let extPhotos = new Map();
+const extPhotoId = (gid, xid) => gid + "~" + xid;
+function extOwnerLine(o = {}){
+  return `<div class="xo-line">
+    <input data-xo list="ownerList" maxlength="80" placeholder="À qui" value="${esc(o.nom || "")}">
+    <input data-xq type="number" inputmode="numeric" min="1" max="99" value="${o.qte || 1}" aria-label="Exemplaires">
+    <button type="button" class="mini-btn" data-xodel aria-label="Retirer ce propriétaire">×</button>
+  </div>`;
+}
+function extBox(x = {}, owners = []){
+  const id = x.id || uid();
+  return `<div class="ext-box" data-xid="${esc(id)}">
     <div class="ext-r1">
       <input data-xn maxlength="120" placeholder="Nom de l'extension" value="${esc(x.nom || "")}">
       <button type="button" class="mini-btn" data-xdel aria-label="Retirer cette extension">×</button>
     </div>
+    <div class="ext-photo">
+      <div class="xprev" data-xprev>${x.thumb ? `<img src="${esc(x.thumb)}" alt="">` : "<span>Pas de photo</span>"}</div>
+      <div class="btns">
+        <label class="btn sm">Photo<input type="file" data-xpf accept="image/*" class="hidden"></label>
+        <button type="button" class="btn sm${x.thumb ? "" : " hidden"}" data-xprm>Retirer la photo</button>
+      </div>
+    </div>
+    <div class="xo-head"><label>À qui</label><label>Exemplaires</label><span></span></div>
+    <div data-xowners>${(owners.length ? owners : [{}]).map(extOwnerLine).join("")}</div>
+    <button type="button" class="btn sm" data-xoadd>+ Propriétaire</button>
     <div class="ext-r2">
-      <div><label>À qui</label><input data-xo list="ownerList" maxlength="80" value="${esc(o.nom || "")}"></div>
-      <div><label>Exemplaires</label><input data-xq type="number" inputmode="numeric" min="1" max="99" value="${o.qte || 1}"></div>
       <div><label>Joueurs max</label><input data-xm type="number" inputmode="numeric" min="1" max="99" value="${x.joueursMax || ""}"></div>
     </div>
+    <div class="ext-notes"><label>Notes</label><textarea data-xt maxlength="2000" placeholder="Ce que l'extension ajoute, les règles en plus, à quoi faire attention…">${esc(x.notes || "")}</textarea></div>
   </div>`;
 }
-// une ligne par propriétaire (une extension à 2 propriétaires = 2 lignes du même nom)
 function renderExtRows(g){
-  $("#extRows").innerHTML = activeExts(g).flatMap(x => (extOwners(x).length ? extOwners(x) : [{}]).map(o => extLine(x, o))).join("");
+  extPhotos = new Map();
+  $("#extRows").innerHTML = activeExts(g).map(x => extBox(x, extOwners(x))).join("");
 }
 $("#addExt").addEventListener("click", () => {
   const first = readOwners()[0];
-  $("#extRows").insertAdjacentHTML("beforeend", extLine({}, { nom: first ? first.nom : "", qte: 1 }));
+  $("#extRows").insertAdjacentHTML("beforeend", extBox({}, [{ nom: first ? first.nom : "", qte: 1 }]));
   const ins = $("#extRows").querySelectorAll("[data-xn]"); ins[ins.length - 1].focus();
 });
 $("#extRows").addEventListener("click", e => {
-  const b = e.target.closest("[data-xdel]"); if (b) b.closest(".ext-box").remove();
+  const box = e.target.closest(".ext-box"); if (!box) return;
+  if (e.target.closest("[data-xdel]")) { box.remove(); return; }
+  if (e.target.closest("[data-xoadd]")) { box.querySelector("[data-xowners]").insertAdjacentHTML("beforeend", extOwnerLine()); const l = box.querySelectorAll("[data-xo]"); l[l.length - 1].focus(); return; }
+  const od = e.target.closest("[data-xodel]");
+  if (od) { const lines = box.querySelectorAll(".xo-line"); if (lines.length > 1) od.closest(".xo-line").remove(); else { lines[0].querySelector("[data-xo]").value = ""; lines[0].querySelector("[data-xq]").value = 1; } return; }
+  if (e.target.closest("[data-xprm]")) {
+    extPhotos.set(box.dataset.xid, null);
+    box.querySelector("[data-xprev]").innerHTML = "<span>Pas de photo</span>";
+    box.querySelector("[data-xprm]").classList.add("hidden");
+  }
+});
+$("#extRows").addEventListener("change", async e => {
+  const inp = e.target.closest("[data-xpf]"); if (!inp) return;
+  const box = inp.closest(".ext-box"), file = inp.files[0]; inp.value = ""; if (!file) return;
+  try {
+    box.querySelector("[data-xprev]").innerHTML = "<span>Traitement…</span>";
+    const ph = await makePhotos(file);
+    extPhotos.set(box.dataset.xid, ph);
+    box.querySelector("[data-xprev]").innerHTML = `<img src="${esc(ph.thumb)}" alt="">`;
+    box.querySelector("[data-xprm]").classList.remove("hidden");
+  } catch (err) { toast(err.message); box.querySelector("[data-xprev]").innerHTML = "<span>Pas de photo</span>"; }
 });
 function readExts(old){
-  const base = readOwners()[0], map = new Map();
-  $("#extRows").querySelectorAll(".ext-box").forEach(l => {
-    const nom = l.querySelector("[data-xn]").value.trim(); if (!nom) return;
-    const key = norm(nom), on = l.querySelector("[data-xo]").value.trim() || (base ? base.nom : "");
-    const q = num(l.querySelector("[data-xq]").value) || 1, mx = num(l.querySelector("[data-xm]").value);
-    if (!map.has(key)) {
-      const prev = extsOf(old).find(x => x.id && x.id === l.dataset.xid) || {};
-      const { sortie, ...keep } = prev;
-      map.set(key, { ...keep, id: prev.id || uid(), nom, proprietaires: [], joueursMax: mx || null });
-    }
-    const x = map.get(key);
-    if (mx && !x.joueursMax) x.joueursMax = mx;
-    if (on) { const cur = x.proprietaires.find(o => norm(o.nom) === norm(on)); if (cur) cur.qte += q; else x.proprietaires.push({ nom: on, qte: q }); }
+  const base = readOwners()[0], list = [];
+  $("#extRows").querySelectorAll(".ext-box").forEach(box => {
+    const nom = box.querySelector("[data-xn]").value.trim(); if (!nom) return;
+    const xid = box.dataset.xid, prev = extsOf(old).find(x => x.id === xid) || {};
+    const { sortie, ...keep } = prev;
+    const props = [];
+    box.querySelectorAll(".xo-line").forEach(l => {
+      const on = l.querySelector("[data-xo]").value.trim(); if (!on) return;
+      const q = num(l.querySelector("[data-xq]").value) || 1, cur = props.find(o => norm(o.nom) === norm(on));
+      if (cur) cur.qte += q; else props.push({ nom: on, qte: q });
+    });
+    if (!props.length && base) props.push({ nom: base.nom, qte: 1 });
+    const ph = extPhotos.get(xid);
+    list.push({ ...keep, id: xid, nom, proprietaires: props,
+      joueursMax: num(box.querySelector("[data-xm]").value),
+      notes: box.querySelector("[data-xt]").value.trim(),
+      thumb: ph === undefined ? (prev.thumb || null) : (ph ? ph.thumb : null) });
   });
   // les extensions sorties de la collection sont gardées telles quelles
-  return [...map.values(), ...extsOf(old).filter(x => x.sortie)];
+  return [...list, ...extsOf(old).filter(x => x.sortie)];
+}
+// Enregistre / supprime les grandes photos des extensions
+async function saveExtPhotos(gid, oldExts, newExts){
+  const ids = new Set(newExts.map(x => x.id));
+  for (const [xid, ph] of extPhotos) {
+    if (!ids.has(xid)) continue;
+    if (ph) await store.put("photos", extPhotoId(gid, xid), { data: ph.full });
+    else await store.del("photos", extPhotoId(gid, xid)).catch(() => {});
+  }
+  for (const x of oldExts) if (!ids.has(x.id) && x.thumb) await store.del("photos", extPhotoId(gid, x.id)).catch(() => {});
 }
 
 $("#photoInput").addEventListener("change", async e => {
@@ -1954,6 +2046,7 @@ $("#gameForm").addEventListener("submit", async e => {
   };
   const btn = $("#fSave"); btn.disabled = true; btn.textContent = "Enregistrement…";
   try {
+    await saveExtPhotos(id, extsOf(old), data.extensions);
     await saveGame(id, data, pendingPhoto === undefined ? undefined : (pendingPhoto ? pendingPhoto.full : null));
     $("#formDlg").close();
     toast(editId ? "Jeu modifié" : "Jeu ajouté");
@@ -2593,6 +2686,12 @@ $("#btnPrint").addEventListener("click", async () => {
 
 /* ---------- Export / import ---------- */
 // Essaie de récupérer une image web pour la garder dans l'appli (possible seulement si le site l'autorise)
+// Sépare les grandes photos d'extensions (fichier de sauvegarde) et les enregistre à part
+async function importExtPhotos(gid, data){
+  const xs = fixExts(data.extensions), ph = xs.filter(x => x.photo).map(x => [x.id, x.photo]);
+  data.extensions = xs.map(({ photo, ...x }) => x);
+  for (const [xid, full] of ph) await store.put("photos", extPhotoId(gid, xid), { data: full }).catch(() => {});
+}
 async function remotePhoto(url){
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
@@ -2612,7 +2711,9 @@ $("#btnExport").addEventListener("click", async () => {
   for (const g of games) {
     let photo = null;
     if (g.thumb) { try { photo = await getPhoto(g.id); } catch {} }
-    out.push({ ...g, photo });
+    const extensions = [];
+    for (const x of extsOf(g)) { let xp = null; if (x.thumb) { try { xp = await getPhoto(extPhotoId(g.id, x.id)); } catch {} } extensions.push(xp ? { ...x, photo: xp } : x); }
+    out.push({ ...g, ...(extsOf(g).length ? { extensions } : {}), photo });
   }
   const blob = new Blob([JSON.stringify({ app: "ludotheque-ptg", version: 2, date: new Date().toISOString(), jeux: out, cartes })], { type: "application/json" });
   const a = document.createElement("a");
@@ -2637,8 +2738,9 @@ $("#importFile").addEventListener("change", async e => {
         if (!g || !g.nom) continue;
         const { id, photo, photoUrl, ...data } = g;
         const ex = games.find(x => x.id === id) || games.find(x => norm(x.nom) === norm(g.nom));
-        if (data.extensions) data.extensions = fixExts(data.extensions);
-        if (!ex) { await saveGame(id || uid(), data, undefined); added++; continue; }
+        const nid = ex ? ex.id : (id || uid());
+        if (data.extensions) await importExtPhotos(nid, data);
+        if (!ex) { await saveGame(nid, data, undefined); added++; continue; }
         const own = ownersOf(ex).map(o => ({ nom: o.nom, qte: o.qte || 1 }));
         ownersOf(g).forEach(o => {
           const cur = own.find(x => norm(x.nom) === norm(o.nom));
@@ -2670,14 +2772,15 @@ $("#importFile").addEventListener("change", async e => {
     for (const g of list) {
       if (!g || !g.nom) continue;
       const { id, photo, photoUrl, ...data } = g;
-      if (data.extensions) data.extensions = fixExts(data.extensions);
+      const gid = id || uid();
+      if (data.extensions) await importExtPhotos(gid, data);
       let ph = photo || undefined;
       if (!ph && photoUrl && /^https?:/i.test(photoUrl)) {
         toast(`Photos : ${ok + 1} / ${list.length}…`);
         const p = await remotePhoto(photoUrl);
         if (p) { data.thumb = p.thumb; ph = p.full; } else data.thumb = photoUrl;
       }
-      await saveGame(id || uid(), data, ph);
+      await saveGame(gid, data, ph);
       ok++;
     }
     for (const c of cl) { if (!c || !c.id) continue; const { id, _saved, ...data } = c; await store.put("cartes", id, data); }
@@ -2705,17 +2808,17 @@ $("#fPlayers").addEventListener("click", e => {
 $("#fOwner").addEventListener("change", e => { F.owner = e.target.value; render(); });
 $("#fSort").addEventListener("change", e => { F.sort = e.target.value; render(); });
 function updateFilterBtn(){
-  const n = [F.owner, F.cat, F.diff, F.age, F.duree].filter(Boolean).length + (F.statut !== "in" ? 1 : 0) + (F.sort !== "nom" ? 1 : 0);
+  const n = [F.owner, F.cat, F.diff, F.age, F.duree, F.ext].filter(Boolean).length + (F.statut !== "in" ? 1 : 0) + (F.sort !== "nom" ? 1 : 0);
   $("#btnFilters").textContent = n ? `Filtres (${n})` : "Filtres";
   $("#btnFilters").classList.toggle("on", n > 0);
 }
 $("#btnFilters").addEventListener("click", () => $("#moreFilters").classList.toggle("open"));
-["Cat", "Diff", "Age", "Duree"].forEach(k => $("#f" + k).addEventListener("change", e => {
+["Cat", "Diff", "Age", "Duree", "Ext"].forEach(k => $("#f" + k).addEventListener("change", e => {
   F[k.toLowerCase()] = e.target.value;
   e.target.classList.toggle("on", !!e.target.value);
   render();
 }));
-["#fOwner", "#fCat", "#fDiff", "#fAge", "#fDuree", "#fSort", "#fStatut"].forEach(id => $(id).addEventListener("change", updateFilterBtn));
+["#fOwner", "#fCat", "#fDiff", "#fAge", "#fDuree", "#fExt", "#fSort", "#fStatut"].forEach(id => $(id).addEventListener("change", updateFilterBtn));
 $("#fStatut").addEventListener("change", e => { F.statut = e.target.value; render(); });
 $("#typeChips").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
