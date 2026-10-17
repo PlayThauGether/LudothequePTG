@@ -135,7 +135,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal)!important;box-s
 .ext-photo .xprev{width:64px;height:64px;border-radius:10px;background:#fff;overflow:hidden;display:grid;place-items:center;flex:0 0 auto;border:1px dashed var(--gold)}
 .ext-photo .xprev img{width:100%;height:100%;object-fit:cover}
 .ext-photo .xprev span{font-size:10px;opacity:.7;text-align:center;padding:2px}
-.ext-photo .btns{display:flex;gap:6px;flex-wrap:wrap}
+.ext-photo .btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;min-width:0}
+.ext-photo .xpaste{flex:1;min-width:150px;padding:8px 10px;font-size:13px;border-style:dashed}
 .xo-head,.xo-line{display:grid;grid-template-columns:minmax(0,1fr) 92px 40px;gap:8px;align-items:center}
 .xo-head{margin-top:8px}
 .xo-head label,.ext-r2 label,.ext-notes label{font-size:11px;opacity:.75;display:block;margin:0 0 2px;white-space:nowrap}
@@ -1910,6 +1911,7 @@ function extBox(x = {}, owners = []){
       <div class="btns">
         <label class="btn sm">Photo<input type="file" data-xpf accept="image/*" class="hidden"></label>
         <button type="button" class="btn sm${x.thumb ? "" : " hidden"}" data-xprm>Retirer la photo</button>
+        <input data-xpaste class="xpaste" placeholder="ou colle une image ici" aria-label="Coller une image ou un lien d'image">
       </div>
     </div>
     <div class="xo-head"><label>À qui</label><label>Exemplaires</label><span></span></div>
@@ -1942,17 +1944,44 @@ $("#extRows").addEventListener("click", e => {
     box.querySelector("[data-xprm]").classList.add("hidden");
   }
 });
+async function setExtPhoto(box, blob){
+  const prev = box.querySelector("[data-xprev]"), old = prev.innerHTML;
+  try {
+    prev.innerHTML = "<span>Traitement…</span>";
+    const ph = await makePhotos(blob);
+    extPhotos.set(box.dataset.xid, ph);
+    prev.innerHTML = `<img src="${esc(ph.thumb)}" alt="">`;
+    box.querySelector("[data-xprm]").classList.remove("hidden");
+    return true;
+  } catch (err) { toast(err.message); prev.innerHTML = old; return false; }
+}
 $("#extRows").addEventListener("change", async e => {
   const inp = e.target.closest("[data-xpf]"); if (!inp) return;
   const box = inp.closest(".ext-box"), file = inp.files[0]; inp.value = ""; if (!file) return;
-  try {
-    box.querySelector("[data-xprev]").innerHTML = "<span>Traitement…</span>";
-    const ph = await makePhotos(file);
-    extPhotos.set(box.dataset.xid, ph);
-    box.querySelector("[data-xprev]").innerHTML = `<img src="${esc(ph.thumb)}" alt="">`;
-    box.querySelector("[data-xprm]").classList.remove("hidden");
-  } catch (err) { toast(err.message); box.querySelector("[data-xprev]").innerHTML = "<span>Pas de photo</span>"; }
+  await setExtPhoto(box, file);
 });
+// Image copiée sur le web (clic droit / appui long → Copier l'image) puis collée dans la boîte de l'extension
+$("#extRows").addEventListener("paste", async e => {
+  const box = e.target.closest(".ext-box"); if (!box) return;
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+  if (item) {
+    e.preventDefault();
+    if (await setExtPhoto(box, item.getAsFile())) toast("Photo de l'extension ajoutée");
+    if (e.target.matches("[data-xpaste]")) e.target.value = "";
+    return;
+  }
+  if (!e.target.matches("[data-xpaste]")) return;
+  // Lien d'image collé : on essaie de la récupérer (seulement si le site l'autorise)
+  e.preventDefault();
+  const url = (e.clipboardData?.getData("text") || "").trim();
+  if (!/^https?:\/\//i.test(url)) { toast("Copie l'image elle-même (clic droit ou appui long → Copier l'image), puis colle-la ici."); return; }
+  e.target.value = "Chargement…";
+  const ph = await remotePhoto(url);
+  e.target.value = "";
+  if (ph) { extPhotos.set(box.dataset.xid, ph); box.querySelector("[data-xprev]").innerHTML = `<img src="${esc(ph.thumb)}" alt="">`; box.querySelector("[data-xprm]").classList.remove("hidden"); toast("Photo de l'extension ajoutée"); }
+  else toast("Ce site bloque la récupération par lien. Copie plutôt l'image elle-même (clic droit ou appui long → Copier l'image).");
+});
+$("#extRows").addEventListener("input", e => { if (e.target.matches("[data-xpaste]") && e.target.value !== "Chargement…") e.target.value = ""; });
 function readExts(old){
   const base = readOwners()[0], list = [];
   $("#extRows").querySelectorAll(".ext-box").forEach(box => {
