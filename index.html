@@ -573,13 +573,13 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
     <div class="dlg-body">
       <div class="import-box">
         <label class="lbl" for="iPaste">Remplir automatiquement</label>
-        <textarea id="iPaste" rows="2" placeholder="Colle ici la fiche du jeu (page Philibert, Ludum… : tout sélectionner, copier, coller) ou une image copiée" style="width:100%;margin-top:4px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;resize:vertical"></textarea>
+        <textarea id="iPaste" rows="2" placeholder="Colle ici la fiche du jeu (page Esprit Jeu, Philibert… : tout sélectionner, copier, coller) ou une image copiée" style="width:100%;margin-top:4px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none;resize:vertical"></textarea>
         <div class="type-add" style="justify-content:flex-end">
           <button type="button" class="btn" id="btnPaste">Remplir depuis le texte</button>
         </div>
         <div id="pasteMsg" class="src-results"></div>
         <div class="type-add" id="bggLine">
-          <input id="iSrc" placeholder="Lien BGG, lien boutique ou nom du jeu" autocomplete="off" style="padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none">
+          <input id="iSrc" placeholder="Lien Esprit Jeu, lien BGG ou nom du jeu" autocomplete="off" style="padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;outline:none">
           <button type="button" class="btn" id="btnFetch">Chercher</button>
         </div>
         <div id="srcResults" class="src-results"></div>
@@ -656,6 +656,8 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
    - Firebase : laisse apiKey vide pour tester en mode local.
    - BGG_PROXY : URL de ta fonction Vercel (voir bgg.js),
      ex. "https://ptg-bgg-proxy.vercel.app/api/bgg"
+   - FICHE_PROXY : URL de la fonction Vercel fiche.js (lecture des
+     liens Esprit Jeu, sans token), ex. "https://ptg-bgg-proxy.vercel.app/api/fiche"
    ========================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyCDTNlZIPxrI7BsGhwX-h7FlZKvY4ziSao",
@@ -666,6 +668,7 @@ const firebaseConfig = {
   appId: "1:518873056258:web:c34816342295677710931b"
 };
 const BGG_PROXY = "";
+const FICHE_PROXY = "";
 
 const USE_FIREBASE = !!firebaseConfig.apiKey;
 const FB_VER = "10.12.2";
@@ -1500,8 +1503,14 @@ function srcMsg(t){ $("#srcResults").innerHTML = t ? `<div class="msg">${esc(t)}
 async function runFetch(){
   const raw = $("#iSrc").value.trim();
   if (!raw) { $("#iSrc").focus(); return; }
-  const src = parseSource(raw);
   const btn = $("#btnFetch"); btn.disabled = true;
+  if (isFicheLink(raw)) {
+    try { await importFiche(raw); } catch (err) { srcMsg(err.message); }
+    finally { btn.disabled = false; }
+    return;
+  }
+  if (!BGG_PROXY) { srcMsg("Colle le lien de la page du jeu sur Esprit Jeu (espritjeu.com/…)."); btn.disabled = false; return; }
+  const src = parseSource(raw);
   try {
     if (src.id) { await importBgg(src.id); return; }
     srcMsg(`Recherche de « ${src.q} » sur BGG…`);
@@ -1544,9 +1553,9 @@ const PASTE_TYPES = [
   [/r[ôo]les? cach[ée]s?|tra[îi]tre/i, "Rôles cachés"], [/enqu[êe]te/i, "Enquête"],
   [/dessin/i, "Dessin"], [/deck.?building/i, "Deck-building"], [/\bdés\b/i, "Dés"],
   [/cartes?\b/i, "Cartes"], [/rapidit[ée]|r[ée]flexe/i, "Rapidité"], [/\bmots?\b|lettres/i, "Mots"],
-  [/escape/i, "Escape game"], [/placement/i, "Placement"], [/gestion/i, "Gestion"],
+  [/escape/i, "Escape game"], [/placement(?! de tuiles)/i, "Placement"], [/gestion(?! de (?:la )?main)/i, "Gestion"],
   [/n[ée]gociation/i, "Négociation"], [/expert/i, "Expert"], [/\bduo\b|2 joueurs/i, "Duo"],
-  [/\bdraft/i, "Draft"], [/\bcollection/i, "Collection"], [/stop ou encore/i, "Stop ou encore"],
+  [/\bdraft/i, "Draft"], [/\bcollection/i, "Collection"], [/stop ou encore|prise de risques?/i, "Stop ou encore"],
   [/\bplis\b/i, "Plis"], [/ench[èe]res/i, "Enchères"], [/m[ée]moire/i, "Mémoire"], [/communication/i, "Communication"],
   [/\bquiz|culture g/i, "Quiz"], [/\bdextérit[ée]|adresse/i, "Adresse"], [/\benfant/i, "Enfants"]
 ];
@@ -1621,30 +1630,61 @@ function parsePaste(raw){
   return out;
 }
 
+// Remplit le formulaire avec ce qui a été lu ; renvoie la liste de ce qui a été trouvé
+function applyParsed(d){
+  const found = [], filled = [];
+  const set = (sel, v) => { const el = $(sel); el.value = v; filled.push(el); };
+  if (d.nom && !$("#iNom").value.trim()) { set("#iNom", d.nom); found.push(d.nom); }
+  if (d.min) { set("#iMin", d.min); found.push(d.max ? `${d.min === d.max ? d.min : d.min + " à " + d.max} joueurs` : `${d.min} joueurs et +`); }
+  if (d.max) set("#iMax", d.max);
+  if (d.duree) { set("#iDuree", d.duree); found.push(`${d.duree} min`); }
+  if (d.age) { set("#iAge", d.age); found.push(`${d.age} ans et +`); }
+  if (d.types.length) { d.types.forEach(x => formTypes.add(x)); renderTypePick(); found.push(d.types.join(", ")); }
+  filled.forEach(el => { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); });
+  return found;
+}
 function runPaste(){
   const box = $("#pasteMsg");
   const msg = (s, ok) => { box.innerHTML = `<div class="paste-msg ${ok ? "ok" : "ko"}">${esc(s)}</div>`; };
   const txt = $("#iPaste").value;
   if (!txt.trim()) { msg("Colle d'abord le texte de la fiche dans le cadre ci-dessus.", false); return; }
   try {
-    const d = parsePaste(txt), found = [], filled = [];
-    const set = (sel, v) => { const el = $(sel); el.value = v; filled.push(el); };
-    if (d.nom && !$("#iNom").value.trim()) { set("#iNom", d.nom); found.push(d.nom); }
-    if (d.min) { set("#iMin", d.min); found.push(d.max ? `${d.min === d.max ? d.min : d.min + " à " + d.max} joueurs` : `${d.min} joueurs et +`); }
-    if (d.max) set("#iMax", d.max);
-    if (d.duree) { set("#iDuree", d.duree); found.push(`${d.duree} min`); }
-    if (d.age) { set("#iAge", d.age); found.push(`${d.age} ans et +`); }
-    if (d.types.length) { d.types.forEach(x => formTypes.add(x)); renderTypePick(); found.push(d.types.join(", ")); }
+    const d = parsePaste(txt), found = applyParsed(d);
     if (!found.length) {
       msg("Rien trouvé dans ce texte (ni joueurs, ni durée, ni âge). Copie plutôt le bloc « Caractéristiques » ou « Fiche technique », ou tape simplement : 3-6 joueurs 15 min 8 ans", false);
       return;
     }
     msg("Trouvé : " + found.join(" · ") + (d.nom ? ". Vérifie, puis choisis la difficulté." : ". Vérifie, puis complète le nom et la difficulté."), true);
-    filled.forEach(el => { el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); });
-    if (filled[0]) filled[0].scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (err) {
     msg("Erreur pendant la lecture du texte : " + err.message, false);
   }
+}
+
+/* ---------- Lien Esprit Jeu (via la fonction Vercel fiche.js) ---------- */
+const isFicheLink = s => /^https?:\/\/(?:[\w-]+\.)*espritjeu\.com\//i.test(s);
+async function ficheFetch(params){
+  if (!FICHE_PROXY) throw new Error("Lecture des liens Esprit Jeu pas encore branchée : renseigne FICHE_PROXY en haut du fichier.");
+  const u = new URL(FICHE_PROXY);
+  Object.entries(params).forEach(([k, v]) => u.searchParams.set(k, v));
+  let r;
+  try { r = await fetch(u); } catch { throw new Error("Impossible de joindre la fonction fiche (connexion ?)"); }
+  if (!r.ok) throw new Error((await r.text().catch(() => "")).slice(0, 120) || "Erreur " + r.status);
+  return r;
+}
+async function importFiche(link){
+  srcMsg("Lecture de la fiche Esprit Jeu…");
+  const f = await (await ficheFetch({ url: link })).json();
+  // le genre du site ("Jeu de Stratégie, Course") est lu comme une ligne de type
+  const d = parsePaste((f.genre ? "Type de jeu : " + f.genre + "\n" : "") + (f.texte || ""));
+  if (f.nom) d.nom = f.nom.replace(/\s+-\s+.*$/, "");
+  const found = applyParsed(d);
+  if (!found.length) { srcMsg("Fiche lue, mais rien trouvé dedans (joueurs, durée, âge). Vérifie le lien."); return; }
+  if (!formHasPhoto && f.image) {
+    srcMsg("Fiche remplie, chargement de la photo…");
+    try { pendingPhoto = await makePhotos(await (await ficheFetch({ img: f.image })).blob()); setPrev(pendingPhoto.thumb); }
+    catch { srcMsg("Trouvé : " + found.join(" · ") + ". La photo n'a pas pu être récupérée. Choisis la difficulté."); return; }
+  }
+  srcMsg("Trouvé : " + found.join(" · ") + ". Vérifie, puis choisis la difficulté.");
 }
 $("#btnPaste").addEventListener("click", runPaste);
 // Image collée (appui long sur la photo du site → Copier l'image → coller ici)
@@ -1659,7 +1699,8 @@ $("#iPaste").addEventListener("paste", async e => {
     $("#pasteMsg").innerHTML = `<div class="msg">Photo ajoutée.</div>`;
   } catch (err) { toast(err.message); setPrev(""); }
 });
-if (!BGG_PROXY) { $("#bggLine").classList.add("hidden"); $("#srcResults").classList.add("hidden"); $("#altNames").classList.add("hidden"); }
+if (FICHE_PROXY && !BGG_PROXY) $("#iSrc").placeholder = "Lien Esprit Jeu (espritjeu.com/…)";
+if (!BGG_PROXY && !FICHE_PROXY) { $("#bggLine").classList.add("hidden"); $("#srcResults").classList.add("hidden"); $("#altNames").classList.add("hidden"); }
 
 $("#btnFetch").addEventListener("click", runFetch);
 $("#iSrc").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); runFetch(); } });

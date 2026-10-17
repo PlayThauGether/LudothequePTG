@@ -1,6 +1,6 @@
 // Service worker — Ludothèque PTG
 // Change ce numéro à chaque mise à jour importante pour forcer le rafraîchissement du cache.
-const VERSION = "ludo-v5";
+const VERSION = "ludo-v8";
 const SHELL = [
   "./",
   "./index.html",
