@@ -962,6 +962,15 @@ function playersFit(g, n){
 const extOwnedBy = (g, nom) => activeExts(g).filter(x => extOwners(x).some(o => o.nom === nom));
 // Pour la carte : faut-il demander exemplaires / extensions ?
 const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+// Nom de l'extension sans le nom du jeu devant ("Skull King - Extension" → "", "Toy Battle - Plateau Cannes" → "Plateau Cannes")
+function extShort(g, x){
+  let t = String(x.nom || "").trim();
+  const ext = () => { t = t.replace(/^extension\s*[\-–—:]?\s*/i, "").trim(); };
+  ext();
+  if (norm(t).startsWith(norm(g.nom))) t = t.slice(g.nom.length).replace(/^[\s\-–—:,.]+/, "").trim();
+  ext();
+  return /^extension$/i.test(t) ? "" : t;
+}
 const extLabel = x => /extension/i.test(x.nom) ? x.nom : "extension " + x.nom;
 const extsText = g => activeExts(g).map(x => x.nom + (extOwnersText(x) ? ` (${extOwnersText(x)})` : "")).join(", ");
 const needsQty = g => totalOf(g) > 1 || activeExts(g).length > 0;
@@ -2463,10 +2472,16 @@ function buildRecap(c){
   const byOwner = new Map();
   const push = (nom, item) => { if (!byOwner.has(nom)) byOwner.set(nom, []); byOwner.get(nom).push(item); };
   inGames().filter(g => c.jeux[g.id]).forEach(g => {
-    prisOf(c, g).forEach(p => push(p.nom, { id: g.id, nom: g.nom, qte: p.qte, tri: norm(g.nom) }));
-    // une extension emmenée revient à son (premier) propriétaire
-    extPris(c, g).forEach(x => push((extOwners(x)[0] || prisOf(c, g)[0] || { nom: "?" }).nom,
-      { id: g.id + "~" + x.id, nom: `${g.nom} + ${extLabel(x)}`, qte: 1, ext: true, tri: norm(g.nom) + "~" + norm(x.nom) }));
+    const mine = prisOf(c, g).map(p => ({ own: p.nom, item: { id: g.id, nom: g.nom, qte: p.qte, tri: norm(g.nom), nx: 0, xs: [] } }));
+    // une extension emmenée revient à son (premier) propriétaire :
+    // même propriétaire que le jeu → sur la même ligne, sinon une ligne à part
+    extPris(c, g).forEach(x => {
+      const own = (extOwners(x)[0] || prisOf(c, g)[0] || { nom: "?" }).nom, sh = extShort(g, x);
+      const m = mine.find(e => norm(e.own) === norm(own));
+      if (m) { m.item.xs.push(sh || "extension"); m.item.nx++; return; }
+      push(own, { id: g.id + "~" + x.id, nom: sh ? `${sh} (extension ${g.nom})` : `Extension ${g.nom}`, qte: 1, ext: true, tri: norm(g.nom) + "~" + norm(x.nom) });
+    });
+    mine.forEach(({ own, item }) => { if (item.xs.length) item.nom = `${g.nom} + ${item.xs.join(" + ")}`; delete item.xs; push(own, item); });
   });
   return [...byOwner.entries()].sort((a, b) => a[0].localeCompare(b[0], "fr"))
     .map(([nom, jeux]) => ({ nom, jeux: jeux.sort((a, b) => (a.tri || norm(a.nom)).localeCompare(b.tri || norm(b.nom), "fr")) }));
@@ -2475,7 +2490,7 @@ const fmtDT = iso => { try { return new Date(iso).toLocaleDateString("fr-FR") + 
 function recapCounts(r){
   const items = r.groupes.flatMap(gr => gr.jeux);
   const nbJ = new Set(items.filter(j => !j.ext).map(j => j.id)).size;
-  const nbE = items.filter(j => !j.ext).reduce((m, j) => m + j.qte, 0), nbX = items.filter(j => j.ext).length;
+  const nbE = items.filter(j => !j.ext).reduce((m, j) => m + j.qte, 0), nbX = items.filter(j => j.ext).length + items.reduce((m, j) => m + (j.nx || 0), 0);
   return `${nbJ} jeux · ${nbE} exemplaires` + (nbX ? ` · ${nbX} extension${nbX > 1 ? "s" : ""}` : "");
 }
 function recapText(c){
