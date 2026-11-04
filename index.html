@@ -440,6 +440,7 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
             <option value="60">1 h max</option>
             <option value="61">Plus d'1 h</option>
           </select>
+          <select id="fEditeur" aria-label="Éditeur"></select>
           <select id="fExt" aria-label="Extensions">
             <option value="">Extensions : peu importe</option>
             <option value="avec">Avec extension</option>
@@ -662,6 +663,12 @@ dialog::backdrop{background:rgba(58,35,19,.55)}
         <div class="field"><label for="iMax">Joueurs max</label><input id="iMax" type="number" inputmode="numeric" min="1" max="99"></div>
         <div class="field"><label for="iDuree">Durée (min)</label><input id="iDuree" type="number" inputmode="numeric" min="1" max="999"></div>
         <div class="field"><label for="iAge">Âge min</label><input id="iAge" type="number" inputmode="numeric" min="1" max="99"></div>
+      </div>
+
+      <div class="field">
+        <label for="iEditeur">Éditeur</label>
+        <input id="iEditeur" list="editeurList" maxlength="80" placeholder="Ex : Iello, Repos Production…">
+        <datalist id="editeurList"></datalist>
       </div>
 
       <div class="field">
@@ -899,14 +906,15 @@ async function getPhoto(id){ const p = await store.get("photos", id); return p ?
 /* ---------- État ---------- */
 let games = [];
 let view = "jeux";
-const F = { q: "", players: "", owner: "", cat: "", diff: "", age: "", duree: "", ext: "", sort: "nom", statut: "in", types: new Set() };
+const F = { q: "", players: "", owner: "", cat: "", diff: "", age: "", duree: "", ext: "", editeur: "", sort: "nom", statut: "in", types: new Set() };
 const DUREE_LBL = { "15": "15 min max", "30": "30 min max", "45": "45 min max", "60": "1 h max", "61": "plus d'1 h" };
 const extraFilt = () => [
   F.cat ? (DEFAULT_SECTIONS.find(x => x.kind === F.cat) || {}).nom : "",
   F.diff ? (DIFF[+F.diff] || "").toLowerCase() : "",
   F.age ? `jouable à ${F.age} ans` : "",
   F.duree ? DUREE_LBL[F.duree] : "",
-  F.ext === "avec" ? "avec extension" : F.ext === "sans" ? "sans extension" : ""
+  F.ext === "avec" ? "avec extension" : F.ext === "sans" ? "sans extension" : "",
+  F.editeur ? (F.editeur === "__none" ? "éditeur non renseigné" : F.editeur) : ""
 ].filter(Boolean);
 const isOut = g => !!g.sortie;
 const inGames = () => games.filter(g => !isOut(g));
@@ -987,6 +995,11 @@ function usedTypes(){
   games.forEach(g => (g.types || []).forEach(t => s.add(t)));
   return [...s].sort((a,b) => a.localeCompare(b, "fr"));
 }
+function editeurs(){
+  const m = new Map();
+  games.forEach(g => { const e = (g.editeur || "").trim(); if (e && !m.has(norm(e))) m.set(norm(e), e); });
+  return [...m.values()].sort((a, b) => a.localeCompare(b, "fr"));
+}
 function owners(){
   const s = new Set(["Association PTG"]);
   games.forEach(g => { ownersOf(g).forEach(o => s.add(o.nom)); extsOf(g).forEach(x => extOwners(x).forEach(o => s.add(o.nom))); });
@@ -1001,6 +1014,11 @@ function refreshFilters(){
   F.owner = fo.value;
   $("#ownerList").innerHTML = owners().map(o => `<option value="${esc(o)}">`).join("");
 
+
+  const fe = $("#fEditeur"), curE = fe.value, eds = editeurs();
+  fe.innerHTML = `<option value="">Éditeur : tous</option>` + eds.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join("") + (games.some(g => !(g.editeur || "").trim()) ? `<option value="__none">Éditeur non renseigné</option>` : "");
+  fe.value = eds.includes(curE) || curE === "__none" ? curE : "";
+  F.editeur = fe.value; fe.classList.toggle("on", !!F.editeur);
 
   const fc = $("#fCat"), curCat = fc.value;
   const kinds = new Set(games.filter(g => !isOut(g)).map(classify));
@@ -1022,13 +1040,14 @@ function filtered(){
     if (F.statut === "out" && !isOut(g)) return false;
     if (F.cat && classify(g) !== F.cat) return false;
     if (F.ext && (F.ext === "avec") !== activeExts(g).length > 0) return false;
+    if (F.editeur && (F.editeur === "__none" ? !!(g.editeur || "").trim() : norm(g.editeur) !== norm(F.editeur))) return false;
     if (F.diff && g.difficulte !== +F.diff) return false;
     if (F.age && g.age && g.age > +F.age) return false;
     if (F.duree) {
       if (!g.duree) return false;
       if (F.duree === "61" ? g.duree <= 60 : g.duree > +F.duree) return false;
     }
-    if (q && !norm([g.nom, ownersText(g), g.notes, (g.types||[]).join(" "), ...activeExts(g).map(x => x.nom + " " + extOwnersText(x))].join(" ")).includes(q)) return false;
+    if (q && !norm([g.nom, g.editeur, ownersText(g), g.notes, (g.types||[]).join(" "), ...activeExts(g).map(x => x.nom + " " + extOwnersText(x))].join(" ")).includes(q)) return false;
     if (F.owner && !ownersOf(g).some(o => o.nom === F.owner) && !extOwnedBy(g, F.owner).length) return false;
     if (n && !playersFit(g, n).ok) return false;
     for (const t of F.types) if (!(g.types || []).includes(t)) return false;
@@ -1099,7 +1118,8 @@ async function openDetail(id){
     ["Joueurs", fmtPlayers(g)],
     ["Durée", fmtDuree(g.duree)],
     ["Âge", g.age ? `${g.age} ans et +` : ""],
-    ["Difficulté", DIFF[g.difficulte] || ""]
+    ["Difficulté", DIFF[g.difficulte] || ""],
+    ["Éditeur", g.editeur || ""]
   ].filter(f => f[1]);
   const bggLien = safeUrl(g.bggLien);
 
@@ -1433,7 +1453,7 @@ $("#btnDoc").addEventListener("click", async () => {
     if (filt.length) kids.push(new Paragraph({ spacing: { after: 60 }, children: [new TextRun({ text: "Sélection : " + filt.join(" · "), size: 20, color: TEAL, bold: true })] }));
     kids.push(new Paragraph({ spacing: { after: 200 }, border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "C9A57E", space: 4 } }, children: [] }));
     list.forEach(g => {
-      const info = [fmtPlayers(g), fmtDuree(g.duree), g.age ? `${g.age} ans et +` : "", DIFF[g.difficulte] ? `difficulté : ${DIFF[g.difficulte].toLowerCase()}` : ""].filter(Boolean).join(" · ");
+      const info = [fmtPlayers(g), fmtDuree(g.duree), g.age ? `${g.age} ans et +` : "", DIFF[g.difficulte] ? `difficulté : ${DIFF[g.difficulte].toLowerCase()}` : "", g.editeur ? `éditeur : ${g.editeur}` : ""].filter(Boolean).join(" · ");
       kids.push(new Paragraph({ keepNext: true, spacing: { before: 120, after: 20 }, children: [
         new TextRun({ text: g.nom, bold: true, size: 24, color: isOut(g) ? GREY : "3A2313" }),
         ...(totalOf(g) > 1 ? [new TextRun({ text: `  ×${totalOf(g)}`, bold: true, size: 20, color: TERRA })] : [])
@@ -1479,6 +1499,7 @@ $("#btnXls").addEventListener("click", async () => {
       "Jeu": g.nom,
       "Propriétaires": ownersText(g),
       "Exemplaires": totalOf(g),
+      "Éditeur": g.editeur || "",
       "Extensions": extsText(g),
       "Joueurs min": g.joueursMin || "",
       "Joueurs max": g.joueursMax || "",
@@ -1493,7 +1514,7 @@ $("#btnXls").addEventListener("click", async () => {
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [32, 30, 11, 36, 11, 11, 11, 9, 11, 30, 40, 22, 13, 30].map(w => ({ wch: w }));
+    ws["!cols"] = [32, 30, 11, 22, 36, 11, 11, 11, 9, 11, 30, 40, 22, 13, 30].map(w => ({ wch: w }));
     ws["!autofilter"] = { ref: ws["!ref"] };
     XLSX.utils.book_append_sheet(wb, ws, "Jeux");
     const hist = list.flatMap(g => (g.historique || []).map(h => ({ "Date": fmtD(h.date), "Jeu": g.nom + (h.ext ? ` (extension ${h.ext})` : ""), "Mouvement": h.motif, "Propriétaire": h.nom, "Exemplaires": h.qte, "Précision": h.note || "" })));
@@ -1639,6 +1660,8 @@ function openForm(id){
   $("#iDuree").value = g?.duree || "";
   $("#iAge").value = g?.age || "";
   $("#iNotes").value = g?.notes || "";
+  $("#iEditeur").value = g?.editeur || "";
+  $("#editeurList").innerHTML = editeurs().map(e => `<option value="${esc(e)}">`).join("");
   $("#iNewType").value = "";
   $("#iSrc").value = "";
   $("#iPaste").value = "";
@@ -2074,6 +2097,7 @@ $("#gameForm").addEventListener("submit", async e => {
     types: [...formTypes],
     extensions: readExts(old),
     notes: $("#iNotes").value.trim(),
+    editeur: $("#iEditeur").value.trim(),
     bggId: formBgg?.id || null,
     bggLien: formBgg?.lien || "",
     thumb: pendingPhoto === undefined ? (old?.thumb || null) : (pendingPhoto ? pendingPhoto.thumb : null),
@@ -2775,6 +2799,24 @@ $("#importFile").addEventListener("change", async e => {
     const cl = Array.isArray(json.cartes) ? json.cartes : [];
     if (!list.length && !cl.length) throw new Error("Fichier non reconnu");
     // Fichier d'ajout : on complète la collection sans rien écraser (propriétaires ajoutés aux jeux existants)
+    if (json.mode === "maj") {
+      const champs = json.champs || ["editeur"];
+      if (!confirm(`Compléter ${list.length} jeu(x) existant(s) (${champs.join(", ")}) ? Aucun jeu n'est créé, et les champs déjà remplis ne sont pas modifiés.`)) return;
+      let done = 0, skip = 0; const absents = [];
+      for (const g of list) {
+        if (!g || !g.nom) continue;
+        const ex = games.find(x => x.id === g.id) || games.find(x => norm(x.nom) === norm(g.nom));
+        if (!ex) { absents.push(g.nom); continue; }
+        const { id: exId, ...upd } = ex; let ch = false;
+        champs.forEach(k => { if (g[k] != null && g[k] !== "" && (upd[k] == null || upd[k] === "")) { upd[k] = g[k]; ch = true; } });
+        if (!ch) { skip++; continue; }
+        upd.updatedAt = Date.now();
+        await store.put("jeux", exId, upd); done++;
+      }
+      toast(`${done} jeu(x) complété(s)` + (skip ? `, ${skip} déjà rempli(s)` : "") + (absents.length ? `, ${absents.length} introuvable(s)` : ""));
+      if (absents.length) alert("Jeux introuvables dans la ludothèque :\n" + absents.join("\n"));
+      return;
+    }
     if (json.mode === "ajout") {
       if (!confirm(`Ajouter ${list.length} jeu(x) à la collection ? Les jeux déjà présents gardent leurs infos et photos, seuls les propriétaires manquants sont ajoutés.`)) return;
       let added = 0, merged = 0;
@@ -2797,6 +2839,7 @@ $("#importFile").addEventListener("change", async e => {
         ["joueursMin", "joueursMax", "duree", "age", "difficulte"].forEach(k => { if (upd[k] == null && data[k] != null) upd[k] = data[k]; });
         if (!(upd.types || []).length && (data.types || []).length) upd.types = data.types;
         if (!upd.notes && data.notes) upd.notes = data.notes;
+        if (!upd.editeur && data.editeur) upd.editeur = data.editeur;
         const xs = fixExts(extsOf(ex));
         fixExts(data.extensions).forEach(nx => {
           const cur = xs.find(x => norm(x.nom) === norm(nx.nom));
@@ -2852,17 +2895,17 @@ $("#fPlayers").addEventListener("click", e => {
 $("#fOwner").addEventListener("change", e => { F.owner = e.target.value; render(); });
 $("#fSort").addEventListener("change", e => { F.sort = e.target.value; render(); });
 function updateFilterBtn(){
-  const n = [F.owner, F.cat, F.diff, F.age, F.duree, F.ext].filter(Boolean).length + (F.statut !== "in" ? 1 : 0) + (F.sort !== "nom" ? 1 : 0);
+  const n = [F.owner, F.cat, F.diff, F.age, F.duree, F.ext, F.editeur].filter(Boolean).length + (F.statut !== "in" ? 1 : 0) + (F.sort !== "nom" ? 1 : 0);
   $("#btnFilters").textContent = n ? `Filtres (${n})` : "Filtres";
   $("#btnFilters").classList.toggle("on", n > 0);
 }
 $("#btnFilters").addEventListener("click", () => $("#moreFilters").classList.toggle("open"));
-["Cat", "Diff", "Age", "Duree", "Ext"].forEach(k => $("#f" + k).addEventListener("change", e => {
+["Cat", "Diff", "Age", "Duree", "Ext", "Editeur"].forEach(k => $("#f" + k).addEventListener("change", e => {
   F[k.toLowerCase()] = e.target.value;
   e.target.classList.toggle("on", !!e.target.value);
   render();
 }));
-["#fOwner", "#fCat", "#fDiff", "#fAge", "#fDuree", "#fExt", "#fSort", "#fStatut"].forEach(id => $(id).addEventListener("change", updateFilterBtn));
+["#fOwner", "#fCat", "#fDiff", "#fAge", "#fDuree", "#fExt", "#fEditeur", "#fSort", "#fStatut"].forEach(id => $(id).addEventListener("change", updateFilterBtn));
 $("#fStatut").addEventListener("change", e => { F.statut = e.target.value; render(); });
 $("#typeChips").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
