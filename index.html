@@ -136,9 +136,9 @@ h1{margin:0;font-size:clamp(36px,10vw,56px);font-weight:600;letter-spacing:-.045
   .more-filters.open{display:flex}
   .more-filters select{flex:1 1 45%}
 }
-.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 4px;margin:0 -2px;scrollbar-width:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 20px 6px;margin:0 -20px;scroll-padding:0 20px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
-@media (min-width:700px){.chips{flex-wrap:wrap;overflow:visible}}
+@media (min-width:700px){.chips{flex-wrap:wrap;overflow:visible;padding:14px 2px 4px;margin:0 -2px}}
 .chip{flex:0 0 auto;display:inline-flex;align-items:center;height:36px;padding:0 15px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--ink-2);white-space:nowrap}
 .chip.on{background:var(--ink);color:var(--on-ink);box-shadow:0 6px 16px -8px rgba(36,23,15,.6)}
 .chip.reset{background:none;box-shadow:inset 0 0 0 1px var(--hair);-webkit-backdrop-filter:none;backdrop-filter:none}
@@ -179,12 +179,14 @@ h1{margin:0;font-size:clamp(36px,10vw,56px);font-weight:600;letter-spacing:-.045
 .loading{text-align:center;padding:40px;color:var(--ink-2)}
 
 /* Bouton flottant + */
-.fab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:31;width:58px;height:58px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;color:var(--on-ink);background:var(--ink);box-shadow:var(--ink-drop);font-size:0;transition:transform .2s var(--ease)}
-.fab svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.8}
+.fab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:31;width:58px;height:58px;border-radius:50%;border:0;padding:0;display:flex;align-items:center;justify-content:center;color:var(--on-ink);background:var(--ink);box-shadow:var(--ink-drop);transition:transform .2s var(--ease)}
+.fab svg{width:26px;height:26px;stroke:currentColor;stroke-width:1.8;display:block;flex:0 0 auto}
+.fab-txt{display:none}
 .fab:active{transform:scale(.95)}
 @media (min-width:900px){
   .fab{right:24px;bottom:24px;width:auto;height:52px;padding:0 22px 0 18px;border-radius:999px;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500}
   .fab svg{width:19px;height:19px}
+  .fab-txt{display:inline}
 }
 footer.wave{display:none}
 
@@ -582,7 +584,7 @@ input::placeholder,textarea::placeholder{color:var(--ink-3)}
 
   <button class="fab" id="btnAdd" aria-label="Ajouter un jeu">
     <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-    Ajouter un jeu
+    <span class="fab-txt">Ajouter un jeu</span>
   </button>
 </div>
 
