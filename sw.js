@@ -1,6 +1,6 @@
 // Service worker — Ludothèque PTG
 // Change ce numéro à chaque mise à jour importante pour forcer le rafraîchissement du cache.
-const VERSION = "ludo-v14";
+const VERSION = "ludo-v15";
 const SHELL = [
   "./",
   "./index.html",
@@ -8,7 +8,8 @@ const SHELL = [
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
-  "./icons/favicon-32.png"
+  "./icons/favicon-32.png",
+  "./icons/logo-ptg.png"
 ];
 
 // Domaines des librairies (versions figées) : on les garde en cache
